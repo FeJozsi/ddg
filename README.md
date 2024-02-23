@@ -1,13 +1,15 @@
 
 # ddg
 
-## Efforts to revive my old SIMULA'67 project dealing with disjunctive graphs using Python now
+## Efforts to revive my old SIMULA'67 project dealing with disjunctive graphs, using Python now
 
 Start date: 2024-02-21  
 Owner: FeJozsi from Budapest, Hungary  
 E-mail: <jfeher@fjm.hu>  
 
-### 2024-02-21 13:59:52: Theoretical background
+### Theoretical background
+
+2024-02-21 13:59:52
 
 **Directed disjunctive graphs** can be conceptualized as collections of operations and machines,
 mirroring our intuitive understanding of these concepts.
@@ -49,3 +51,14 @@ The thesis revolved around this topic.
 
 - When we modify a few specific technological dependencies between tasks,
 it can *greatly affect* the resources needed to find the optimum solution.
+
+### Milestones
+
+Each linked folder has its own ReadMe file. Only major "milestones" are listed below.
+
+2024-02-23 12:19:12 Added folders: `src\generate_input` and `inputs`
+
+- The `src\generate_input\generate_random_dg_problem.py` module can generate
+text files within the `inputs` folder, describing random Directed Disjunctive Graphs.  
+These files are suitable to serve as input (respectively input template) for the main
+functionality of the project.
