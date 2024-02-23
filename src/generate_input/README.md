@@ -1,5 +1,5 @@
 
-# `srd\generate_input` folder
+# `src\generate_input` folder
 
 Start date: 2024-02-23
 
