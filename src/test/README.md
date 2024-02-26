@@ -9,8 +9,9 @@ The `src\test` directory houses the test (unittest) components of the project.
 
 Currently, it exclusively serves the test_dg_input_read module,
 which tests the src\main\dg_standard_input module.  
-In this test, the information describing a Directed Disjunctive Graph is
-an object of dg_standard_input.InputTextFile class. This object meets
+The information describing a Directed Disjunctive Graph must be
+a real object of a subclass of DgInpSource abstract base class (ABC).  
+The instances of test_dg_input_read.DgInpSource class meet
 the requirements of the DgInpSource abstract base class defined in the
 src\main\dg_standard_input module.  
 
@@ -21,7 +22,18 @@ You will probably try these commands if you have the required Python tools insta
 
 You can execute a command like the second to run the test_dg_input_read module for a test.  
 Note: Ensure that your PYTHONPATH contains src/main.
-You can check this using $env:PYTHONPATH in a PowerShell Terminal.
+(You can check this using $env:PYTHONPATH in a PowerShell Terminal.)  
+You also may consider to apply the .vscode\settings.json file with the new sets below for VSC:
+
+    { ...
+        "python.autoComplete.extraPaths": [
+            "src/main"
+        ],
+        "python.analysis.extraPaths": [
+            "src/main"
+        ]
+    ... }
 
 The `test_dg_input_read` module reads input data describing a Directed Disjunctive Graph
 from a text file and prints it to the standard output (Terminal or Command window).
+See the comments of the module also.
