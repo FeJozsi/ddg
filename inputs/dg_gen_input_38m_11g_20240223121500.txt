@@ -4,7 +4,7 @@
 # Number of operations: 38, number of machines: 11
 [38, 11]
 # Maximum run time: 20.0 sec (0 = no limit), maximum depth level: 15 (0 = no limit), step-by-step information: False
-[20.0, 15, False]
+[20.0, 0, True]
 
 # Number of operations per machine (we need provide a positive integer for each machine, and their sum should give the total number of operations):
 [4, 6, 3, 4, 3, 4, 2, 3, 2, 3, 4]

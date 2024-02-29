@@ -54,11 +54,18 @@ it can *greatly affect* the resources needed to find the optimum solution.
 
 ### Milestones
 
-Each linked folder has its own ReadMe file. Only major "milestones" are listed below.
+Each linked folder contains its own ReadMe file.
+Below are only the major "milestones", listed in descending order of recency.
+
+2024-02-29 15:56:34 Added missing components to the `src\main` folder of the project
+in its current state.
+
+- To solve Directed Disjunctive Graphs, you must initiate the `dg_main.py` module.  
+See src\main\README.md for details.
 
 2024-02-23 12:19:12 Added folders: `src\generate_input` and `inputs`
 
 - The `src\generate_input\generate_random_dg_problem.py` module can generate
-text files within the `inputs` folder, describing random Directed Disjunctive Graphs.  
+text files within the inputs folder, describing random Directed Disjunctive Graphs.  
 These files are suitable to serve as input (respectively input template) for the main
 functionality of the project.

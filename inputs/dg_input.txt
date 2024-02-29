@@ -1,0 +1,30 @@
+# Diszjunktív gráf input állomány.
+# Készült: 2024-02-08 19:55:02.317735.
+
+# Műveletszám, gépszám:
+[17, 4]
+# Futás maximális ideje, maximális mélységszint, lépésenkénti információ:
+[36.00, 0, False]
+# Gépek műveleteinek száma (gépszám db pozitív egész szám):
+[5, 4, 4, 4]
+# Műveletek azonosítói a gépek szerinti csoportosítást tükröző sorrendben, azaz elöl az első gép műveleteinek azonosítói stb.  (műveletszám db, annál nem nagyobb pozitív egész szám):
+[1, 3, 6, 9, 15, 2, 5, 7, 17, 4, 11, 13, 14, 8, 10, 12, 16]
+# A műveleteket leíró adatok, annyi sorban, ahány művelet van. A sorrendjük tetszőleges.
+#     E sorok felépítése: művelet azonosítója, végrehajtó gépje, végrehajtási ideje, a megelőző műveletek azonosítóinak listája, amely lehet üres is:
+[1, 1, 2.0, []]
+[2, 2, 3.0, [1]]
+[3, 1, 3.0, []]
+[4, 3, 3.0, [3]]
+[5, 2, 2.0, [4]]
+[6, 1, 1.0, []]
+[7, 2, 3.0, [6]]
+[8, 4, 2.0, [7]]
+[9, 1, 4.0, []]
+[10, 4, 1.0, [9]]
+[11, 3, 3.0, [10]]
+[12, 4, 4.0, []]
+[13, 3, 4.0, [12]]
+[14, 3, 5.0, []]
+[15, 1, 2.0, [1]]
+[16, 4, 6.0, [15]]
+[17, 2, 2.0, [16]]

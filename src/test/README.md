@@ -21,8 +21,9 @@ You will probably try these commands if you have the required Python tools insta
 - `python src\test\test_dg_input_read.py inputs\dg_gen_input_38m_11g_20240223121500.txt`
 
 You can execute a command like the second to run the test_dg_input_read module for a test.  
-Note: Ensure that your PYTHONPATH contains src/main.
-(You can check this using $env:PYTHONPATH in a PowerShell Terminal.)  
+Note: Ensure that your PYTHONPATH contains src/main.  
+(You can check this using $env:PYTHONPATH in a PowerShell Terminal.  
+You can set it using $env:PYTHONPATH = "src/main;src/test" if it was empty.)  
 You also may consider to apply the .vscode\settings.json file with the new sets below for VSC:
 
     { ...

@@ -2,16 +2,18 @@
 This module encapsulates the functionality of the SIMULA'67's *standard input*.  
 The information describing a Directed Disjunctive Graph may originate from any source
 that satisfies the requirements of the `DgInpSource` abstract base class (ABC)
-defined in this modul.  
+defined in this module.  
 When constructing a `DgStandardInput` object, we need to share a valid object that conforms
 to the properties of DgInpSource in the constructor's parameter.
 """
+from abc import ABC, abstractmethod
+
+from typing import List
+from typing import Dict
+from typing import Any
 from ast import literal_eval
 
-from abc import ABC, abstractmethod
-from typing import List
-# from typing import Any
-from typing_extensions import deprecated
+from typing_extensions import deprecated # import functools (for the same: @deprecated)?!?!
 
 class DgInpSource(ABC):
     """
@@ -190,7 +192,7 @@ class DgStandardInput:
         """
         return self.input_source_obj.get_state()
 
-my_dict_for_input = {"dg_input_object": None}
+my_dict_for_input: Dict[DgStandardInput, Any] = {"dg_input_object": None}
 """
 This global dictionary can content an important object:
 a DgStandardInput object with "dg_input_object" key.
