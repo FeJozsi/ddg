@@ -52,21 +52,61 @@ The thesis revolved around this topic.
 - When we modify a few specific technological dependencies between tasks,
 it can *greatly affect* the resources needed to find the optimum solution.
 
-### Milestones
+## About the Development Environment
+
+I am developing this project on Windows 10, using Visual Studio Code as the IDE,
+within a Python virtual environment.
+
+### python --version
+
+    Python 3.12.1
+
+### pip list
+
+I installed these packages manually in the virtual environment:
+
+    pip install pip
+    pip install pylint
+    pip install typing_extensions
+    pip install PyQt6
+    pip install qasync
+
+### The packages' versions in the virtual environment
+
+    Package           Version
+    ----------------- -------
+    astroid           3.1.0
+    colorama          0.4.6
+    dill              0.3.8
+    isort             5.13.2
+    mccabe            0.7.0
+    pip               24.0
+    platformdirs      4.2.0
+    pylint            3.1.0
+    PyQt6             6.6.1
+    PyQt6-Qt6         6.6.2
+    PyQt6-sip         13.6.0
+    qasync            0.27.1
+    tomlkit           0.12.3
+    typing_extensions 4.10.0
+
+## Milestones of developing
 
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
-2024-03-01 11:40:13 Set up foundational GUI elements, starting point.
+### 2024-03-01 11:40:13 Set up foundational GUI elements, starting point.
 See the new `src\gui` folder.
 
-2024-02-29 15:56:34 Added missing components to the `src\main` folder of the project
+### 2024-02-29 15:56:34 Added missing components to the `src\main` folder
+
+Added missing components to the `src\main` folder of the project
 in its current state.
 
 - To solve Directed Disjunctive Graphs, you must initiate the `dg_main.py` module.  
 See src\main\README.md for details.
 
-2024-02-23 12:19:12 Added folders: `src\generate_input` and `inputs`
+### 2024-02-23 12:19:12 Added folders: `src\generate_input` and `inputs`
 
 - The `src\generate_input\generate_random_dg_problem.py` module can generate
 text files within the inputs folder, describing random Directed Disjunctive Graphs.  
