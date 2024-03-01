@@ -95,7 +95,8 @@ I installed these packages manually in the virtual environment:
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
-### 2024-03-01 11:40:13 Set up foundational GUI elements, starting point.
+### 2024-03-01 11:40:13 Set up foundational GUI elements, starting point
+
 See the new `src\gui` folder.
 
 ### 2024-02-29 15:56:34 Added missing components to the `src\main` folder
