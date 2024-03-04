@@ -5,20 +5,20 @@ Args:
     <muvszam>: number of operations that need to be executed
     <gepszam>: number of machines
 
-    Requierments:
+    Requirements:
             gepszam > 0,  
             muvszam >= gepszam.  
             Each machine has one operation at least, and
             the result has no round-trip operation cycles.
 
 Result:
-    It produce an output text file in the  `inputs` folder of
+    It produces an output text file in the  `inputs` folder of
     the recent root folder of (Python/project) environment.  
     The name template for the output file is:  
         `dg_gen_input_<muvszam>m_<gepszam>g_YYMMDDHHMISS.txt` .
 
 TODO:
-    Check the arguments for the Requierments.
+    Check the arguments against the Requirements.
 """
 import sys
 from traceback import print_tb
@@ -65,7 +65,7 @@ class GrdgControl:
     def random_mach(self) -> int:
         """
         This method generates a random machine ID, but also, as far aspossible,
-        takes care of the requierment any machine has an operation at least.
+        takes care of the requirement any machine has an operation at least.
         We can use a different probability value in random_percent() >= 66.
         """
         return (self.next_mach_suggest()

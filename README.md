@@ -38,7 +38,7 @@ it can still be challenging depending on the specific circumstances.
 
 The execution time improved significantly, among others, due to the
 increased speed of computers by at least five orders of magnitude.
-However, our task is remained extremely complex.
+However, our task has remained extremely complex.
 
 - I have developed a random *"directed disjunctive graph" task generator*
 (which will be added first to the repository soon).
