@@ -4,6 +4,11 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-05 15:15:38 Added dg_gui_finite_state_machine.py module
+
+Added the dg_gui_finite_state_machine.py module as is now.
+The implementation has to be continued.
+
 ## 2024-03-04 16:48:51 Added 'FSM states and transitions.ods' spreadsheet
 
 Added the design document `doc\FSM states and transitions.ods` to outline the
