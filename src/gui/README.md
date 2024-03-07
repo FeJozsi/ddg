@@ -4,6 +4,16 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-07 20:35:55 Continued developing dg_gui_finite_state_machine.py (I.)
+
+In this latest update, we've made significant advancements in the
+`dg_gui_finite_state_machine.py`
+module by implementing new state management functions.
+
+A new DgTransition class has been established. The contents of
+`doc\FSM states and transfers.ods` have been meticulously mapped,
+ensuring a complete representation of all GUI state transitions in the system.
+
 ## 2024-03-05 15:15:38 Added dg_gui_finite_state_machine.py module
 
 Added the dg_gui_finite_state_machine.py module as is now.

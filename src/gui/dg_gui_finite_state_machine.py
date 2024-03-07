@@ -22,19 +22,34 @@ class InfluEventSet:
     Represents a set of events whitch can change the given state of GUI
     or could be occurred by the GUI and / or System.
     """
-    def __init__(self, by_process: List[str] = None, by_forms: List[str] = None,
-                       by_buttons: List[str] = None):
-        self.by_process: List[str] = ["Confirmed Close Win"]
+    def __init__(self, by_process: Union[List[str], str] = None,
+                       by_forms: Union[List[str], str] = None,
+                       by_buttons: List[str] = None) -> None:
+        self.by_process: List[str] = [] # ["Confirmed Close Win"]
         if by_process is not None:
-            self.by_process = by_process
+            if isinstance(by_process, list):
+                self.by_process = by_process[0:] # make a copy!
+            elif isinstance(by_process, str):
+                self.by_process = [by_process]
         self.by_forms: List[str] = []
-        if by_process is not None:
-            self.by_forms = by_forms
+        if by_forms is not None:
+            if isinstance(by_forms, list):
+                self.by_forms = by_forms[0:] # make a copy!
+            elif isinstance(by_forms, str):
+                self.by_forms = [by_forms]
         self.by_buttons: List[str] = ["", "", ""]
         if by_buttons is not None and len(by_buttons) == 3:
-            self.by_buttons = by_buttons
+            self.by_buttons = by_buttons[0:] # make a copy!
+    def __repr__(self) -> str:
+        # Filter out empty strings from each list and concatenate them
+        filled_elements = [
+            element
+            for sublist in [self.by_process, self.by_forms, self.by_buttons] if sublist
+            for element in sublist if element]
+        # Join the non-empty elements with a comma
+        return ">-" + ", ".join(filled_elements) + "->"
 
-    def is_watching_all(self, event_set):
+    def is_watching_all(self, event_set) -> bool:
         """
         Check if self InfluEventSet is interested in one specified by the parameter,
         moreover in its all segments
@@ -53,13 +68,16 @@ class InfluEventSet:
         if any(e_s.by_buttons[i] for i in range(3)):
             existance = True
             if not all(
-                    not e_s.by_buttons[i] or e_s.by_buttons[i] == self.by_buttons[i]
-                    for i in range(3)):
+                    not e_s.by_buttons[i] or
+                    e_s.by_buttons[i] == self.by_buttons[i] or
+                    (e_s.by_buttons[i] == "*" and self.by_buttons[i])
+                    for i in range(3)
+                    ):
                 ret_val = False
         if not existance:
             return False
         return ret_val
-    def is_not_interested(self, event_set):
+    def is_not_interested(self, event_set) -> bool:
         """
         Check if self InfluEventSet is not interested in one specified by the parameter at all.
         """
@@ -73,10 +91,15 @@ class InfluEventSet:
         #     False if not e_s.by_buttons[1] else e_s.by_buttons[1] == self.by_buttons[1] or
         #     False if not e_s.by_buttons[2] else e_s.by_buttons[2] == self.by_buttons[2]):
         #     ret_val = False
-        if any(e_s.by_buttons[i] and e_s.by_buttons[i] == self.by_buttons[i] for i in range(3)):
+        if any(
+            e_s.by_buttons[i] and
+            ( e_s.by_buttons[i] == self.by_buttons[i] or
+              ( e_s.by_buttons[i] == "*" and self.by_buttons[i] ) )
+            for i in range(3)
+            ):
             ret_val = False
         return ret_val
-    def is_watching(self, event_set):
+    def is_watching(self, event_set) -> bool:
         """
         Check if self InfluEventSet is interested in one specified by the parameter,
         in one of its segments at least
@@ -88,6 +111,37 @@ class InfluEventSet:
         ):
             return False
         return not self.is_not_interested(e_s)
+    def dg_merge(self, event_set) -> None:
+        """
+        Merge self with the InfluEventSet in the event_set parameter
+        """
+        e_s: InfluEventSet = event_set
+        self.by_process = list(set( # combining without empty and duplicate elements
+            [item for item in self.by_process if item] + [item for item in e_s.by_process if item]
+        ))
+        self.by_forms = list(set(
+            [item for item in self.by_forms if item] + [item for item in e_s.by_forms if item]
+        ))
+        # combining the buttons if it is possible
+        if e_s.by_buttons is not None and len(e_s.by_buttons) == 3:
+            merged_buttons = []
+            for item1, item2 in zip(self.by_buttons, e_s.by_buttons):
+                if item1 and item2:  # If both items are non-empty
+                    # print(self)
+                    # print(self.by_process)
+                    # print(self.by_forms)
+                    # print(self.by_buttons)
+                    # print(item1)
+                    # print(item2)
+                    raise ValueError("Attention InfluEventSet.dg_merge! "
+                                     "Both elements are non-empty "
+                                    f"at the same position ({item1} and {item2})")
+                if item1 or item2:  # If one of the items is non-empty
+                    merged_buttons.append(item1 if item1 else item2)
+                else:  # If both items are empty
+                    merged_buttons.append("")  # or whatever you want in this case
+            self.by_buttons = merged_buttons
+
 
 class DimStep(Enum):
     """
@@ -196,7 +250,7 @@ class DgState(Enum):
         16	BUSY_FIRST_ORDER_CREATE	Create first order
         17	IDLE_FIRST_ORD_ERROR	Error of first order
         18	IDLE_FIRST_ORD_PRESENT 	View of first order
-        19	IDLE_HAVE_ROOT_INPUT	Deciding about search steps (s by s or cont)
+        19	IDLE_HAVE_ROOT_INPUT	Deciding about search steps (step by step or continuous)
         20	BUSY_SEARCH_OPTIM_EXEC	Searching optimum
         21	IDLE_SEARCH_OPT_ERROR	Error of searching optimum
         22	IDLE_SEARCH_OPT_PAUSE	Deciding about present recent
@@ -227,7 +281,7 @@ class DgState(Enum):
     BUSY_FIRST_ORDER_CREATE =(auto(), "Create first order")
     IDLE_FIRST_ORD_ERROR    =(auto(), "Error of first order")
     IDLE_FIRST_ORD_PRESENT  =(auto(), "View of first order")
-    IDLE_HAVE_ROOT_INPUT    =(auto(), "Deciding about search steps (s by s or cont)")
+    IDLE_HAVE_ROOT_INPUT    =(auto(), "Deciding about search steps (step by step or continuous)")
     BUSY_SEARCH_OPTIM_EXEC  =(auto(), "Searching optimum")
     IDLE_SEARCH_OPT_ERROR   =(auto(), "Error of searching optimum")
     IDLE_SEARCH_OPT_PAUSE   =(auto(), "Deciding about present recent")
@@ -240,17 +294,18 @@ class DgState(Enum):
     IDLE_RESULTS_PRESENT    =(auto(), "View of last result")
     STOP                    =(auto(), "Stop Program")
 
-    def __init__(self, numb: int, desc: str):
-        self.nb: int = numb
+    def __init__(self, *args) -> int:
+        # self.nb: int = numb # trick: args[0] can be retrived as DgState.XXX.value[0]
         self.step: DimStep = None
         self.property: DimProp = None
         self.busy: DimBusy = None
         self.input_type: DimInpT = None
         self.influ_events: InfluEventSet = None
-        self.description : str = desc
+        self.transitions: List [DgTransition] = []
+        self.description : str = args[1] # It can be retrived as DgState.XXX.value[1] also
 
     def set_prop(self, dim_step: DimStep, dim_property: DimProp,
-                 dim_busy: DimBusy, dim_input_type: DimInpT):
+                 dim_busy: DimBusy, dim_input_type: DimInpT) -> None:
         """
         This method fills the DgState member's attributes
         """
@@ -259,14 +314,30 @@ class DgState(Enum):
         self.busy: DimBusy = dim_busy
         self.input_type: DimInpT = dim_input_type
 
-    def set_influ_events(self, event_set: InfluEventSet):
+    def set_influ_events(self) -> None:
         """
         This method fills the DgState member's influ_events attribute
         """
-        self.influ_events: InfluEventSet = event_set
+        event_set: InfluEventSet = None
+        if self.transitions:
+            event_set = InfluEventSet(by_forms=   self.transitions[0].influence.by_forms,
+                                      by_process= self.transitions[0].influence.by_process,
+                                      by_buttons= self.transitions[0].influence.by_buttons
+            )    # make a copy!
+        for tr in self.transitions[1:]:
+            event_set.dg_merge(tr.influence)
+        self.influ_events = event_set
+
+    def add_transition(self, transition) -> None:
+        """
+        This method adds (appends) a transition (DgTransition) into the
+        list of transitions start from self state (self DgState).
+        """
+        loc_trans: DgTransition = transition
+        self.transitions.append(loc_trans)
 
     @classmethod
-    def states_by_prop(cls, prop: Union[Enum, int, str]):
+    def states_by_prop(cls, prop: Union[Enum, int, str]) -> List:
         """
         Returns a list of DgState having the property set by paramater
         """
@@ -285,68 +356,383 @@ class DgState(Enum):
             ret_val = [dg_state for dg_state in cls if prop.lower() in dg_state.description.lower()]
         return ret_val
 
-
-DgState.INIT                    .set_prop(
+# -----------------------------------------------------------------------------------
+# I. Clarification of state descriptions using the introduced descriptive dimensions:
+# -----------------------------------------------------------------------------------
+def clarification_of_states() -> None:
+    """
+    Clarification of state descriptions using the introduced descriptive dimensions
+    """
+    DgState.INIT                    .set_prop(
                 DimStep.INIT_WAIT, DimProp.INIT_NONE    , DimBusy.BUSY        , DimInpT.TYPE_NONE )
-DgState.IDLE_INIT               .set_prop(
+    DgState.IDLE_INIT               .set_prop(
                 DimStep.DECIDE   , DimProp.INIT_NONE    , DimBusy.ORDER_IDLE  , DimInpT.TYPE_NONE )
-DgState.IDLE_RANDOM_GEN         .set_prop(
+    DgState.IDLE_RANDOM_GEN         .set_prop(
                 DimStep.DECIDE   , DimProp.INP_TYPE     , DimBusy.MISSING_IDLE, DimInpT.RANDOM_GEN)
-DgState.IDLE_RAND_GEN_SATISFIED .set_prop(
+    DgState.IDLE_RAND_GEN_SATISFIED .set_prop(
                 DimStep.DECIDE   , DimProp.INP_TYPE     , DimBusy.ORDER_IDLE  , DimInpT.RANDOM_GEN)
-DgState.BUSY_RAND_GEN_INPUT     .set_prop(
+    DgState.BUSY_RAND_GEN_INPUT     .set_prop(
                 DimStep.DECIDE   , DimProp.INP_DESCRIPT , DimBusy.WAIT_IDLE   , DimInpT.RANDOM_GEN)
-DgState.IDLE_RAND_GEN_ERROR     .set_prop(
+    DgState.IDLE_RAND_GEN_ERROR     .set_prop(
                 DimStep.DECIDE   , DimProp.INP_DESCRIPT , DimBusy.ERROR_IDLE  , DimInpT.RANDOM_GEN)
-DgState.IDLE_INPUT_TEXT_DEF     .set_prop(
+    DgState.IDLE_INPUT_TEXT_DEF     .set_prop(
                 DimStep.DECIDE   , DimProp.INP_TYPE     , DimBusy.MISSING_IDLE, DimInpT.TEXT_INPUT)
-DgState.IDLE_INP_TEXT_SATISFIED .set_prop(
+    DgState.IDLE_INP_TEXT_SATISFIED .set_prop(
                 DimStep.DECIDE   , DimProp.INP_TYPE     , DimBusy.ORDER_IDLE  , DimInpT.TEXT_INPUT)
-DgState.BUSY_INP_TEXT_READ      .set_prop(
+    DgState.BUSY_INP_TEXT_READ      .set_prop(
                 DimStep.DECIDE   , DimProp.INP_DESCRIPT , DimBusy.WAIT_IDLE   , DimInpT.TEXT_INPUT)
-DgState.IDLE_INP_TEXT_ERROR     .set_prop(
+    DgState.IDLE_INP_TEXT_ERROR     .set_prop(
                 DimStep.DECIDE   , DimProp.INP_DESCRIPT , DimBusy.ERROR_IDLE  , DimInpT.TEXT_INPUT)
-DgState.IDLE_HAVE_TECHN_INPUT   .set_prop(
+    DgState.IDLE_HAVE_TECHN_INPUT   .set_prop(
                 DimStep.DECIDE   , DimProp.INPUT_AS_IS  , DimBusy.ORDER_IDLE  , DimInpT.BOTH_TYPE )
-DgState.BUSY_TECHN_INP_PRESENT  .set_prop(
+    DgState.BUSY_TECHN_INP_PRESENT  .set_prop(
                 DimStep.WATCH    , DimProp.INPUT_AS_IS  , DimBusy.WAIT_IDLE   , DimInpT.BOTH_TYPE )
-DgState.IDLE_TECHN_INP_ERROR    .set_prop(
+    DgState.IDLE_TECHN_INP_ERROR    .set_prop(
                 DimStep.WATCH    , DimProp.INPUT_AS_IS  , DimBusy.ERROR_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_TECHN_INP_PRESENT  .set_prop(
+    DgState.IDLE_TECHN_INP_PRESENT  .set_prop(
                 DimStep.WATCH    , DimProp.INPUT_TECHN  , DimBusy.WATCH_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_HAVE_LOWER_BOUND   .set_prop(
+    DgState.IDLE_HAVE_LOWER_BOUND   .set_prop(
                 DimStep.DECIDE   , DimProp.INPUT_TECHN  , DimBusy.ORDER_IDLE  , DimInpT.BOTH_TYPE )
-DgState.BUSY_FIRST_ORDER_CREATE .set_prop(
+    DgState.BUSY_FIRST_ORDER_CREATE .set_prop(
                 DimStep.WATCH    , DimProp.INPUT_TECHN  , DimBusy.WAIT_IDLE   , DimInpT.BOTH_TYPE )
-DgState.IDLE_FIRST_ORD_ERROR    .set_prop(
+    DgState.IDLE_FIRST_ORD_ERROR    .set_prop(
                 DimStep.WATCH    , DimProp.INPUT_TECHN  , DimBusy.ERROR_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_FIRST_ORD_PRESENT  .set_prop(
+    DgState.IDLE_FIRST_ORD_PRESENT  .set_prop(
                 DimStep.WATCH    , DimProp.FIRST_ORDER  , DimBusy.WATCH_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_HAVE_ROOT_INPUT    .set_prop(
+    DgState.IDLE_HAVE_ROOT_INPUT    .set_prop(
                 DimStep.DECIDE   , DimProp.FIRST_ORDER  , DimBusy.ORDER_IDLE  , DimInpT.BOTH_TYPE )
-DgState.BUSY_SEARCH_OPTIM_EXEC  .set_prop(
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .set_prop(
                 DimStep.SOME_ITER, DimProp.RECENT_RESULT, DimBusy.WAIT_IDLE   , DimInpT.BOTH_TYPE )
-DgState.IDLE_SEARCH_OPT_ERROR   .set_prop(
+    DgState.IDLE_SEARCH_OPT_ERROR   .set_prop(
                 DimStep.SOME_ITER, DimProp.RECENT_RESULT, DimBusy.ERROR_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_SEARCH_OPT_PAUSE   .set_prop(
+    DgState.IDLE_SEARCH_OPT_PAUSE   .set_prop(
                 DimStep.DECIDE   , DimProp.RECENT_RESULT, DimBusy.ORDER_IDLE  , DimInpT.BOTH_TYPE )
-DgState.BUSY_RECENT_OPT_PRESENT .set_prop(
+    DgState.BUSY_RECENT_OPT_PRESENT .set_prop(
                 DimStep.WATCH    , DimProp.RECENT_RESULT, DimBusy.WAIT_IDLE   , DimInpT.BOTH_TYPE )
-DgState.IDLE_RECENT_OPT_ERROR   .set_prop(
+    DgState.IDLE_RECENT_OPT_ERROR   .set_prop(
                 DimStep.WATCH    , DimProp.RECENT_RESULT, DimBusy.ERROR_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_RECENT_OPT_PRESENT .set_prop(
+    DgState.IDLE_RECENT_OPT_PRESENT .set_prop(
                 DimStep.WATCH    , DimProp.RECENT_RESULT, DimBusy.WATCH_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_SEARCH_DONE        .set_prop(
+    DgState.IDLE_SEARCH_DONE        .set_prop(
                 DimStep.DECIDE   , DimProp.LAST_RESULT  , DimBusy.ORDER_IDLE  , DimInpT.BOTH_TYPE )
-DgState.BUSY_RESULTS_PRESENT    .set_prop(
+    DgState.BUSY_RESULTS_PRESENT    .set_prop(
                 DimStep.WATCH    , DimProp.LAST_RESULT  , DimBusy.WAIT_IDLE   , DimInpT.BOTH_TYPE )
-DgState.IDLE_RESULTS_ERROR      .set_prop(
+    DgState.IDLE_RESULTS_ERROR      .set_prop(
                 DimStep.WATCH    , DimProp.LAST_RESULT  , DimBusy.ERROR_IDLE  , DimInpT.BOTH_TYPE )
-DgState.IDLE_RESULTS_PRESENT    .set_prop(
+    DgState.IDLE_RESULTS_PRESENT    .set_prop(
                 DimStep.WATCH    , DimProp.LAST_RESULT  , DimBusy.WATCH_IDLE  , DimInpT.BOTH_TYPE )
-DgState.STOP                    .set_prop(
+    DgState.STOP                    .set_prop(
                 DimStep.INIT_WAIT, DimProp.INIT_NONE    , DimBusy.BUSY        , DimInpT.TYPE_NONE )
 
+class DgTransition:
+    """
+    This class determines the resulting state caused by an 'influ event'.
+    """
+    def __init__(self,
+                 influence: InfluEventSet,
+                 new_state: DgState,
+                 new_alter_state: DgState = None):
+        self.influence: InfluEventSet = influence
+        self.new_state : DgState = new_state # for cases based on Random generated input
+                                             # and/or for processes going "slow"
+        # Here is an alternative for cases based on Text input when it's necessary
+        self.new_alter_state : DgState = new_alter_state # and/or for processes going "quick"
+    def __repr__(self) -> str:
+        return repr(self.influence) + self.new_state.name
+    def put_accross(self) -> None:
+        """
+        This method put across the transition
+        """
+# -----------------------------------------------------------------------
+# II. Connecting transitions to their initial state in four installments:
+# -----------------------------------------------------------------------
+def connect_transitions_a() -> None:
+    """
+    Connecting transitions to their initial state. Part a of a,b,c and d.
+    """
+    loc_influ: InfluEventSet = None
+    loc_new_state : DgState = None
+    #   1	INIT	The program started
+    loc_influ = InfluEventSet(by_process="Start Eventloop")
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.INIT                    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #  2	IDLE_INIT	Deciding type of input
+    loc_influ = InfluEventSet(by_forms="Radio Random")
+    loc_new_state = DgState(DgState.IDLE_RANDOM_GEN)
+    DgState.IDLE_INIT               .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_forms="Radio Text")
+    loc_new_state = DgState(DgState.IDLE_INPUT_TEXT_DEF)
+    DgState.IDLE_INIT               .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","","Exit"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.STOP)
+    DgState.IDLE_INIT               .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="Close Win")
+    loc_new_state = DgState(DgState.STOP)
+    DgState.IDLE_INIT               .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   3 - 29
+    loc_influ = InfluEventSet(by_process="Confirmed Close Win")
+    loc_new_state = DgState(DgState.STOP)
+    loc_tran: DgTransition = DgTransition(loc_influ, loc_new_state)
+    # Tuple of DgState elements to exclude
+    loc_excl = (DgState.INIT, DgState.IDLE_INIT, DgState.STOP)
+    for loc_dgst in DgState:
+        if loc_dgst not in loc_excl:
+            loc_dgst.add_transition(loc_tran)
+
+    #   3	IDLE_RANDOM_GEN	Form for random generation
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.IDLE_RANDOM_GEN         .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_forms="Filled (R)")
+    loc_new_state = DgState(DgState.IDLE_RAND_GEN_SATISFIED)
+    DgState.IDLE_RANDOM_GEN         .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   4	IDLE_RAND_GEN_SATISFIED	Form for random gen. filled
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.IDLE_RAND_GEN_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_forms="Missing (R)")
+    loc_new_state = DgState(DgState.IDLE_RANDOM_GEN)
+    DgState.IDLE_RAND_GEN_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","","Generate"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_RAND_GEN_INPUT)
+    DgState.IDLE_RAND_GEN_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   5	BUSY_RAND_GEN_INPUT	Random generation of input
+    loc_influ = InfluEventSet(by_process="Gen Failed")
+    loc_new_state = DgState(DgState.IDLE_RAND_GEN_ERROR)
+    DgState.BUSY_RAND_GEN_INPUT     .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="Gen Done")
+    loc_new_state = DgState(DgState.IDLE_HAVE_TECHN_INPUT)
+    DgState.BUSY_RAND_GEN_INPUT     .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   6	IDLE_RAND_GEN_ERROR	Error of Random generation
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_RAND_GEN_SATISFIED)
+    DgState.IDLE_RAND_GEN_ERROR     .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+def connect_transitions_b() -> None:
+    """
+    Connecting transitions to their initial state. Part b of a,b,c and d.
+    """
+    loc_influ: InfluEventSet = None
+    loc_new_state : DgState = None
+    #   7	IDLE_INPUT_TEXT_DEF	Form for input text file
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.IDLE_INPUT_TEXT_DEF     .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_forms="Filled (T)")
+    loc_new_state = DgState(DgState.IDLE_INP_TEXT_SATISFIED)
+    DgState.IDLE_INPUT_TEXT_DEF     .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   8	IDLE_INP_TEXT_SATISFIED	Form for inp. text file filled
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.IDLE_INP_TEXT_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_forms="Missing (T)")
+    loc_new_state = DgState(DgState.IDLE_INPUT_TEXT_DEF)
+    DgState.IDLE_INP_TEXT_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","","Read"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_INP_TEXT_READ)
+    DgState.IDLE_INP_TEXT_SATISFIED .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #   9	BUSY_INP_TEXT_READ	Read of input text
+    loc_influ = InfluEventSet(by_process="Read Failed")
+    loc_new_state = DgState(DgState.IDLE_INP_TEXT_ERROR)
+    DgState.BUSY_INP_TEXT_READ      .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="Read Done")
+    loc_new_state = DgState(DgState.IDLE_HAVE_TECHN_INPUT)
+    DgState.BUSY_INP_TEXT_READ      .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    #  10	IDLE_INP_TEXT_ERROR	Error of Reading input text
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INP_TEXT_SATISFIED)
+    DgState.IDLE_INP_TEXT_ERROR     .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+def connect_transitions_c() -> None:
+    """
+    Connecting transitions to their initial state. Part c of a,b,c and d.
+    """
+    loc_influ: InfluEventSet = None
+    loc_new_state : DgState = None
+    loc_new_st_alt : DgState = None
+    #   11, 13, 15, 17, 19, 21, 22, 24, 28
+    loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_RAND_GEN_SATISFIED)
+    loc_new_st_alt = DgState(DgState.IDLE_INP_TEXT_SATISFIED)
+    # DgState.IDLE_HAVE_TECHN_INPUT   .add_transition( DgTransition(loc_influ,
+    #                                                               loc_new_state,
+    #                                                               loc_new_st_alt) )
+    loc_tran = DgTransition(loc_influ, loc_new_state, loc_new_st_alt)
+    loc_incl = (DgState.IDLE_HAVE_TECHN_INPUT,
+                DgState.IDLE_TECHN_INP_ERROR,
+                DgState.IDLE_HAVE_LOWER_BOUND,
+                DgState.IDLE_FIRST_ORD_ERROR,
+                DgState.IDLE_HAVE_ROOT_INPUT,
+                DgState.IDLE_SEARCH_OPT_ERROR,
+                DgState.IDLE_SEARCH_OPT_PAUSE,
+                DgState.IDLE_RECENT_OPT_ERROR,
+                DgState.IDLE_RESULTS_ERROR
+    )
+    for loc_dgst in loc_incl:
+        loc_dgst.add_transition(loc_tran)
+
+    #  11	IDLE_HAVE_TECHN_INPUT	Deciding about present preliminary analysis
+    loc_influ = InfluEventSet(by_buttons=["","Investigate","Continue"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_TECHN_INP_PRESENT)
+    DgState.IDLE_HAVE_TECHN_INPUT   .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 12	BUSY_TECHN_INP_PRESENT 	Preliminary analysis for lower bound
+    loc_influ = InfluEventSet(by_process="PreAnalys Failed")
+    loc_new_state = DgState(DgState.IDLE_TECHN_INP_ERROR)
+    DgState.BUSY_TECHN_INP_PRESENT  .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="PreAnalys Done")
+    loc_new_state = DgState(DgState.IDLE_TECHN_INP_PRESENT)
+    loc_new_st_alt = DgState(DgState.IDLE_HAVE_LOWER_BOUND)
+    DgState.BUSY_TECHN_INP_PRESENT  .add_transition( DgTransition(loc_influ,
+                                                                loc_new_state,
+                                                                loc_new_st_alt) )
+
+    # 13	IDLE_TECHN_INP_ERROR	Error of preliminary analysis
+    # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
+    # DgState.IDLE_TECHN_INP_ERROR    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 14	IDLE_TECHN_INP_PRESENT	View of preliminary analysis
+    # "Done Viewing" === "Looked at"
+    loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_HAVE_LOWER_BOUND)
+    DgState.IDLE_TECHN_INP_PRESENT  .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 15	IDLE_HAVE_LOWER_BOUND	Deciding about present first order
+    loc_influ = InfluEventSet(by_buttons=["","Investigate","Continue"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_FIRST_ORDER_CREATE)
+    DgState.IDLE_HAVE_LOWER_BOUND   .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 16	BUSY_FIRST_ORDER_CREATE	Create first order
+    loc_influ = InfluEventSet(by_process="FirstOrd Failed")
+    loc_new_state = DgState(DgState.IDLE_FIRST_ORD_ERROR)
+    DgState.BUSY_FIRST_ORDER_CREATE .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="FirstOrd Done")
+    loc_new_state = DgState(DgState.IDLE_FIRST_ORD_PRESENT)
+    loc_new_st_alt = DgState(DgState.IDLE_HAVE_ROOT_INPUT)
+    DgState.BUSY_FIRST_ORDER_CREATE .add_transition( DgTransition(loc_influ,
+                                                                loc_new_state,
+                                                                loc_new_st_alt) )
+    loc_influ = InfluEventSet(by_process="FirstOrd Success")
+    loc_new_state = DgState(DgState.IDLE_FIRST_ORD_PRESENT)
+    loc_new_st_alt = DgState(DgState.IDLE_SEARCH_DONE)
+    DgState.BUSY_FIRST_ORDER_CREATE .add_transition( DgTransition(loc_influ,
+                                                                loc_new_state,
+                                                                loc_new_st_alt) )
+
+    # 17	IDLE_FIRST_ORD_ERROR	Error of first order
+    # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
+    # DgState.IDLE_FIRST_ORD_ERROR    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 18	IDLE_FIRST_ORD_PRESENT 	View of first order
+    loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_HAVE_ROOT_INPUT)
+    loc_new_st_alt = DgState(DgState.IDLE_SEARCH_DONE)
+    DgState.IDLE_FIRST_ORD_PRESENT  .add_transition( DgTransition(loc_influ,
+                                                                loc_new_state,
+                                                                loc_new_st_alt) )
+
+    # 19	IDLE_HAVE_ROOT_INPUT	Deciding about search steps (step by step or continuous)
+    loc_influ = InfluEventSet(by_buttons=["","","Continue"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_SEARCH_OPTIM_EXEC)
+    DgState.IDLE_HAVE_ROOT_INPUT    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+def connect_transitions_d() -> None:
+    """
+    Connecting transitions to their initial state. Part d of a,b,c and d.
+    """
+    loc_influ: InfluEventSet = None
+    loc_new_state : DgState = None
+    # 20	BUSY_SEARCH_OPTIM_EXEC	Searching optimum
+    loc_influ = InfluEventSet(by_process="SearchOpt Failed")
+    loc_new_state = DgState(DgState.IDLE_SEARCH_OPT_ERROR)
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="SearchOpt Done")
+    loc_new_state = DgState(DgState.IDLE_SEARCH_DONE)
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","PAUSE",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_SEARCH_OPT_PAUSE)
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 21	IDLE_SEARCH_OPT_ERROR	Error of searching optimum
+    # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
+    #DgState.IDLE_SEARCH_OPT_ERROR   .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 22	IDLE_SEARCH_OPT_PAUSE	Deciding about present recent
+    loc_influ = InfluEventSet(by_buttons=["","","Continue"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_SEARCH_OPTIM_EXEC)
+    DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","Investigate",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_RECENT_OPT_PRESENT)
+    DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="SearchOpt Done")
+    loc_new_state = DgState(DgState.IDLE_SEARCH_DONE)
+    DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 23	BUSY_RECENT_OPT_PRESENT	Prepare recent for present
+    loc_influ = InfluEventSet(by_process="ResentPres Failed")
+    loc_new_state = DgState(DgState.IDLE_RECENT_OPT_ERROR)
+    DgState.BUSY_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="ResentPres Done")
+    loc_new_state = DgState(DgState.IDLE_RECENT_OPT_PRESENT)
+    DgState.BUSY_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 24	IDLE_RECENT_OPT_ERROR	Error of prepare recent
+    # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
+    # DgState.IDLE_RECENT_OPT_ERROR   .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 25	IDLE_RECENT_OPT_PRESENT	View of recent
+    loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_SEARCH_OPT_PAUSE)
+    DgState.IDLE_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 26	IDLE_SEARCH_DONE	Deciding about present last result
+    loc_influ = InfluEventSet(by_buttons=["","","Done"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_INIT)
+    DgState.IDLE_SEARCH_DONE        .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_buttons=["","Investigate",""]) # Back, Action, Next
+    loc_new_state = DgState(DgState.BUSY_RESULTS_PRESENT)
+    DgState.IDLE_SEARCH_DONE        .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 27	BUSY_RESULTS_PRESENT	Prepare last result for present
+    loc_influ = InfluEventSet(by_process="PresentLast Failed")
+    loc_new_state = DgState(DgState.IDLE_RESULTS_ERROR)
+    DgState.BUSY_RESULTS_PRESENT    .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="PresentLast Done")
+    loc_new_state = DgState(DgState.IDLE_RESULTS_PRESENT)
+    DgState.BUSY_RESULTS_PRESENT    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 28	IDLE_RESULTS_ERROR	Error of prepare last result
+    # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
+    # DgState.IDLE_RESULTS_ERROR      .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 29	IDLE_RESULTS_PRESENT	View of last result
+    loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
+    loc_new_state = DgState(DgState.IDLE_SEARCH_DONE)
+    DgState.IDLE_RESULTS_PRESENT    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+    # 30	STOP	Stop Program
+    # It does not have transitions.
+    # DgState.STOP                    .add_transition( DgTransition(loc_influ, loc_new_state) )
+
+# -----------------------------------------------------------------------------------------
+# III. Set influence events (set DgState.influ_events by DgState.set_influ_events() method)
+# -----------------------------------------------------------------------------------------
+def set_influence_events() -> None:
+    """
+    Set influence events (set DgState.influ_events by DgState.set_influ_events() method)
+    """
+    for st in DgState:
+        st.set_influ_events()
+
+clarification_of_states()
 # # # Example usage:
 # print(DgState.INIT)         # Output: DgState.INIT
 # print(DgState.INIT.step)    # Output: DimStep.INIT_WAIT
@@ -358,3 +744,17 @@ DgState.STOP                    .set_prop(
 # print(DgState.states_by_prop(DimInpT.RANDOM_GEN))
 # print(DgState.states_by_prop(27))
 # print(DgState.states_by_prop("fill"))
+print(DgState.INIT.value)
+print(DgState.INIT.value[0])
+print(DgState.INIT.value[1])
+#print(DgState.INIT.nb)
+
+connect_transitions_a()
+connect_transitions_b()
+connect_transitions_c()
+connect_transitions_d()
+
+set_influence_events()
+for loc_st in DgState:
+    # print(loc_st.name, loc_st.description)
+    print(loc_st.value[0], loc_st.name, loc_st.influ_events)
