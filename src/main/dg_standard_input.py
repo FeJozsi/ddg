@@ -9,8 +9,7 @@ to the properties of DgInpSource in the constructor's parameter.
 from abc import ABC, abstractmethod
 
 from typing import List
-from typing import Dict
-from typing import Any
+# from typing import Dict, Any, Optional
 from ast import literal_eval
 
 from typing_extensions import deprecated # import functools (for the same: @deprecated)?!?!
@@ -192,7 +191,8 @@ class DgStandardInput:
         """
         return self.input_source_obj.get_state()
 
-my_dict_for_input: Dict[DgStandardInput, Any] = {"dg_input_object": None}
+# my_dict_for_input: Dict[str, Optional[DgStandardInput]] = {"dg_input_object": None}
+my_dict_for_input: dict[str, DgStandardInput | None] = {"dg_input_object": None}
 """
 This global dictionary can content an important object:
 a DgStandardInput object with "dg_input_object" key.

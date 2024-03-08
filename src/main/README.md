@@ -11,7 +11,7 @@ I intend to equip it with a GUI later on.
 To solve Directed Disjunctive Graphs, you must initiate the dg_main module.
 It writes the data from input and the results to the TERMINAL/Command screen.  
 
-You will probably try these commands if you have the required Python tool installed:
+You will probably try these commands if you have the required Python tools installed:
 
 - `python src\main\dg_main.py inputs\dg_input.txt`
 - `python src\main\dg_main.py inputs\dg_gen_input_38m_11g_20240223121500.txt`

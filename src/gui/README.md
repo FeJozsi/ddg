@@ -4,6 +4,20 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-08 19:48:44 FSM module (`dg_gui_finite_state_machine.py`) development completed
+
+FSM module development completed: fully operational and independently testable by itself.  
+Upcoming efforts will integrate it with the main application flow, with minor adjustments needed,
+and will extensively update the GUI for full operational integration.
+
+It is an important Update also on Typing Enhancements. Revising our
+inaccurate approach to `dict` Typing.
+
+You will probably try these commands if you have the required Python tools installed:
+
+- `pylint src\gui\dg_gui_finite_state_machine.py`
+- `python src\gui\dg_gui_finite_state_machine.py`
+
 ## 2024-03-07 20:35:55 Continued developing dg_gui_finite_state_machine.py (I.)
 
 In this latest update, we've made significant advancements in the

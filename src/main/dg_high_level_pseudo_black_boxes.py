@@ -10,14 +10,15 @@ This module serves high level functionalities based on the class and subclasses
  This module continues the concept of "black boxes" of the above classes but
  it does not create new classes for all level as was the case in the origin SIMULA program.
 """
-from typing import Dict
+# from typing import Dict, Union, Optional
 
 from vezerles  import Vezerles
 
 # visszalepes_kovetkezik: bool - Instead of this origin property see my_control_dict["step_back"]
 # grabowsky_algoritmus_nem_allt_le: bool -
 #                                Instead of this origin property see my_control_dict["continue"]
-my_control_dict: Dict[Vezerles, bool] = {
+# my_control_dict: Dict[str, Optional[Union[Vezerles, bool]]] = {
+my_control_dict: dict[str, Vezerles | None | bool] = {
     "dg_o"     : None,  # a Vezerles object. The dg_main module is responsible for it.
     "step_back": False, # Controls stepping back on the solution tree
     "continue" : True   # Controls the main loop of solution tree traversaling
