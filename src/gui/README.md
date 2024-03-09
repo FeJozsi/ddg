@@ -4,6 +4,29 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## feat(gui): Launch async `dg_task_manager` with dynamic simulation & auto-switch
+
+- Initiated src\gui\dg_task_manager.py, creating an async framework tailored
+for managing the application's main flow operations, aligning with the Model concept.
+- Implemented self-contained testing capability, enabling the module to independently
+simulate main operation calls. The async architecture ensures seamless operation
+and testing flexibility.
+- Enhanced the simulation with automatic switching functionality, designed to transition
+to real main tasks upon their assumed completion, simulating a real operational environment.
+- Integrated randomized imitate behavior for task outcomes, allowing simulated tasks
+to result in either "Done" or "Failed" states, thereby introducing variability
+and realism into the testing process.
+- Directly builds upon and complements the src\gui\dg_gui_finite_state_machine.py module
+completed yesterday, with no updates needed for the finite state machine module today.
+
+This set of enhancements not only establishes a robust framework for future development
+but also significantly advances the simulation's fidelity and operational readiness.
+
+You will probably try these commands if you have the required Python tools installed:
+
+- `pylint src\gui\dg_task_manager.py`
+- `python src\gui\dg_task_manager.py`
+
 ## 2024-03-08 19:48:44 FSM module (`dg_gui_finite_state_machine.py`) development completed
 
 FSM module development completed: fully operational and independently testable by itself.  
