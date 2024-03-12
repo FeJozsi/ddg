@@ -4,6 +4,12 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## Enhance GUI aesthetics in PyQt6 design by adding background image and refining fonts
+
+- Added a background image to `src/gui/gui_pyqt6_my_design.py` to improve the visual
+appeal of the preview GUI design.
+- Refined font styles for better readability and consistency with the new background.
+
 ## feat(gui): Launch async `dg_task_manager` with dynamic simulation & auto-switch
 
 - Initiated src\gui\dg_task_manager.py, creating an async framework tailored

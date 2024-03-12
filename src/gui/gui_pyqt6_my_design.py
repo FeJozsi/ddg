@@ -7,8 +7,8 @@ import asyncio
 
 from PyQt6.QtWidgets import (QTextEdit, QWidget, QPushButton, QVBoxLayout, QLabel,
                              QHBoxLayout, QLineEdit, QStackedWidget, QGraphicsView, QGraphicsScene,
-                             QStatusBar, QApplication, QFileDialog)
-from PyQt6.QtGui import QTextCursor, QPixmap
+                             QStatusBar, QApplication, QFileDialog, QMainWindow)
+from PyQt6.QtGui import QTextCursor, QPixmap, QPainter #, QColor, QFont
 from PyQt6.QtCore import Qt #, QRectF
 
 import qasync
@@ -54,7 +54,7 @@ class QTextEditOutputStream:
         """
         # pass
 
-class AsyncApp(QWidget):
+class AsyncApp(QMainWindow):  # QWidget
     """
     This class represents the GUI interface
     and the asynchronous behaviors of the template program
@@ -66,11 +66,39 @@ class AsyncApp(QWidget):
         # self.setGeometry(100, 100, 300, 200)
         self.setWindowTitle("dgg Project GUI") # "Complex Layout Example"
         self.setGeometry(100, 100, 800, 600) # , 600, 400
-        self.main_layout = QVBoxLayout(self) # stands for self.setLayout(self.main_layout)
+
+        # self.opacity = 0.7  # Set the desired opacity level (0.0 transparent through 1.0 opaque)
+
+        # Set a central widget with transparent background
+        l_cent_widget = QWidget(self) # self.centralWidget
+        self.setCentralWidget(l_cent_widget) # self.centralWidget
+        l_cent_widget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # self.centralWidget
+
+        # self.main_layout = QVBoxLayout(self) # stands for self.setLayout(self.main_layout)
+        self.main_layout = QVBoxLayout()
         self.init_gui_a()
         self.init_gui_b()
         self.init_gui_c()
         self.init_gui_d(max_char)
+
+        l_cent_widget.setLayout(self.main_layout) # self.centralWidget
+
+    def paintEvent(self, _): # event  # pylint: disable=C0103
+        """
+        This method draws the backgroud picture
+        """
+        painter = QPainter(self)
+        # pixmap = QPixmap('src\\gui\\sandbox\\DALL·E 2024-03-11 16.28.47 -  3D __small.webp')
+        pixmap = QPixmap('src\\gui\\DALL·E 2024-03-11 16.40.08 halvany__small.webp')
+
+        painter.drawPixmap(self.rect(), pixmap)
+
+        # Apply semi-transparent overlay
+        # painter.setOpacity(self.opacity)  # Apply the opacity level
+        # painter.setBrush(QColor(0, 0, 0, 127)) # A semi-transparent overlay: 27 light, 227 dark
+        # painter.setPen(Qt.PenStyle.NoPen)  # No border
+        painter.drawRect(self.rect())  # Draw the overlay
+
 
     def init_gui_a(self):
         """
@@ -80,6 +108,13 @@ class AsyncApp(QWidget):
         # "Title or Some Labels"
         title_label = QLabel("dgg Project – skeleton showing simulated actions")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        font = title_label.font()
+        # print(font.family(), font.pointSize(), font.weight())
+        font.setPointSize(14)
+        # font.setBold(True)
+        title_label.setFont(font)
+
         self.main_layout.addWidget(title_label)
 
         # 2. Form part
@@ -139,6 +174,12 @@ class AsyncApp(QWidget):
 
         # Status stripe
         status_bar = QStatusBar()
+        font = status_bar.font()
+        # print(font.family(), font.pointSize(), font.weight())
+        font.setPointSize(11)
+        # font.setBold(True)
+        status_bar.setFont(font)
+        # print(font.family(), font.pointSize(), font.weight())
         status_bar.showMessage("Status Info")
         self.main_layout.addWidget(status_bar)
 
