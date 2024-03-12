@@ -1,5 +1,5 @@
 """
-This modul demonstrates the GUI for the dgg project
+This modul demonstrates the GUI for the ddg project
 and its asynchronous behaviors.
 """
 import sys
@@ -64,7 +64,7 @@ class AsyncApp(QMainWindow):  # QWidget
 
         # self.setWindowTitle('Async PyQt Example')
         # self.setGeometry(100, 100, 300, 200)
-        self.setWindowTitle("dgg Project GUI") # "Complex Layout Example"
+        self.setWindowTitle("ddg Project GUI") # "Complex Layout Example"
         self.setGeometry(100, 100, 800, 600) # , 600, 400
 
         # self.opacity = 0.7  # Set the desired opacity level (0.0 transparent through 1.0 opaque)
@@ -106,7 +106,7 @@ class AsyncApp(QMainWindow):  # QWidget
         """
         # 1. Top part
         # "Title or Some Labels"
-        title_label = QLabel("dgg Project – skeleton showing simulated actions")
+        title_label = QLabel("ddg Project – skeleton showing simulated actions")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         font = title_label.font()

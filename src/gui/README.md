@@ -4,6 +4,23 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-12 23:49:52 feat(gui): Add resizable GUI module view with paged components and ChatGPT-inspired background
+
+Implemented a new module `src/gui/dg_gui_main.py` that centralizes all GUI components
+and control details for enhanced maintainability. The main features include:
+
+- Resizability: Ensures the GUI dynamically adapts to different window sizes,
+improving user experience.
+- Paged Navigation: Utilizes QStackedWidget to facilitate "paging" through
+different parts of the application, offering a streamlined navigation experience.
+- Transparent Controls: Introduces a background image visible through the controls,
+adding to the aesthetic appeal of the interface.
+
+You will probably try these commands if you have the required Python tools installed:
+
+- `pylint src\gui\dg_gui_main.py`
+- `python src\gui\dg_gui_main.py`
+
 ## Enhance GUI aesthetics in PyQt6 design by adding background image and refining fonts
 
 - Added a background image to `src/gui/gui_pyqt6_my_design.py` to improve the visual
