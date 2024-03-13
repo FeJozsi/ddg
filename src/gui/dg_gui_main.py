@@ -1,7 +1,7 @@
 """
 This modul is the main part of the project's GUI.
 Its responsibilities are:
-- 100% for View alon;
+- 100% for View, alone;
 - with dg_gui_finite_state_machine.py together for Control.
 """
 
@@ -23,6 +23,7 @@ class QTextEditOutputStream:
     """
     def __init__(self, text_edit: QTextEdit, max_char: int):
         self.text_edit: QTextEdit = text_edit
+        self.text_edit.setStyleSheet("background-color: rgba(255, 255, 255, 200);")
         self.max_char: int = max_char # 160  # Maximum character limit
 
     def write(self, message: str):
@@ -86,6 +87,7 @@ class BaseForm(QWidget): # pylint: disable=R0903  # Too few public methods
         font.setPointSize(11)
         self.setFont(font)
         # self.setStyleSheet("QWidget#MyForm {  font-size: 11pt; }") # font-family: Arial;
+
 class TextForm(BaseForm):
     """
     This is the GUI input FORM when the Application's input comes form TEXT file
@@ -162,7 +164,15 @@ class TextForm(BaseForm):
         """
         Explore the local computer files to choose one as the input of the process
         """
-        file_name, _ = QFileDialog.getOpenFileName(self, "Select File...", "", "All Files (*)")
+        file_name = self.file_input.text()
+        # Option Enum: pl. QFileDialog.Option.DontUseNativeDialog | QFileDialog.Option.ShowDirsOnly
+        # options = QFileDialog.Option.DontUseNativeDialog
+        # file_name, _ = QFileDialog.getOpenFileName(
+        #                            self, "Select File...", "", "All Files (*)", options= options)
+        file_name, _ = QFileDialog.getOpenFileName(self,
+                                                   "Select File...",
+                                                   file_name,
+                                                   "All Files (*);;Text Files (*.txt)")
         if file_name:
             self.file_input.setText(file_name)
 
@@ -246,13 +256,16 @@ class GenForm(BaseForm):
         """
         Explore the local computer path+file names to choose one for the new generated input
         """
-        file_name, _ = QFileDialog.getOpenFileName(self,
-                                                   "Save generated file as...",
-                                                   "",
-                                                   "All Files (*)")
+        file_name = self.file_input.text()
+        # Option Enum: pl. QFileDialog.Option.DontUseNativeDialog | QFileDialog.Option.ShowDirsOnly
+        options = QFileDialog.Option.ShowDirsOnly
+        file_name, _ = QFileDialog.getSaveFileName(self,
+                                                   "Save generated file as...",    # Dialog Title
+                                                   file_name,            # Initial Directory/Path
+                                                   "All Files (*);;Text Files (*.txt)", # Filters
+                                                   options= options)
         if file_name:
             self.file_input.setText(file_name)
-
 
 # Base class for our frames
 class BaseFrame(QFrame): # pylint: disable=R0903  # Too few public methods
@@ -312,7 +325,7 @@ class TitleFrame(BaseFrame):
         font = self.title_label.font()
         # print(font.family(), font.pointSize(), font.weight())
         font.setPointSize(14)
-        # font.setBold(True)
+        font.setBold(True)
         self.title_label.setFont(font)
 
         self.layout.addWidget(self.title_label)
@@ -399,10 +412,48 @@ class FormFrame(BaseFrame):
         # # sizePolicy.setHeightForWidth(False)
         # self.form_stack_widget.setSizePolicy(sizePolicy)
 
-        self.form_stack_widget.addWidget(TextForm())
-        self.form_stack_widget.addWidget(GenForm())
+        self.text_form = TextForm()
+        self.form_stack_widget.addWidget(self.text_form)
+        self.gen_form = GenForm()
+        self.form_stack_widget.addWidget(self.gen_form)
 
         self.layout.addWidget(self.form_stack_widget)
+
+        # initialize
+        self.text_form.text_input_radio.setChecked(True)
+        self.gen_form.text_input_radio.setChecked(True)
+
+        # Connect the toggled signal to the slot
+        self.text_form.text_input_radio.toggled.connect(self.on_radio_toggled)
+        self.text_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
+        self.gen_form.text_input_radio.toggled.connect(self.on_radio_toggled)
+        self.gen_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
+
+    def on_radio_toggled(self):
+        """
+        Keep the Radio Buttons of the two forms synchronized and
+        replace the Forms according to them.
+        """
+        current_index = self.form_stack_widget.currentIndex()
+
+        # Check which radio button sent the signal
+        radio_button: QPushButton = self.sender()
+
+        # Check if the radio button is checked, and print its label
+        if radio_button.isChecked():
+            # print(f"{radio_button.text()} is selected")
+            # QRadioButton (or any checkable button in PyQt) will trigger the toggled
+            #   signal if the action changes the checked state of the button.
+            if radio_button.text() == "Text Input":
+                self.text_form.text_input_radio.setChecked(True)
+                self.gen_form.text_input_radio.setChecked(True)
+                if current_index == 1:
+                    self.form_stack_widget.setCurrentIndex(0)
+            else:
+                self.text_form.random_gen_radio.setChecked(True)
+                self.gen_form.random_gen_radio.setChecked(True)
+                if current_index == 0:
+                    self.form_stack_widget.setCurrentIndex(1)
 
     def switch_form_stack_widget(self, switch_button: QPushButton) -> None: # switch_central_widget
         """
@@ -635,8 +686,8 @@ class StatusFrame(BaseFrame):
                     StatusFrame {
                         border: 2px solid #00BFFF; /* Deep Sky blue */
                         border-radius: 5px;
-                        background-color: rgba(0, 0, 0, 30); /* #A0A0A0; gray */
-                            /* Semi-transparent white (gray) */
+                        background-color: rgba(255, 255, 255, 200); /* #A0A0A0; gray */
+                            /* Semi-transparent white (gray) rgba(0, 0, 0, 30) */
                     }
                     """)
         # self.setMaximumHeight(35) # setFixedHeight

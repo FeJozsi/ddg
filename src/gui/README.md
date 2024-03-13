@@ -4,6 +4,21 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-13 12:41:48 Refine UI elements and interactions in dg_gui_main.py
+
+This update to the `src/gui/dg_gui_main.py` module brings focused improvements to enhance functionality:
+
+- Enhanced Transparency: Adjusted transparency levels on certain controls, further improving the visual hierarchy and user focus on essential interactions.
+- Dialog Differentiation: Fine-tuned the behavior and appearance of open and save file dialogs, tailoring them to their specific use cases.
+- Radio Buttons Engagement: Involved the existing radio buttons more prominently in the demonstration of the GUI's capabilities, highlighting their role in user choices and interface dynamics.
+
+We have reached the threshold of the integration of the elements that form the basis of the GUI completed so far.
+This milestone underscores our commitment to developing a coherent and user-friendly interface,
+laying a solid foundation for future enhancements and features.
+
+A new screenshot, `dg_gui_Screenshot_20240313.PNG`, has been added to the `doc` folder,
+providing a current view of the GUI's appearance for reference and documentation purposes.
+
 ## 2024-03-12 23:49:52 feat(gui): Add resizable GUI module view with paged components and ChatGPT-inspired background
 
 Implemented a new module `src/gui/dg_gui_main.py` that centralizes all GUI components

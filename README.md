@@ -95,6 +95,18 @@ I installed these packages manually in the virtual environment:
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
+### 2024-03-13 12:41:48 We have reached the threshold of the integration
+
+We have reached the threshold of the integration of the elements that form the basis
+of the GUI completed so far. See the `src/gui` folder for news and updates on our ongoing
+work to refine and expand the application's graphical user interface.
+
+A new screenshot, `dg_gui_Screenshot_20240313.PNG`, has been added to the `doc` folder,
+providing a current view of the GUI's appearance for reference and documentation purposes.
+
+This milestone underscores our commitment to developing a coherent and user-friendly interface,
+laying a solid foundation for future enhancements and features.
+
 ### 2024-03-01 11:40:13 Set up foundational GUI elements, starting point
 
 See the new `src\gui` folder.

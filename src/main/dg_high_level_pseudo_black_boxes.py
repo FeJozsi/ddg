@@ -74,7 +74,7 @@ def esszeru_ismetelt_korlatozas() -> None:
     else:
         my_control_dict["step_back"] = False
 
-# This function below alone making a pseudo class or pseudo black box implement
+# This function below–alone–making a pseudo class or pseudo black box implement
 #   the original SIMULA program's class named "REGI MEGOLDASOKON KERESZTUL UJ MEGOLDASBA".
 # @pseudo black box
 # KORLATOZAS     ISMETELT KORLATOZAS                # 1120. origin sor
