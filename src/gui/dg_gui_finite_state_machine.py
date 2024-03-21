@@ -8,6 +8,7 @@ user interface.
 
 from enum import Enum, auto
 from typing import List, Union
+from datetime import datetime
 
 class MyButton(Enum):
     """
@@ -40,6 +41,7 @@ class InfluEventSet:
         self.by_buttons: List[str] = ["", "", ""]
         if by_buttons is not None and len(by_buttons) == 3:
             self.by_buttons = by_buttons[0:] # make a copy!
+        self.triggered_dtn = datetime.now()
     def __repr__(self) -> str:
         # Filter out empty strings from each list and concatenate them
         filled_elements = [
@@ -564,6 +566,8 @@ class DgTransition:
 
 # -----------------------------------------------------------------------
 # II. Connecting transitions to their initial state in four installments:
+#     connect_transitions_a(), connect_transitions_b(),
+#     connect_transitions_c(), connect_transitions_d()
 # -----------------------------------------------------------------------
 def connect_transitions_a() -> None:
     """

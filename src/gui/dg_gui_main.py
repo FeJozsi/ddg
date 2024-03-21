@@ -1,874 +1,177 @@
 """
-This modul is the main part of the project's GUI.
-Its responsibilities are:
-- 100% for View, alone;
-- with dg_gui_finite_state_machine.py together for Control.
+This module serves as the entry point for the graphical user interface (GUI) version
+of the project. It initializes the application's main window and starts the event loop,
+effectively launching the GUI.
+
+Key Components:
+- The module utilizes the MainWindow class (defined within this project)
+to set up the GUI environment, including creating the main window
 """
 
 import sys
 import asyncio
+from typing import List
 
-from PyQt6.QtWidgets import ( QApplication, QMainWindow, QFrame, QVBoxLayout, QHBoxLayout,
-                              QPushButton, QLineEdit, QWidget, QLabel, QFileDialog,
-                              QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene, QStatusBar,
-                              QSpacerItem, QSizePolicy, QRadioButton, QGridLayout)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QTextCursor, QPixmap, QPainter
+from PyQt6.QtWidgets import QApplication
 
 import qasync
 
-class QTextEditOutputStream:
+# from typing_extensions import deprecated
+
+# Ensure you import your MainWindow class correctly
+from dg_gui_window import get_main_window_instance
+# import dg_gui_window
+
+from dg_gui_finite_state_machine import ( InfluEventSet, DgState, # DimInpT,
+                                          state_change_due_to_event,
+                                          gui_control_dict
+                                         )
+from dg_task_manager import carry_out_process
+
+from dg_gui_draw_on_state import redraw_my_app_window_on_state
+
+# from dg_gui_draw_on_state import draw_form_stack_widget
+# # The line above triggered:
+# #  ImportError: cannot import name 'draw_form_stack_widget' from partially
+# #               initialized module 'dg_gui_draw_on_state' (most likely due to
+# #               a circular import)
+# import dg_gui_draw_on_state     <<< was the temporary solution
+# [[The reason was: dg_gui_draw_on_state.py contained: from d g _gui_main import M a inWindow]]
+from dg_gui_own_event_stack import my_event_stack
+
+original_stdout = sys.stdout  # Save a reference to the original standard output
+
+# async def i n itialize_process(mw: M a inWindow):
+def initialize_process():
     """
-    This class produces the scrollable multiline LOG TEXT output screen part.
+    Prepare for starting own high level event loop
     """
-    def __init__(self, text_edit: QTextEdit, max_char: int):
-        self.text_edit: QTextEdit = text_edit
-        self.text_edit.setStyleSheet("background-color: rgba(255, 255, 255, 200);")
-        self.max_char: int = max_char # 160  # Maximum character limit
+    print(gui_control_dict["rec_state"])    # DgState.INIT
+    state_change_due_to_event(influ_event= InfluEventSet(by_process="Start Eventloop"))
+    print(gui_control_dict["rec_state"])    # DgState.IDLE_INIT
 
-    def write(self, message: str):
-        """
-        Write to QTextEdit widget. Ensure the max_char not exceeded.
-        """
-        self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-        self.text_edit.insertPlainText(message)
-        # self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-        # self.text_edit.ensureCursorVisible()
+    # loc_recent_state: DgState = gui_control_dict["rec_state"]
+    # r e draw_my_app_window_on_state(main_window= mw, recent_state= loc_recent_state)
+    my_event_stack.emit_redraw_my_app_window_on_state()
 
-        # Check if the current text exceeds the maximum character limit
-        current_text = self.text_edit.toPlainText()
-        if len(current_text) > self.max_char:
-            # Find the position to cut the text
-            cut_position: int = len(current_text) - self.max_char
-            new_text: str = current_text[cut_position:]
-            if cut_position != -1:
-                cut_position = new_text.find("\n")
-                new_text = new_text[cut_position + 1:]  # len("\n") = always 1!
-
-            # Update the QTextEdit (test_edit) with the trimmed text
-            self.text_edit.setPlainText(new_text)
-            self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-            self.text_edit.ensureCursorVisible()
-
-    def flush(self):
-        """
-        Flush the buffers.
-        QTextEdit handles its updates and display internally.
-        There's no need to manually manage a buffer
-        that requires flushing to ensure data is written or displayed
-        """
-        # pass
-
-# Base class for our Forms
-class BaseForm(QWidget): # pylint: disable=R0903  # Too few public methods
+async def process_event_stack() -> None: # (mw: M a inWindow):
     """
-    Basically, the GUI's forms are built as objects of the BaseForm class's descendant.
-    This is a skeleton, a pseudo ABC.
+    Continuously process the high-level event stack.
+    This coroutine will check for a condition to exit at each iteration to allow graceful shutdown.
     """
-    # Colours:  black, cyan, blue
-    # background-color: #ADD8E6; /* Baby blue */
-    # #87CEEB; /* Sky blue */
-    # #00BFFF; /* Deep Sky blue */
-    # #F4C2C2; /* Middle baby pink */
-    def __init__(self):
-        super().__init__()
-        self.setObjectName("MyForm")
-        # # self.setStyleSheet(
-        # #             """
-        # #             BaseForm {  /* QWidget#MyForm */
-        # #                 border: 2px solid #E7A9C4; /* Light purple */
-        # #                 border-radius: 5px;
-        # #             }
-        # #             """)
-        # # Create and set font attributes
-        # # font = QFont('Arial', 12, QFont.Weight.Bold)  # Font family, size, and weight
-        font = self.font()
-        # font.setItalic(True)  # Set font style to italic
-        font.setPointSize(11)
-        self.setFont(font)
-        # self.setStyleSheet("QWidget#MyForm {  font-size: 11pt; }") # font-family: Arial;
+    while True:
+        # Your event processing logic here
+        # Check if there are events in your high-level event-stack
+        # Process them accordingly
+        event: InfluEventSet = my_event_stack.get_next_prepared_event()
+        if event is not None:
+            state_change_due_to_event(influ_event= event)
+            if gui_control_dict["rec_state"] == DgState.STOP:
+                break
+            my_event_stack.emit_redraw_my_app_window_on_state()
 
-class TextForm(BaseForm):
+        # Simulate async work with sleep
+        await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
+    print("The process_event_stack() was broken.",
+            file= sys.stderr)
+    my_event_stack.emit_my_application_quit()
+
+async def carry_out_processes() -> None:
     """
-    This is the GUI input FORM when the Application's input comes form TEXT file
+    Carry out the processes depending on the current state
     """
-    def __init__(self):
-        super().__init__()
+    while True:
+        if gui_control_dict["rec_state"] == DgState.STOP:
+            break
+        # Check if there is a task to execute
+        if gui_control_dict["rec_state"].name.startswith("BUSY_"):
+            await carry_out_process()
+            await asyncio.sleep(0.00001) # Prevents hogging the CPU, adjust the time as needed
+            continue
+        # Simulate async work with sleep
+        await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
 
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # font=super().font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font())
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        self.init_ui()
-    def init_ui(self):
-        """
-        It initializes the Form
-        """
-        # Main layout
-        main_form_layout = QHBoxLayout(self)
-
-        font=self.font()
-
-        # Left part - Radio Buttons
-        left_layout = QVBoxLayout()
-        self.random_gen_radio = QRadioButton("Random Gen.")
-        self.random_gen_radio.setFont(font)
-        self.text_input_radio = QRadioButton("Text Input")
-        self.text_input_radio.setFont(font)
-        left_layout.addWidget(self.random_gen_radio)
-        left_layout.addWidget(self.text_input_radio)
-
-        # Right part
-        right_layout = QVBoxLayout()
-
-        # Top - File input and Browse button
-        file_layout = QHBoxLayout()
-        file_label = QLabel("Input path & name:")
-        file_label.setFont(font)
-        self.file_input = QLineEdit()
-        self.file_input.setFont(font)
-        self.browse_button = QPushButton("Browse")
-        # browse_button.setFixedSize(66, 30)
-        self.browse_button.clicked.connect(self.browse_file)
-        file_layout.addWidget(file_label)
-        file_layout.addWidget(self.file_input)
-        file_layout.addWidget(self.browse_button)
-
-        # Bottom - Short input fields
-        input_fields_layout = QGridLayout()
-        labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [QLineEdit() for _ in labels]
-
-        for i, label in enumerate(labels):
-            loc_label = QLabel(label)
-            loc_label.setFont(font)
-            input_fields_layout.addWidget(loc_label, 0, i)
-            self.inputs[i].setFont(font)
-            input_fields_layout.addWidget(self.inputs[i], 1, i)
-
-        # Combine layouts
-        right_layout.addLayout(file_layout)
-        right_layout.addLayout(input_fields_layout)
-
-        # Add to main layout
-        main_form_layout.addLayout(left_layout)
-        main_form_layout.addLayout(right_layout)
-
-    def browse_file(self):
-        """
-        Explore the local computer files to choose one as the input of the process
-        """
-        file_name = self.file_input.text()
-        # Option Enum: pl. QFileDialog.Option.DontUseNativeDialog | QFileDialog.Option.ShowDirsOnly
-        # options = QFileDialog.Option.DontUseNativeDialog
-        # file_name, _ = QFileDialog.getOpenFileName(
-        #                            self, "Select File...", "", "All Files (*)", options= options)
-        file_name, _ = QFileDialog.getOpenFileName(self,
-                                                   "Select File...",
-                                                   file_name,
-                                                   "All Files (*);;Text Files (*.txt)")
-        if file_name:
-            self.file_input.setText(file_name)
-
-class GenForm(BaseForm):
+def on_about_to_quit(tasks: List[asyncio.Task]):
     """
-    This is the GUI input FORM when the Application's input is random generated
+    Cancel all tasks.
+    It is strange, but it will be run twice.
     """
-    def __init__(self):
-        super().__init__()
+    # Restore the original stdout
+    sys.stdout = original_stdout
 
-        self.init_ui()
-
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # font=super().font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font())
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font()) # After each child exists.
-        # self.setStyleSheet("GenForm {  font-size: 11pt; }") # font-family: Arial;
-
-    def init_ui(self):
-        """
-        It initializes the Form
-        """
-        # Main layout
-        main_form_layout = QHBoxLayout(self)
-
-        font=self.font()
-
-        # Left part - Radio Buttons
-        left_layout = QVBoxLayout()
-        self.random_gen_radio = QRadioButton("Random Gen.")
-        self.random_gen_radio.setFont(font)
-        self.text_input_radio = QRadioButton("Text Input")
-        self.text_input_radio.setFont(font)
-        left_layout.addWidget(self.random_gen_radio)
-        left_layout.addWidget(self.text_input_radio)
-
-        # Right part
-        right_layout = QVBoxLayout()
-
-        # Bottom - File input and Browse button
-        file_layout = QHBoxLayout()
-        file_label = QLabel("Save as path & name:")
-        file_label.setFont(font)
-        self.file_input = QLineEdit()
-        self.file_input.setFont(font)
-        self.browse_button = QPushButton("Browse")
-        # browse_button.setFixedSize(66, 30)
-        self.browse_button.clicked.connect(self.browse_file)
-        file_layout.addWidget(file_label)
-        file_layout.addWidget(self.file_input)
-        file_layout.addWidget(self.browse_button)
-
-        # Top - Short input fields
-        input_fields_layout = QGridLayout()
-        labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [QLineEdit() for _ in labels]
-
-        for i, label in enumerate(labels):
-            loc_label = QLabel(label)
-            loc_label.setFont(font)
-            input_fields_layout.addWidget(loc_label, 0, i)
-            self.inputs[i].setFont(font)
-            input_fields_layout.addWidget(self.inputs[i], 1, i)
-
-        # Combine layouts (They are swapped in comparison with TextForm:)
-        right_layout.addLayout(input_fields_layout)
-        right_layout.addLayout(file_layout)
-
-        # Add to main layout
-        main_form_layout.addLayout(left_layout)
-        main_form_layout.addLayout(right_layout)
-
-    def browse_file(self):
-        """
-        Explore the local computer path+file names to choose one for the new generated input
-        """
-        file_name = self.file_input.text()
-        # Option Enum: pl. QFileDialog.Option.DontUseNativeDialog | QFileDialog.Option.ShowDirsOnly
-        options = QFileDialog.Option.ShowDirsOnly
-        file_name, _ = QFileDialog.getSaveFileName(self,
-                                                   "Save generated file as...",    # Dialog Title
-                                                   file_name,            # Initial Directory/Path
-                                                   "All Files (*);;Text Files (*.txt)", # Filters
-                                                   options= options)
-        if file_name:
-            self.file_input.setText(file_name)
-
-# Base class for our frames
-class BaseFrame(QFrame): # pylint: disable=R0903  # Too few public methods
-    """
-    Basically, the GUI is built from objects of the BaseFrame class.
-    This is a skeleton, a pseudo ABC.
-    """
-    # Colours:  black, cyan, blue
-    # background-color: #ADD8E6; /* Baby blue */
-    # #87CEEB; /* Sky blue */
-    # #00BFFF; /* Deep Sky blue */
-    # #F4C2C2; /* Middle baby pink */
-    def __init__(self):
-        super().__init__()
-        self.setObjectName("FrameWithBorder")
-        self.setStyleSheet(
-                    """
-                    QFrame#FrameWithBorder {
-                        border: 2px solid #E7A9C4; /* Light purple */
-                        border-radius: 5px;
-                        background-color: rgba(0, 0, 0, 20); /* #A0A0A0; gray */
-                            /* Semi-transparent white (gray) */
-                    }
-                    """)
-# 1. Top part. Title
-class TitleFrame(BaseFrame):
-    """
-    Frame for 1. Top part: Title.
-    """
-    def __init__(self, title_text: str):
-        super().__init__()
-        self.setStyleSheet(
-                    """
-                    TitleFrame {
-                        border: 2px solid #00BFFF; /* Deep Sky blue */
-                        border-radius: 5px;
-                        /* background-color: #ADD8E6;Baby blue */
-                        /* border: 1px solid rgba(0, 0, 0, 0.15);  / *  a subtle border * /
-                            / * Subtle, semi-transparent black border */
-                        background-color: rgba(0, 0, 0, 30); /* #A0A0A0; */
-                            /* Semi-transparent white (gray) */
-                    }
-                    """)
-        self.layout = QVBoxLayout()
-        self.init_gui_t(title_text)
-        self.setLayout(self.layout)
-    def __repr__(self) -> str:
-        return "Frame for Title: " + self.title_label.text()
-    def init_gui_t(self, title_text: str):
-        """
-        It initializes the GUI: Top 1. part
-        """
-        # "Title and/or Some Labels"
-        self.title_label = QLabel(title_text) # "ddg Project – skeleton showing simulated actions"
-        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        font = self.title_label.font()
-        # print(font.family(), font.pointSize(), font.weight())
-        font.setPointSize(14)
-        font.setBold(True)
-        self.title_label.setFont(font)
-
-        self.layout.addWidget(self.title_label)
-
-# 2. Top part. Form
-# class FormFrame(BaseFrame):
-#     """
-#     Frame for 2. Top part: Form.
-#     """
-#     def __init__(self):
-#         super().__init__()
-#         self.layout = QHBoxLayout()
-#         self.init_gui_a()
-#         self.setLayout(self.layout)
-#     def __repr__(self) -> str:
-#         return "Frame for Form"
-#     def init_gui_a(self):
-#         """
-#         It initializes the GUI: Top 2. part
-#         """
-#         # 2. Form part
-#         # form_layout = QHBoxLayout()
-#         self.name_label = QLabel("Input path & name:")
-#         self.name_line_edit = QLineEdit()
-#         self.name_line_edit.setPlaceholderText("Select a file...")
-#         font = self.name_label.font()
-#         # print(font.family(), font.pointSize(), font.weight())
-#         font.setPointSize(11)
-#         # font.setBold(True)
-#         self.name_label.setFont(font)
-#         font = self.name_line_edit.font()
-#         # print(font.family(), font.pointSize(), font.weight())
-#         font.setPointSize(11)
-#         # font.setBold(True)
-#         self.name_line_edit.setFont(font)
-#         self.layout.addWidget(self.name_label)
-#         self.layout.addWidget(self.name_line_edit)
-#         self.browse_button = QPushButton("Browse")
-#         self.browse_button.setFixedSize(66, 30)
-#         self.browse_button.clicked.connect(self.browse_file)
-#         self.layout.addWidget(self.browse_button)
-#     def browse_file(self):
-#         """
-#         Explore the local computer files to choose one as the input of the process
-#         """
-#         file_name, _ = QFileDialog.getOpenFileName(self, "Select File...") # open win's title
-#         if file_name:  # If a file was selected (i.e., the user didn't cancel)
-#             # self.lineEdit.setText(file_name)
-#             self.name_line_edit.setText(file_name)
-
-# 2. Top part. Forms (Interchanging forms)
-class FormFrame(BaseFrame):
-    """
-    Frame for 2. Top part: Forms (Interchanging forms).
-    """
-    def __init__(self):
-        super().__init__()
-
-        # Adjust the size policy
-        size_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        # sizePolicy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        # sizePolicy.setHeightForWidth(self.form_stack_widget.sizePolicy().hasHeightForWidth())
-        # sizePolicy.setHeightForWidth(False)
-        self.setSizePolicy(size_policy)
-
-        self.layout = QVBoxLayout()
-        self.init_gui_a()
-        self.setLayout(self.layout)
-    def __repr__(self) -> str:
-        return "Frame for Interchanging Forms"
-    def init_gui_a(self):
-        """
-        It initializes the GUI: Top 2. part with two Interchanging Forms
-        """
-        # 2. Form part
-        self.form_stack_widget = QStackedWidget() # central_widget
-
-        # # Adjust the size policy
-        # sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        # # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(0)
-        # # sizePolicy.setHeightForWidth(self.form_stack_widget.sizePolicy().hasHeightForWidth())
-        # # sizePolicy.setHeightForWidth(False)
-        # self.form_stack_widget.setSizePolicy(sizePolicy)
-
-        self.text_form = TextForm()
-        self.form_stack_widget.addWidget(self.text_form)
-        self.gen_form = GenForm()
-        self.form_stack_widget.addWidget(self.gen_form)
-
-        self.layout.addWidget(self.form_stack_widget)
-
-        # initialize
-        self.text_form.text_input_radio.setChecked(True)
-        self.gen_form.text_input_radio.setChecked(True)
-
-        # Connect the toggled signal to the slot
-        self.text_form.text_input_radio.toggled.connect(self.on_radio_toggled)
-        self.text_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
-        self.gen_form.text_input_radio.toggled.connect(self.on_radio_toggled)
-        self.gen_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
-
-    def on_radio_toggled(self):
-        """
-        Keep the Radio Buttons of the two forms synchronized and
-        replace the Forms according to them.
-        """
-        current_index = self.form_stack_widget.currentIndex()
-
-        # Check which radio button sent the signal
-        radio_button: QPushButton = self.sender()
-
-        # Check if the radio button is checked, and print its label
-        if radio_button.isChecked():
-            # print(f"{radio_button.text()} is selected")
-            # QRadioButton (or any checkable button in PyQt) will trigger the toggled
-            #   signal if the action changes the checked state of the button.
-            if radio_button.text() == "Text Input":
-                self.text_form.text_input_radio.setChecked(True)
-                self.gen_form.text_input_radio.setChecked(True)
-                if current_index == 1:
-                    self.form_stack_widget.setCurrentIndex(0)
+    for task in tasks:
+        if task.done():
+            if task.cancelled():
+                print("The task was cancelled.")
             else:
-                self.text_form.random_gen_radio.setChecked(True)
-                self.gen_form.random_gen_radio.setChecked(True)
-                if current_index == 0:
-                    self.form_stack_widget.setCurrentIndex(1)
-
-    def switch_form_stack_widget(self, switch_button: QPushButton) -> None: # switch_central_widget
-        """
-        This method switches between Text Input Form and Random Generated Input Form
-        """
-        current_index = self.form_stack_widget.currentIndex()
-        if current_index == 0:
-            self.form_stack_widget.setCurrentIndex(1)
-            # self.switch_button.setText("Switch to TextEdit (STDOUT)")
-            switch_button.setText("Switch Text Input")
-            # # # Load your image here, if necessary
-            # # pixmap = QPixmap("path/to/your/image.png")
-            # # self.scene.clear()
-            # # self.scene.addPixmap(pixmap)
-            # # # self.scene.setSceneRect(pixmap.rect())
+                try:
+                    result = task.result()
+                    print("Task completed with result:", result)
+                except Exception as e: # # pylint: disable=W0718 # Catching too general
+                                       #  ... exception Exception (broad-exception-caught)
+                    print("The task raised an exception:", e)
+            print("task.cancel() omitted")
         else:
-            self.form_stack_widget.setCurrentIndex(0)
-            # self.switch_button.setText("Switch to Image (D. GRAPH)")
-            switch_button.setText("Switch Random Gen Input")
-
-# 3. Central part (QTextEdit or Image)
-class CentralFrame(BaseFrame):
-    """
-    Frame for 3. central part: QTextEdit or Image.
-    """
-    def __init__(self):
-        super().__init__()
-        self.setStyleSheet(
-                    """
-                    CentralFrame {
-                        border: 2px solid #00BFFF; /* Deep Sky blue */
-                        border-radius: 5px;
-                    }
-                    """)
-
-        # Adjust the size policy
-        size_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        # sizePolicy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(999999)
-        # sizePolicy.setHeightForWidth(self.form_stack_widget.sizePolicy().hasHeightForWidth())
-        # sizePolicy.setHeightForWidth(False)
-        self.setSizePolicy(size_policy)
-
-        self.layout = QHBoxLayout()
-        # # self.central_widget = QStackedWidget()
-        self.init_gui_b()
-        # self.switch_central_widget()
-        # # self.addWidget(self.central_widget)
-        self.setLayout(self.layout)
-    def __repr__(self) -> str:
-        return "Frame for Central part"
-    def init_gui_b(self):
-        """
-        It initializes the GUI: Central (3.) part
-        """
-        # Central part (QTextEdit or Image) using QStackedWidget
-        self.central_widget = QStackedWidget()
-
-        # # Adjust the size policy
-        # sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        # # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(999999)
-        # # sizePolicy.setHeightForWidth(self.form_stack_widget.sizePolicy().hasHeightForWidth())
-        # # sizePolicy.setHeightForWidth(False)
-        # self.central_widget.setSizePolicy(sizePolicy)
-
-        self.text_edit = QTextEdit()  # self.text_edit = QTextEdit(self) parent?!?!
-        self.text_edit.setReadOnly(True)
-        graphics_view = QGraphicsView()
-        self.scene = QGraphicsScene()
-        graphics_view.setScene(self.scene)
-        # Load your image (ensure the path is correct)
-        pixmap = QPixmap(".\\src\\gui\\Picture 1.png")  # ".\\src\\gui\\sandbox\\Picture 1.png"
-        self.scene.clear()  # Clear previous content
-        self.scene.addPixmap(pixmap)
-        # self.scene.setSceneRect(pixmap.rect())
-        # self.scene.setSceneRect(QRectF(pixmap.rect()))
-        self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
-
-        self.central_widget.addWidget(self.text_edit)
-        self.central_widget.addWidget(graphics_view)
-
-        self.layout.addWidget(self.central_widget)
-    def switch_central_widget(self, switch_button: QPushButton) -> None:
-        """
-        This method switches between Text and Image in the central widget
-        """
-        current_index = self.central_widget.currentIndex()
-        if current_index == 0:
-            self.central_widget.setCurrentIndex(1)
-            # self.switch_button.setText("Switch to TextEdit (STDOUT)")
-            switch_button.setText("Switch to TextEdit (STDOUT)")
-            # # # Load your image here, if necessary
-            # # pixmap = QPixmap("path/to/your/image.png")
-            # # self.scene.clear()
-            # # self.scene.addPixmap(pixmap)
-            # # # self.scene.setSceneRect(pixmap.rect())
-        else:
-            self.central_widget.setCurrentIndex(0)
-            # self.switch_button.setText("Switch to Image (D. GRAPH)")
-            switch_button.setText("Switch to Image (D. GRAPH)")
-
-# 4. Bottom part (Buttons)
-class ButtonsFrame(BaseFrame):
-    """
-    Frame for 4. bottom part: Buttons.
-    """
-    def __init__(self, main_window):
-        super().__init__()
-        self.main_window: MainWindow = main_window
-        self.layout = QHBoxLayout()
-        # Set the layout margins to 0
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.init_gui_c()
-        self.setLayout(self.layout)
-    def __repr__(self) -> str:
-        return "Frame for Buttons"
-    def init_gui_c(self):
-        """
-        It initializes the GUI: Bottom (4.) parts for buttons
-        """
-        # Buttons stripe
-
-        # self.task_button = QPushButton(
-        #                   'Run Async Search Optim') # here without , parent= self param.
-        # self.task_button.setFixedSize(200, 30)
-        # self.task_button.clicked.connect(self.run_async_task)
-        # self.layout.addWidget(self.task_button)
-        # self.switch_button = QPushButton("Switch to Image (D. GRAPH)") # see it on another place
-        # self.switch_button.setFixedSize(200, 30)
-        # self.switch_button.clicked.connect(self.main_window.central_frame.switch_central_widget)
-        # self.layout.addWidget(self.switch_button)
-
-        # Button placeholders
-        self.button_placeholders = [QFrame(self) for _ in range(4)]
-        # for placeholder in self.button_placeholders:
-        #     placeholder.setFixedHeight(50) # setMaximumHeight
-        #     # Optionally set a fixed width or maximum width for the placeholders if needed
-        #     # placeholder.setMaximumWidth(100)
-        #     # painter = QPainter(placeholder)
-        #     # painter.drawRect(placeholder.rect())
-        #     # placeholder.drawFrame(painter)
-
-        # Create buttons
-        self.button1 = QPushButton("Run Async Search Optim") # "Button 1", self
-        self.button2 = QPushButton("Change visibility") # "Button 2"
-        self.button3 = QPushButton("Switch Random Gen Input") # "Button 3"
-        self.button4 = QPushButton("Switch to Image (D. GRAPH)") # "Button 4"
-
-        # Set a maximum width for buttons
-        max_width = 220
-        for btn in [self.button1, self.button2, self.button3, self.button4]:
-            btn.setMaximumWidth(max_width)
-            btn.setFixedHeight(30) # setMaximumHeight
-
-        # # Add buttons to the layout
-        # self.mainLayout.addWidget(self.button1)
-        # self.mainLayout.addWidget(self.button2)
-        # self.mainLayout.addWidget(self.button3)
-        # self.mainLayout.addWidget(self.button4)
-
-        # Add buttons to their respective placeholders
-        for i, btn in enumerate([self.button1, self.button2, self.button3, self.button4]):
-            layout = QHBoxLayout(self.button_placeholders[i])
-            # Set the layout margins to 0
-            if i == 0:
-                layout.setContentsMargins(5, 0, 0, 0)
-            elif i == 3:
-                layout.setContentsMargins(0, 0, 5, 0)
-            layout.addWidget(btn)
-            self.layout.addWidget(self.button_placeholders[i])
-
-        # Example event handle I.: Start async task
-        self.button1.clicked.connect(self.run_async_task) # task_button
-
-        # Example event handle II.: Hide the second button
-        # self.toggleButtonVisibility(self.button3)   # It has no effect here.
-        self.button2.clicked.connect(self.toggle_button3_visibility)
-
-        # Example event handle III.: Swich GUI Input FORM
-        self.button3.clicked.connect(
-            lambda: self.main_window.form_frame.switch_form_stack_widget(self.button3)
-        )
-
-        # Example event handle IV.: Swich central part
-        self.button4.clicked.connect(
-            lambda: self.main_window.central_frame.switch_central_widget(self.button4)
-        )
-
-    async def async_task(self):
-        """
-        It demonstrates the asynchronous tasks
-        """
-        print("Task solving Directed Disjunctive Graph started")
-        self.main_window.print_status("Task solving Directed Disjunctive Graph started")
-
-        await asyncio.sleep(5)
-        print("Task completed")
-        self.main_window.print_status("...COMPLETED...", -3)
-
-    def run_async_task(self):
-        """
-        It demonstrates the starting asynchronous tasks
-        """
-        asyncio.create_task(self.async_task())
-
-    # Example method to toggle button visibility
-    def toggle_button3_visibility(self):  # , button
-        """
-        This method toggle the visibility of button3 for demonstration
-        """
-        self.button3.setVisible(not self.button3.isVisible())
-        # self.button3.hide()
-        if self.button3.isVisible():
-            self.main_window.print_status("The Button3 is visible...")
-            self.main_window.print_status("", 2)
-        else:
-            self.main_window.print_status("The Button3 disappeared...", -2)
-            self.main_window.print_status("...REALLY...", 3)
-
-# 5. Bottom part (Status Info)
-class StatusFrame(BaseFrame):
-    """
-    Frame for 5. bottom part: Status Info.
-    """
-    def __init__(self):
-        super().__init__()
-        self.setStyleSheet(
-                    """
-                    StatusFrame {
-                        border: 2px solid #00BFFF; /* Deep Sky blue */
-                        border-radius: 5px;
-                        background-color: rgba(255, 255, 255, 200); /* #A0A0A0; gray */
-                            /* Semi-transparent white (gray) rgba(0, 0, 0, 30) */
-                    }
-                    """)
-        # self.setMaximumHeight(35) # setFixedHeight
-        self.layout = QHBoxLayout()
-        # Set the layout margins to 0
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.init_gui_d()
-        self.setLayout(self.layout)
-    def __repr__(self) -> str:
-        return "Frame for Status"
-    def init_gui_d(self):
-        """
-        It initializes the GUI: Bottom 5. parts: Status Info
-        """
-        # Status stripe
-        status_bar = QStatusBar()
-        font = status_bar.font()
-        # print(font.family(), font.pointSize(), font.weight())
-        font.setPointSize(11)
-        # # font.setBold(True)
-        # status_bar.setFont(font)
-        # # print(font.family(), font.pointSize(), font.weight())
-
-        # Create layout to hold items
-        loc_layout = QHBoxLayout()
-
-        # Set the layout margins to 0
-        loc_layout.setContentsMargins(0, 0, 0, 0)
-
-        # Left-aligned information
-        self.left_label = QLabel("Left Info")
-        # Set the minimum width
-        self.left_label.setMinimumWidth(200)
-        self.left_label.setFont(font)
-        loc_layout.addWidget(self.left_label)
-
-        # Spacer to push center and right apart
-        loc_layout.addItem(QSpacerItem(40, 20,
-                                       QSizePolicy.Policy.Expanding,
-                                       QSizePolicy.Policy.Minimum))
-
-        # Center-aligned information
-        self.center_label = QLabel("Center Info")
-        self.center_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.center_label.setFont(font)
-        loc_layout.addWidget(self.center_label)
-
-        # Another spacer for symmetry
-        loc_layout.addItem(QSpacerItem(40, 20,
-                                       QSizePolicy.Policy.Expanding,
-                                       QSizePolicy.Policy.Minimum))
-
-        # Right-aligned information
-        self.right_label = QLabel("Right Info")
-        self.right_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        # Set the minimum width
-        self.right_label.setMinimumWidth(200)
-        self.right_label.setFont(font)
-        loc_layout.addWidget(self.right_label)
-
-        # Create a QWidget to set the layout
-        container = QWidget()
-        container.setLayout(loc_layout)
-
-        # Add the container widget to the status bar
-        status_bar.addPermanentWidget(container, 1)
-
-        #status_bar.showMessage("Status Info")
-        self.layout.addWidget(status_bar)
-
-# Main Application Window
-class MainWindow(QMainWindow):
-    """
-    This class represents the GUI interface's view
-    """
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("ddg Project")
-        self.setGeometry(100, 100, 800, 600)
-
-        # Set a central widget with transparent background
-
-        cent_widget = QWidget(self) # stands for l_cent... = QWidget(); self.setLayout(l_cent...)
-        self.setCentralWidget(cent_widget)
-        cent_widget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # self.centralWidget
-
-        main_layout = QVBoxLayout()
-
-        # Initialize frames
-        self.title_frame = TitleFrame("ddg Project")
-        # print(self.title_frame)
-        self.form_frame = FormFrame()
-        self.central_frame = CentralFrame()
-        self.buttons_frame = ButtonsFrame(self)
-        self.status_frame = StatusFrame()
-
-        # Add frames to the main_layout
-        main_layout.addWidget(self.title_frame)
-        main_layout.addWidget(self.form_frame)
-        main_layout.addWidget(self.central_frame)
-        main_layout.addWidget(self.buttons_frame)
-        main_layout.addWidget(self.status_frame)
-
-        cent_widget.setLayout(main_layout)
-
-        # pixmap = QPixmap('src\\gui\\sandbox\\DALL·E 2024-03-11 16.28.47 -  3D __small.webp')
-        self.pixmap = QPixmap('src\\gui\\DALL·E 2024-03-11 16.40.08 halvany__small.webp')
-        self.redirect_print()
-
-    def __repr__(self) -> str:
-        return "Main window of the Application"
-
-    def paintEvent(self, _): # pylint: disable=C0103 # doesn't conform to snake_case naming style
-        """
-        This method draws the backgroud picture
-        This method over-writes the QMainWindow's one.
-        """
-        painter = QPainter(self)
-
-        painter.drawPixmap(self.rect(), self.pixmap)
-
-        # Apply semi-transparent overlay
-        # painter.setOpacity(self.opacity)  # Apply the opacity level
-        # painter.setBrush(QColor(0, 0, 0, 127)) # A semi-transparent overlay: 27 light, 227 dark
-        # painter.setPen(Qt.PenStyle.NoPen)  # No border
-        painter.drawRect(self.rect())  # Draw the overlay
-
-    def redirect_print(self) -> None:
-        """
-        Redirect print statements to QTextEdit
-        """
-        sys.stdout = QTextEditOutputStream(self.central_frame.text_edit, 1300) # max_char
-        # sys.stderr = QTextEditOutputStream(self.text_edit)
-
-    def print_status(self, message: str = "", alaign_nb: int = 0) -> None:
-        """
-        Print a message into the bottom Status line
-
-        Attributes:
-            message   - the text being printed
-
-            aliagn_nb - 0 - Erease any message in the Status line if not message.
-                            Otherwise as aliagn_nb = 1
-                        1 - Write the message into the left label
-                        2 - Write the message into the center label
-                        3 - Write the message into the right label
-                        -1 - Write the message into the left label and erase others
-                        -2 - Write the message into the center label and erase others
-                        -3 - Write the message into the right label and erase others
-        """
-        if alaign_nb < 0:
-            self.print_status()
-            alaign_nb = - alaign_nb
-        if alaign_nb == 0 and not bool(message):
-            self.status_frame.left_label.setText("")
-            self.status_frame.center_label.setText("")
-            self.status_frame.right_label.setText("")
-        elif alaign_nb in [0, 1]:
-            self.status_frame.left_label.setText(message)
-        elif alaign_nb == 2:
-            self.status_frame.center_label.setText(message)
-        elif alaign_nb == 3:
-            self.status_frame.right_label.setText(message)
+            print("task.cancel() run")
+            task.cancel()
+    print("Tasks are being cancelled...")
 
 def dg_gui_main():
     """
     This function is the main runable one of the GUI controlled version of ddg project.
     """
     app = QApplication(sys.argv)
-    # mainWindow = MainWindow() // AsyncApp(max_char= 1300)
+    # mainWindow = M a inWindow() // AsyncApp(max_char= 1300)
     # mainWindow.show()
     # sys.exit(app.exec())
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    window = MainWindow()
-    window.show()
+    # main_window = MainWindow()
+    # main_window = mw
+    main_window = get_main_window_instance()
+
+    main_window.set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
+
+    main_window.show()
+
+    # # await i n itialize_process(main_window)  "await" allowed only within async function
+    # asyncio.run(i n itialize_process(main_window))
+    # Schedule i n itialize_process without using asyncio.run():
+    #   Since you're already in an async environment managed by qasync,
+    #   directly scheduling your coroutine with the event loop might be more appropriate.
+    #   asyncio.run() is generally used as the main entry point to run an async
+    #   program and will create a new event loop, which is not what you want
+    #   since qasync already sets up an event loop for you.
+    initialize_process()
+    tasks = [
+        # asyncio.ensure_future() is used to schedule
+        #    i n itialize_process() and process_event_stack()
+        #    for execution in the asyncio event loop.
+        #    This allows both your GUI and async tasks
+        #    to run concurrently.
+        # asyncio.ensure_future(i n itialize_process(main_window)),
+        asyncio.ensure_future(process_event_stack()),
+        asyncio.ensure_future(carry_out_processes())
+    ]
+
+    app.aboutToQuit.connect(lambda: on_about_to_quit(tasks))
 
     with loop:
-        loop.run_forever()
+        try:
+            # (loop.)run_forever() is designed to keep the (loop) running
+            #   until (loop.)stop() is explicitly called.
+            loop.run_forever()  # This line triggers the aboutToQuit event when ...
+        finally:                #   ... when the main window closed by the user
+            loop.run_until_complete(    # It triggers the aboutToQuit also ...
+                 loop.shutdown_asyncgens()
+                                   )    #   ... as it seems at line below in Debug session.
+            # loop.run_until_complete( tasks[0] )  # It triggers the aboutToQuit also
+            loop.close()
+
+    print("The post Application life begins")  # This will now run after the loop is closed.
 
 if __name__ == "__main__":
     dg_gui_main()
+    # asyncio.run(dg_gui_main())

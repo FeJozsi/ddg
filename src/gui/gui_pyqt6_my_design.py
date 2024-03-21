@@ -86,6 +86,7 @@ class AsyncApp(QMainWindow):  # QWidget
     def paintEvent(self, _): # event  # pylint: disable=C0103
         """
         This method draws the backgroud picture
+        This method over-writes the QMainWindow's one.
         """
         painter = QPainter(self)
         # pixmap = QPixmap('src\\gui\\sandbox\\DALL·E 2024-03-11 16.28.47 -  3D __small.webp')

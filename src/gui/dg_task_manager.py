@@ -104,7 +104,7 @@ class TaskFactory:
 
     async def run_task(self) -> str:
         """
-        This method execute sthe functionality
+        This method executes the functionality
         via a task object.
 
         REAL_USE global variable:
@@ -195,7 +195,7 @@ async def carry_out_process() -> None:
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     else:
-        raise ValueError("Attention carry_out_processe! "
+        raise ValueError("Attention carry_out_process! "
                         f"Unknown DgState sate ({loc_rec_state.value}) named {loc_rec_state.name}")
     await loc_factory.run_and_propagate_result()
 
