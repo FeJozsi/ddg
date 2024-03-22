@@ -28,12 +28,12 @@ import asyncio
 import os
 
 from PyQt6.QtWidgets import ( QMainWindow, QFrame, QVBoxLayout, QHBoxLayout, QApplication,
-                              QPushButton, QLineEdit, QWidget, QLabel, QFileDialog,
+                              QPushButton, QWidget, QLabel, QFileDialog, # , QLineEdit
                               QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene, QStatusBar,
                               QSpacerItem, QSizePolicy, QGridLayout, QMessageBox, QCheckBox)
                               # QErrorMessage
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QTextCursor, QPixmap, QPainter
+from PyQt6.QtCore import Qt #, QTimer
+from PyQt6.QtGui import QPixmap, QPainter # QTextCursor,
 
 # import qasync
 
@@ -41,82 +41,12 @@ from typing_extensions import deprecated
 
 from dg_gui_finite_state_machine import DgState, InfluEventSet, gui_control_dict
 from dg_gui_own_event_stack import my_event_stack
-from dg_gui_read_only_able_checkbox import ReadOnlyAbleCheckBox
+from dg_gui_read_only_able_checkbox import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
+      BaseForm, BaseFrame, IntegerLineEdit, is_valid_write_path)
 
 # The slot will be "finished" in dg_gui_main because of module import issues
 # import dg_gui_draw_on_state
 # from dg_gui_draw_on_state import redraw_my_app_window_on_state
-
-class QTextEditOutputStream:
-    """
-    This class produces the scrollable multiline LOG TEXT output screen part.
-    """
-    def __init__(self, text_edit: QTextEdit, max_char: int):
-        self.text_edit: QTextEdit = text_edit
-        self.text_edit.setStyleSheet("background-color: rgba(255, 255, 255, 200);")
-        self.max_char: int = max_char # 160  # Maximum character limit
-
-    def write(self, message: str):
-        """
-        Write to QTextEdit widget. Ensure the max_char not exceeded.
-        """
-        self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-        self.text_edit.insertPlainText(message)
-        # self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-        # self.text_edit.ensureCursorVisible()
-
-        # Check if the current text exceeds the maximum character limit
-        current_text = self.text_edit.toPlainText()
-        if len(current_text) > self.max_char:
-            # Find the position to cut the text
-            cut_position: int = len(current_text) - self.max_char
-            new_text: str = current_text[cut_position:]
-            if cut_position != -1:
-                cut_position = new_text.find("\n")
-                new_text = new_text[cut_position + 1:]  # len("\n") = always 1!
-
-            # Update the QTextEdit (test_edit) with the trimmed text
-            self.text_edit.setPlainText(new_text)
-            self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
-            self.text_edit.ensureCursorVisible()
-
-    def flush(self):
-        """
-        Flush the buffers.
-        QTextEdit handles its updates and display internally.
-        There's no need to manually manage a buffer
-        that requires flushing to ensure data is written or displayed
-        """
-        # pass
-
-# Base class for our Forms
-class BaseForm(QWidget): # pylint: disable=R0903  # Too few public methods
-    """
-    Basically, the GUI's forms are built as objects of the BaseForm class's descendant.
-    This is a skeleton, a pseudo ABC.
-    """
-    # Colours:  black, cyan, blue
-    # background-color: #ADD8E6; /* Baby blue */
-    # #87CEEB; /* Sky blue */
-    # #00BFFF; /* Deep Sky blue */
-    # #F4C2C2; /* Middle baby pink */
-    def __init__(self):
-        super().__init__()
-        self.setObjectName("MyForm")
-        # # self.setStyleSheet(
-        # #             """
-        # #             BaseForm {  /* QWidget#MyForm */
-        # #                 border: 2px solid #E7A9C4; /* Light purple */
-        # #                 border-radius: 5px;
-        # #             }
-        # #             """)
-        # # Create and set font attributes
-        # # font = QFont('Arial', 12, QFont.Weight.Bold)  # Font family, size, and weight
-        font = self.font()
-        # font.setItalic(True)  # Set font style to italic
-        font.setPointSize(11)
-        self.setFont(font)
-        # self.setStyleSheet("QWidget#MyForm {  font-size: 11pt; }") # font-family: Arial;
 
 class TextForm(BaseForm):
     """
@@ -161,9 +91,7 @@ class TextForm(BaseForm):
         file_layout = QHBoxLayout()
         file_label = QLabel("Input path & name:")
         file_label.setFont(font)
-        self.file_input = QLineEdit()
-        self.file_input.setFont(font)
-        self.file_input.setPlaceholderText("Select a file...")
+        self.file_input.setPlaceholderText("Select a file...") # self.file_input inherited
         self.browse_button = QPushButton("Browse")
         # browse_button.setFixedSize(66, 30)
         self.browse_button.clicked.connect(self.browse_file)
@@ -174,7 +102,8 @@ class TextForm(BaseForm):
         # Bottom - Short input fields
         input_fields_layout = QGridLayout()
         labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [QLineEdit() for _ in labels]
+        self.inputs = [IntegerLineEdit() for _ in labels]
+        self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
 
         for i, label in enumerate(labels):
             loc_label = QLabel(label)
@@ -191,14 +120,7 @@ class TextForm(BaseForm):
         main_form_layout.addLayout(left_layout)
         main_form_layout.addLayout(right_layout)
 
-        self.debounce_timer = QTimer(self)
-        self.debounce_timer.setSingleShot(True)
-        self.debounce_timer.timeout.connect(self.check_form_completion)
-
         self.file_input.textChanged.connect(self.start_debounce_timer)
-        # self.file_input.textChanged.connect(self.check_form_completion)
-        # for inp in self.inputs:
-        #     inp.textChanged.connect(self.start_debounce_timer)
 
     def browse_file(self):
         """
@@ -216,36 +138,17 @@ class TextForm(BaseForm):
         if file_name:
             self.file_input.setText(file_name)
 
-    def start_debounce_timer(self):
-        """
-        Start debounce timer to foresee the inspection of the FORM (check_form_completion)
-        after a 0.5 sec idle
-        """
-        if (not self.isHidden() and
-            not self.file_input.isHidden() and
-            not self.file_input.isReadOnly()):
-            self.debounce_timer.start(500)  # 500 ms delay
-
-    def check_form_completion(self):
+    def check_form_completion(self): # debounce_timer.timeout
         """
         Check the text entry form to make sure it's been completely filled out
         """
-        # # # Check if all QLineEdits are filled
-        # # all_filled = all(line_edit.text() for line_edit in [self.line_edit1,
-        # #                                                     self.line_edit2,
-        # #                                                     self.line_edit3])
-        # # self.submit_button.setEnabled(all_filled)
-        if (not self.isHidden() and
-            not self.file_input.isHidden() and
-            not self.file_input.isReadOnly() and
+        if (not self.isHidden() and not self.file_input.isReadOnly() and
             gui_control_dict["rec_state"] in (
                     DgState.IDLE_INPUT_TEXT_DEF,
                     DgState.IDLE_INP_TEXT_SATISFIED
             )):
             file_path = self.file_input.text()
-            # if os.path.exists(file_path):
-            if os.path.isfile(file_path):
-                # # self.check_label.setText("File exists.")
+            if os.path.isfile(file_path):   # if os.path.exists(file_path):
                 if gui_control_dict["rec_state"] == (DgState.IDLE_INPUT_TEXT_DEF):
                     my_event_stack.post_event(e= InfluEventSet(by_forms="Filled (T)"))
             else:
@@ -286,9 +189,7 @@ class GenForm(BaseForm):
         file_layout = QHBoxLayout()
         file_label = QLabel("Save as path & name:")
         file_label.setFont(font)
-        self.file_input = QLineEdit()
-        self.file_input.setFont(font)
-        self.file_input.setPlaceholderText("Select a file name with path to save...")
+        self.file_input.setPlaceholderText("Select a file name with path to save...")  # inherited
         self.browse_button = QPushButton("Browse")
         # browse_button.setFixedSize(66, 30)
         self.browse_button.clicked.connect(self.browse_file)
@@ -299,7 +200,10 @@ class GenForm(BaseForm):
         # Top - Short input fields
         input_fields_layout = QGridLayout()
         labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [QLineEdit() for _ in labels]
+        self.inputs = [IntegerLineEdit() for _ in labels]
+        self.inputs[2].setPlaceholderText("default 15 levels")
+        self.inputs[3].setPlaceholderText("default 300 sec")
+        self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
 
         for i, label in enumerate(labels):
             loc_label = QLabel(label)
@@ -316,6 +220,10 @@ class GenForm(BaseForm):
         main_form_layout.addLayout(left_layout)
         main_form_layout.addLayout(right_layout)
 
+        self.file_input.textChanged.connect(self.start_debounce_timer)
+        for inp in self.inputs:
+            inp.textChanged.connect(self.start_debounce_timer)
+
     def browse_file(self):
         """
         Explore the local computer path+file names to choose one for the new generated input
@@ -331,29 +239,29 @@ class GenForm(BaseForm):
         if file_name:
             self.file_input.setText(file_name)
 
-# Base class for our frames
-class BaseFrame(QFrame): # pylint: disable=R0903  # Too few public methods
-    """
-    Basically, the GUI is built from objects of the BaseFrame class.
-    This is a skeleton, a pseudo ABC.
-    """
-    # Colours:  black, cyan, blue
-    # background-color: #ADD8E6; /* Baby blue */
-    # #87CEEB; /* Sky blue */
-    # #00BFFF; /* Deep Sky blue */
-    # #F4C2C2; /* Middle baby pink */
-    def __init__(self):
-        super().__init__()
-        self.setObjectName("FrameWithBorder")
-        self.setStyleSheet(
-                    """
-                    QFrame#FrameWithBorder {
-                        border: 2px solid #E7A9C4; /* Light purple */
-                        border-radius: 5px;
-                        background-color: rgba(0, 0, 0, 20); /* #A0A0A0; gray */
-                            /* Semi-transparent white (gray) */
-                    }
-                    """)
+    def check_form_completion(self): # debounce_timer.timeout
+        """
+        Check the Generate form to make sure it's been completely filled out
+        """
+        loc_result: bool = True
+        if (not self.isHidden() and not self.file_input.isReadOnly() and
+            gui_control_dict["rec_state"] in (
+                    DgState.IDLE_RANDOM_GEN,
+                    DgState.IDLE_RAND_GEN_SATISFIED
+            )):
+            if (not self.inputs[0].text() or
+                not self.inputs[1].text()):
+                loc_result = False
+            file_path = self.file_input.text()
+            if loc_result and not is_valid_write_path(file_path) > 0:
+                loc_result = False
+            if loc_result:
+                if gui_control_dict["rec_state"] == (DgState.IDLE_RANDOM_GEN):
+                    my_event_stack.post_event(e= InfluEventSet(by_forms="Filled (R)"))
+            else:
+                if gui_control_dict["rec_state"] == (DgState.IDLE_RAND_GEN_SATISFIED):
+                    my_event_stack.post_event(e= InfluEventSet(by_forms="Missing (R)"))
+
 # 1. Top part, I. Title
 class TitleFrame(BaseFrame):
     """

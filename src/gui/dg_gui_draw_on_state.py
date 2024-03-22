@@ -116,7 +116,7 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
     loc_text_form = mw.form_frame.text_form
     if lrs == DgState.IDLE_INIT:
         loc_line_edit_set_read_only(loc_text_form.file_input, True)
-        # loc_text_form.file_input.setText("") # Important: it could work after set_read_only
+        # loc_text_form.file_input.setText("") # Important: it could work proper after set_read_only
         loc_text_form.browse_button.setText("")
         loc_text_form.browse_button.setDisabled(True)
         for inp in loc_text_form.inputs:
@@ -151,14 +151,16 @@ def draw_gen_form(mw: MainWindow, lrs: DgState) -> None:
     loc_gen_form = mw.form_frame.gen_form
     if lrs == DgState.IDLE_INIT:
         loc_line_edit_set_read_only(loc_gen_form.file_input, True)
+        # loc_gen_form.file_input.setText("") # Important: it could work proper after set_read_only
         loc_gen_form.browse_button.setText("")
         loc_gen_form.browse_button.setDisabled(True)
-        for inp in loc_gen_form.inputs:
-            inp.setText("")
-            loc_line_edit_set_read_only(inp, True)
+        # for inp in loc_gen_form.inputs:
+        #     inp.setText("")
+        #     loc_line_edit_set_read_only(inp, True)
 
     elif lrs in (DgState.IDLE_RANDOM_GEN, DgState.IDLE_RAND_GEN_SATISFIED):
         loc_line_edit_set_read_only(loc_gen_form.file_input, False)
+        loc_gen_form.start_debounce_timer() # loc_gen_form.debounce_timer.start(500)
         loc_gen_form.browse_button.setText("Browse")
         loc_gen_form.browse_button.setDisabled(False)
         for inp in loc_gen_form.inputs:
@@ -242,6 +244,7 @@ def redraw_my_app_window_on_state() -> None:
 
     main_window.print_status() # erease bottom status line
     main_window.form_frame.text_form.debounce_timer.stop()
+    main_window.form_frame.gen_form.debounce_timer.stop()
 
     loc_recent_state: DgState = gui_control_dict["rec_state"]
 
