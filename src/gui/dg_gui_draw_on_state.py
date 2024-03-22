@@ -116,6 +116,7 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
     loc_text_form = mw.form_frame.text_form
     if lrs == DgState.IDLE_INIT:
         loc_line_edit_set_read_only(loc_text_form.file_input, True)
+        # loc_text_form.file_input.setText("") # Important: it could work after set_read_only
         loc_text_form.browse_button.setText("")
         loc_text_form.browse_button.setDisabled(True)
         for inp in loc_text_form.inputs:
@@ -124,6 +125,7 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
 
     elif lrs in (DgState.IDLE_INPUT_TEXT_DEF, DgState.IDLE_INP_TEXT_SATISFIED):
         loc_line_edit_set_read_only(loc_text_form.file_input, False)
+        loc_text_form.start_debounce_timer() # loc_text_form.debounce_timer.start(500)
         loc_text_form.browse_button.setText("Browse")
         loc_text_form.browse_button.setDisabled(False)
         for inp in loc_text_form.inputs:
@@ -237,7 +239,10 @@ def redraw_my_app_window_on_state() -> None:
     It must be run inside the GUI-event-loop's thread.
     """
     main_window: MainWindow = get_main_window_instance()
+
     main_window.print_status() # erease bottom status line
+    main_window.form_frame.text_form.debounce_timer.stop()
+
     loc_recent_state: DgState = gui_control_dict["rec_state"]
 
     draw_form_stack_widget(mw= main_window, lrs= loc_recent_state)

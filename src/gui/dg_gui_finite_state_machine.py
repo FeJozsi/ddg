@@ -922,19 +922,18 @@ def state_change_due_to_event(influ_event: InfluEventSet) -> None:
                 raise RuntimeError("Alert state_change_due_to_event! "
                                    "The transition cannot be clearly defined by is_watching_all()")
     if not loc_tr:
-        for trans in loc_rec_state.transitions:
+        # if not gui_control_dict["last_influ_event"].is_watching_all(influ_event):
+        for trans in gui_control_dict["prev_state"].transitions:
             if trans.influence.is_watching(event_set= influ_event):
-                if not loc_tr:
-                    loc_tr = trans
-                else:
-                    raise RuntimeError("Alert state_change_due_to_event! "
-                                       "The transition cannot be clearly defined by is_watching()")
-    if not loc_tr:
-        raise RuntimeError("Alert state_change_due_to_event! "
-                           "The transition cannot be found.\n"
-                          f"Recent GUI state: {loc_rec_state}, "
-                          f"influence event: {influ_event}."
-        )
+                loc_tr = trans
+                break
+        if not loc_tr:
+            raise RuntimeError("Alert state_change_due_to_event! "
+                               "The transition cannot be found.\n"
+                              f"Recent GUI state: {loc_rec_state}, "
+                              f"influence event: {influ_event}."
+            )
+        return
     loc_tr.put_accross(influ_event= influ_event)
 
 init_fsm() # It must be run only a time to avoid configuration conflicts!

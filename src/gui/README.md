@@ -4,10 +4,30 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-22 11:38:24 enhance: Improve UI feedback and async stability, refine FSM event handling
+
+- Added debounce timer for text input form's textChanged signal to optimize user input handling.
+- Replaced Button2 with a checkbox for user-controlled "Step by step process" toggling.
+- Enhanced MainWindow's paintEvent to ensure correct termination of the painting session,
+improving background image management.
+- Upgraded exception handling for async daemons (process_event_stack and carry_out_processes),
+securing the application's quit process.
+- Extended carry_out_processes daemon functionality to emit redraw_my_app_window_on_state signal,
+facilitating state-aware UI updates.
+- Refined FSM's state_change_due_to_event method for increased resilience against redundant
+high-level events, enhancing system robustness.
+
+Ongoing development and enhancements continue to integrate and stabilize application functionality.
+
+You will probably try this command if you have the required Python tool installed:
+
+- `python src\gui\dg_gui_main.py`
+
 ## 2024-03-21 20:07:28 feat(gui): Integrate GUI modules and enhance functionality
 
 - Integrated GUI's ready modules: gui-main, FSM, task manager.
-- Separated MainWindow (dg_gui_window) and window update functionalities (dg_gui_draw_on_state) into a distinct module from gui-main (dg_gui_main).
+- Separated MainWindow (dg_gui_window) and window update functionalities (dg_gui_draw_on_state)
+into a distinct module from gui-main (dg_gui_main).
 - Introduced a new QCheckBox variant (dg_gui_read_only_able_checkbox) with read-only capability.
 - Implemented a high-level event stack module for enhanced event management.
 - Integrated pyqtSignals for safe application quit and window updates based on FSM state transitions.
@@ -26,13 +46,18 @@ You will probably try these commands if you have the required Python tools insta
 
 ## 2024-03-13 12:41:48 Refine UI elements and interactions in dg_gui_main.py
 
-This update to the `src/gui/dg_gui_main.py` module brings focused improvements to enhance functionality:
+This update to the `src/gui/dg_gui_main.py` module brings focused improvements
+to enhance functionality:
 
-- Enhanced Transparency: Adjusted transparency levels on certain controls, further improving the visual hierarchy and user focus on essential interactions.
-- Dialog Differentiation: Fine-tuned the behavior and appearance of open and save file dialogs, tailoring them to their specific use cases.
-- Radio Buttons Engagement: Involved the existing radio buttons more prominently in the demonstration of the GUI's capabilities, highlighting their role in user choices and interface dynamics.
+- Enhanced Transparency: Adjusted transparency levels on certain controls, further improving
+the visual hierarchy and user focus on essential interactions.
+- Dialog Differentiation: Fine-tuned the behavior and appearance of open and save file dialogs,
+tailoring them to their specific use cases.
+- Radio Buttons Engagement: Involved the existing radio buttons more prominently in the demonstration
+of the GUI's capabilities, highlighting their role in user choices and interface dynamics.
 
-We have reached the threshold of the integration of the elements that form the basis of the GUI completed so far.
+We have reached the threshold of the integration of the elements that form the basis
+of the GUI completed so far.
 This milestone underscores our commitment to developing a coherent and user-friendly interface,
 laying a solid foundation for future enhancements and features.
 

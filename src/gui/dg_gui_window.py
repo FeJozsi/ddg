@@ -25,12 +25,14 @@ To create and show the main window, instantiate the MainWindow class and call it
 import sys
 import asyncio
 
+import os
+
 from PyQt6.QtWidgets import ( QMainWindow, QFrame, QVBoxLayout, QHBoxLayout, QApplication,
                               QPushButton, QLineEdit, QWidget, QLabel, QFileDialog,
                               QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene, QStatusBar,
                               QSpacerItem, QSizePolicy, QGridLayout, QMessageBox, QCheckBox)
                               # QErrorMessage
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QTextCursor, QPixmap, QPainter
 
 # import qasync
@@ -189,6 +191,15 @@ class TextForm(BaseForm):
         main_form_layout.addLayout(left_layout)
         main_form_layout.addLayout(right_layout)
 
+        self.debounce_timer = QTimer(self)
+        self.debounce_timer.setSingleShot(True)
+        self.debounce_timer.timeout.connect(self.check_form_completion)
+
+        self.file_input.textChanged.connect(self.start_debounce_timer)
+        # self.file_input.textChanged.connect(self.check_form_completion)
+        # for inp in self.inputs:
+        #     inp.textChanged.connect(self.start_debounce_timer)
+
     def browse_file(self):
         """
         Explore the local computer files to choose one as the input of the process
@@ -205,6 +216,42 @@ class TextForm(BaseForm):
         if file_name:
             self.file_input.setText(file_name)
 
+    def start_debounce_timer(self):
+        """
+        Start debounce timer to foresee the inspection of the FORM (check_form_completion)
+        after a 0.5 sec idle
+        """
+        if (not self.isHidden() and
+            not self.file_input.isHidden() and
+            not self.file_input.isReadOnly()):
+            self.debounce_timer.start(500)  # 500 ms delay
+
+    def check_form_completion(self):
+        """
+        Check the text entry form to make sure it's been completely filled out
+        """
+        # # # Check if all QLineEdits are filled
+        # # all_filled = all(line_edit.text() for line_edit in [self.line_edit1,
+        # #                                                     self.line_edit2,
+        # #                                                     self.line_edit3])
+        # # self.submit_button.setEnabled(all_filled)
+        if (not self.isHidden() and
+            not self.file_input.isHidden() and
+            not self.file_input.isReadOnly() and
+            gui_control_dict["rec_state"] in (
+                    DgState.IDLE_INPUT_TEXT_DEF,
+                    DgState.IDLE_INP_TEXT_SATISFIED
+            )):
+            file_path = self.file_input.text()
+            # if os.path.exists(file_path):
+            if os.path.isfile(file_path):
+                # # self.check_label.setText("File exists.")
+                if gui_control_dict["rec_state"] == (DgState.IDLE_INPUT_TEXT_DEF):
+                    my_event_stack.post_event(e= InfluEventSet(by_forms="Filled (T)"))
+            else:
+                if gui_control_dict["rec_state"] == (DgState.IDLE_INP_TEXT_SATISFIED):
+                    my_event_stack.post_event(e= InfluEventSet(by_forms="Missing (T)"))
+
 class GenForm(BaseForm):
     """
     This is the GUI input FORM when the Application's input is random generated
@@ -213,19 +260,6 @@ class GenForm(BaseForm):
         super().__init__()
 
         self.init_ui()
-
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # font=super().font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font())
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font()) # After each child exists.
-        # self.setStyleSheet("GenForm {  font-size: 11pt; }") # font-family: Arial;
 
     def init_ui(self):
         """
@@ -403,15 +437,6 @@ class FormFrame(BaseFrame):
 
         self.layout.addWidget(self.form_stack_widget)
 
-        # initialize
-        # self.text_form.text_input_radio.setChecked(True)
-        # self.gen_form.text_input_radio.setChecked(True)
-
-        # Connect the toggled signal to the slot
-        # self.text_form.text_input_radio.toggled.connect(self.on_radio_toggled)
-        # self.text_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
-        # self.gen_form.text_input_radio.toggled.connect(self.on_radio_toggled)
-        # self.gen_form.random_gen_radio.toggled.connect(self.on_radio_toggled)
         self.text_form.text_input_radio.stateChanged.connect(self.check_state_change)
         self.text_form.random_gen_radio.stateChanged.connect(self.check_state_change)
         self.gen_form.text_input_radio.stateChanged.connect(self.check_state_change)
@@ -596,10 +621,17 @@ class ButtonsFrame(BaseFrame):
         #     # painter.drawRect(placeholder.rect())
         #     # placeholder.drawFrame(painter)
 
-        # Create buttons
+        # Create buttons and a quasi button (CheckBox)
         self.button1 = QPushButton("Run Async Search Optim") # "Button 1", self
+
         # self.button2 = QPushButton("Change visibility") # "Button 2"
         self.checkbox2 = QCheckBox("Step by step process")
+        font = self.checkbox2.font()
+        # print(font.family(), font.pointSize(), font.weight())
+        font.setPointSize(11)
+        # font.setBold(True)
+        self.checkbox2.setFont(font)
+
         self.button3 = QPushButton("Switch Random Gen Input") # "Button 3"
         self.button4 = QPushButton("Switch to Image (D. GRAPH)") # "Button 4"
 
@@ -838,6 +870,8 @@ class MainWindow(QMainWindow):
         # painter.setBrush(QColor(0, 0, 0, 127)) # A semi-transparent overlay: 27 light, 227 dark
         # painter.setPen(Qt.PenStyle.NoPen)  # No border
         painter.drawRect(self.rect())  # Draw the overlay
+
+        painter.end()  # Properly end the painting session
 
     def redirect_print(self) -> None:
         """

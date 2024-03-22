@@ -11,6 +11,7 @@ to set up the GUI environment, including creating the main window
 import sys
 import asyncio
 from typing import List
+import traceback
 
 from PyQt6.QtWidgets import QApplication
 
@@ -59,37 +60,55 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
     Continuously process the high-level event stack.
     This coroutine will check for a condition to exit at each iteration to allow graceful shutdown.
     """
-    while True:
-        # Your event processing logic here
-        # Check if there are events in your high-level event-stack
-        # Process them accordingly
-        event: InfluEventSet = my_event_stack.get_next_prepared_event()
-        if event is not None:
-            state_change_due_to_event(influ_event= event)
-            if gui_control_dict["rec_state"] == DgState.STOP:
-                break
-            my_event_stack.emit_redraw_my_app_window_on_state()
+    try:
+        while True:
+            # Your event processing logic here
+            # Check if there are events in your high-level event-stack
+            # Process them accordingly
+            event: InfluEventSet = my_event_stack.get_next_prepared_event()
+            if event is not None:
+                state_change_due_to_event(influ_event= event)
+                if gui_control_dict["rec_state"] == DgState.STOP:
+                    break
+                my_event_stack.emit_redraw_my_app_window_on_state()
 
-        # Simulate async work with sleep
-        await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
-    print("The process_event_stack() was broken.",
-            file= sys.stderr)
+            # Simulate async work with sleep
+            await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
+        print("The process_event_stack() was broken.",
+                file= sys.stderr)
+    except Exception as e: # pylint: disable=W0718 # Catching too general
+                           #  ... exception Exception (broad-exception-caught)
+        gui_control_dict["rec_state"] = DgState.STOP
+        print(f"The process_event_stack raised an exception: {e}",
+                file= sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+
     my_event_stack.emit_my_application_quit()
 
 async def carry_out_processes() -> None:
     """
     Carry out the processes depending on the current state
     """
-    while True:
-        if gui_control_dict["rec_state"] == DgState.STOP:
-            break
-        # Check if there is a task to execute
-        if gui_control_dict["rec_state"].name.startswith("BUSY_"):
-            await carry_out_process()
-            await asyncio.sleep(0.00001) # Prevents hogging the CPU, adjust the time as needed
-            continue
-        # Simulate async work with sleep
-        await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
+    try:
+        while True:
+            if gui_control_dict["rec_state"] == DgState.STOP:
+                break
+            # Check if there is a task to execute
+            if gui_control_dict["rec_state"].name.startswith("BUSY_"):
+                await carry_out_process()
+                await asyncio.sleep(0.00001) # Prevents hogging the CPU, adjust the time as needed
+                my_event_stack.emit_redraw_my_app_window_on_state()
+                continue
+            # Simulate async work with sleep
+            await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
+    except Exception as e: # pylint: disable=W0718 # Catching too general
+                           #  ... exception Exception (broad-exception-caught)
+        gui_control_dict["rec_state"] = DgState.STOP
+        print(f"The carry_out_processes raised an exception: {e}",
+                file= sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+
+        my_event_stack.emit_my_application_quit()
 
 def on_about_to_quit(tasks: List[asyncio.Task]):
     """
@@ -107,7 +126,7 @@ def on_about_to_quit(tasks: List[asyncio.Task]):
                 try:
                     result = task.result()
                     print("Task completed with result:", result)
-                except Exception as e: # # pylint: disable=W0718 # Catching too general
+                except Exception as e: # pylint: disable=W0718 # Catching too general
                                        #  ... exception Exception (broad-exception-caught)
                     print("The task raised an exception:", e)
             print("task.cancel() omitted")
@@ -115,6 +134,11 @@ def on_about_to_quit(tasks: List[asyncio.Task]):
             print("task.cancel() run")
             task.cancel()
     print("Tasks are being cancelled...")
+
+# def my_exception_handler(_, context): # loop
+#     # context["message"] will always be there; but context["exception"] may not
+#     msg = context.get("exception", context["message"])
+#     print(f"Caught an asyncio exception: {msg}", file= sys.stderr)
 
 def dg_gui_main():
     """
@@ -127,6 +151,9 @@ def dg_gui_main():
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
+
+    # loc_loop = asyncio.get_event_loop()
+    # loc_loop.set_exception_handler(my_exception_handler) It does not work.
 
     # main_window = MainWindow()
     # main_window = mw
