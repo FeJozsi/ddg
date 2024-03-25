@@ -49,7 +49,7 @@ def initialize_process():
     """
     print(gui_control_dict["rec_state"])    # DgState.INIT
     state_change_due_to_event(influ_event= InfluEventSet(by_process="Start Eventloop"))
-    print(gui_control_dict["rec_state"])    # DgState.IDLE_INIT
+    # print(gui_control_dict["rec_state"])    # DgState.IDLE_INIT
 
     # loc_recent_state: DgState = gui_control_dict["rec_state"]
     # r e draw_my_app_window_on_state(main_window= mw, recent_state= loc_recent_state)

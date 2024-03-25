@@ -28,10 +28,10 @@ import asyncio
 import os
 
 from PyQt6.QtWidgets import ( QMainWindow, QFrame, QVBoxLayout, QHBoxLayout, QApplication,
-                              QPushButton, QWidget, QLabel, QFileDialog, # , QLineEdit
+                              QPushButton, QWidget, QLabel, QFileDialog,
                               QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene, QStatusBar,
-                              QSpacerItem, QSizePolicy, QGridLayout, QMessageBox, QCheckBox)
-                              # QErrorMessage
+                              QSpacerItem, QSizePolicy, QMessageBox, QCheckBox)
+                              # QErrorMessage, QLineEdit, QGridLayout
 from PyQt6.QtCore import Qt #, QTimer
 from PyQt6.QtGui import QPixmap, QPainter # QTextCursor,
 
@@ -42,7 +42,7 @@ from typing_extensions import deprecated
 from dg_gui_finite_state_machine import DgState, InfluEventSet, gui_control_dict
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_read_only_able_checkbox import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
-      BaseForm, BaseFrame, IntegerLineEdit, is_valid_write_path)
+      BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
 
 # The slot will be "finished" in dg_gui_main because of module import issues
 # import dg_gui_draw_on_state
@@ -55,70 +55,29 @@ class TextForm(BaseForm):
     def __init__(self):
         super().__init__()
 
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # font=super().font()
-        # print(font.family(), font.pointSize(), font.weight())
-
-        # self.setFont(super().font())
-        # font=self.font()
-        # print(font.family(), font.pointSize(), font.weight())
-
         self.init_ui()
     def init_ui(self):
         """
-        It initializes the Form
+        Finishing initializing the Form
         """
-        # Main layout
+        # Main layout:
         main_form_layout = QHBoxLayout(self)
 
-        font=self.font()
-
-        # Left part - Radio Buttons
-        left_layout = QVBoxLayout()
-        self.random_gen_radio = ReadOnlyAbleCheckBox("Random Gen.")# QCheckBox (quasi QRadioButton)
-        self.random_gen_radio.setFont(font)
-        self.text_input_radio = ReadOnlyAbleCheckBox("Text Input") # QCheckBox (quasi QRadioButton)
-        self.text_input_radio.setFont(font)
-        left_layout.addWidget(self.random_gen_radio)
-        left_layout.addWidget(self.text_input_radio)
-
         # Right part
-        right_layout = QVBoxLayout()
-
         # Top - File input and Browse button
-        file_layout = QHBoxLayout()
-        file_label = QLabel("Input path & name:")
-        file_label.setFont(font)
+        self.file_label.setText("Input path & name:")
         self.file_input.setPlaceholderText("Select a file...") # self.file_input inherited
-        self.browse_button = QPushButton("Browse")
-        # browse_button.setFixedSize(66, 30)
-        self.browse_button.clicked.connect(self.browse_file)
-        file_layout.addWidget(file_label)
-        file_layout.addWidget(self.file_input)
-        file_layout.addWidget(self.browse_button)
+        self.file_input.setToolTip("A path & file contains the description of Directed "
+                                   "Disjunctive Graph to search optimum")
 
         # Bottom - Short input fields
-        input_fields_layout = QGridLayout()
-        labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [IntegerLineEdit() for _ in labels]
-        self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
-
-        for i, label in enumerate(labels):
-            loc_label = QLabel(label)
-            loc_label.setFont(font)
-            input_fields_layout.addWidget(loc_label, 0, i)
-            self.inputs[i].setFont(font)
-            input_fields_layout.addWidget(self.inputs[i], 1, i)
-
         # Combine layouts
-        right_layout.addLayout(file_layout)
-        right_layout.addLayout(input_fields_layout)
+        self.right_layout.addLayout(self.file_layout)
+        self.right_layout.addLayout(self.input_fields_layout)
 
         # Add to main layout
-        main_form_layout.addLayout(left_layout)
-        main_form_layout.addLayout(right_layout)
+        main_form_layout.addLayout(self.left_layout)
+        main_form_layout.addLayout(self.right_layout)
 
         self.file_input.textChanged.connect(self.start_debounce_timer)
 
@@ -166,59 +125,26 @@ class GenForm(BaseForm):
 
     def init_ui(self):
         """
-        It initializes the Form
+        Finishing initializing the Form
         """
-        # Main layout
+        # Main layout:
         main_form_layout = QHBoxLayout(self)
 
-        font=self.font()
-
-        # Left part - Radio Buttons
-        left_layout = QVBoxLayout()
-        self.random_gen_radio = ReadOnlyAbleCheckBox("Random Gen.")# QCheckBox (quasi QRadioButton)
-        self.random_gen_radio.setFont(font)
-        self.text_input_radio = ReadOnlyAbleCheckBox("Text Input") # QCheckBox (quasi QRadioButton)
-        self.text_input_radio.setFont(font)
-        left_layout.addWidget(self.random_gen_radio)
-        left_layout.addWidget(self.text_input_radio)
-
         # Right part
-        right_layout = QVBoxLayout()
-
         # Bottom - File input and Browse button
-        file_layout = QHBoxLayout()
-        file_label = QLabel("Save as path & name:")
-        file_label.setFont(font)
-        self.file_input.setPlaceholderText("Select a file name with path to save...")  # inherited
-        self.browse_button = QPushButton("Browse")
-        # browse_button.setFixedSize(66, 30)
-        self.browse_button.clicked.connect(self.browse_file)
-        file_layout.addWidget(file_label)
-        file_layout.addWidget(self.file_input)
-        file_layout.addWidget(self.browse_button)
+        self.file_label.setText("Save as path & name:")
+        self.file_input.setPlaceholderText("Select a file or a folder to save into...")
+        self.file_input.setToolTip("A path & file for saving the description of the Random "
+                                   "Generated Directed Disjunctive Graph to search optimum")
 
         # Top - Short input fields
-        input_fields_layout = QGridLayout()
-        labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
-        self.inputs = [IntegerLineEdit() for _ in labels]
-        self.inputs[2].setPlaceholderText("default 15 levels")
-        self.inputs[3].setPlaceholderText("default 300 sec")
-        self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
-
-        for i, label in enumerate(labels):
-            loc_label = QLabel(label)
-            loc_label.setFont(font)
-            input_fields_layout.addWidget(loc_label, 0, i)
-            self.inputs[i].setFont(font)
-            input_fields_layout.addWidget(self.inputs[i], 1, i)
-
         # Combine layouts (They are swapped in comparison with TextForm:)
-        right_layout.addLayout(input_fields_layout)
-        right_layout.addLayout(file_layout)
+        self.right_layout.addLayout(self.input_fields_layout)
+        self.right_layout.addLayout(self.file_layout)
 
         # Add to main layout
-        main_form_layout.addLayout(left_layout)
-        main_form_layout.addLayout(right_layout)
+        main_form_layout.addLayout(self.left_layout)
+        main_form_layout.addLayout(self.right_layout)
 
         self.file_input.textChanged.connect(self.start_debounce_timer)
         for inp in self.inputs:

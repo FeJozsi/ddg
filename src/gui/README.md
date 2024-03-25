@@ -4,6 +4,18 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-25 11:08:41 refactor: Streamline form structure and improve UI guidance
+
+- Implemented consistent FSM status messages, enhancing clarity and reliability
+in application state communication.
+- Overhauled the form class hierarchy, including AbstractFormMixin, BaseForm, and their child classes
+TextForm and GenForm, for improved unification and complexity management across the UI components.
+- Introduced tooltips for form controls, significantly enhancing user interface guidance
+and providing better context and usability to end-users.
+
+These changes mark another step forward in our ongoing efforts to refine the application's
+architecture and user experience, with continued focus on integration and stability enhancements.
+
 ## 2024-03-22 11:38:24 enhance: Improve UI feedback and async stability, refine FSM event handling
 
 - Added debounce timer for text input form's textChanged signal to optimize user input handling.

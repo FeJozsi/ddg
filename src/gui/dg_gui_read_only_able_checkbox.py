@@ -9,7 +9,8 @@ import errno
 
 # from abc import ABC, abstractmethod
 
-from PyQt6.QtWidgets import QCheckBox, QWidget, QTextEdit, QFrame, QLineEdit
+from PyQt6.QtWidgets import (QCheckBox, QWidget, QTextEdit, QFrame, QLineEdit,
+                             QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout)
 from PyQt6.QtGui import QTextCursor, QValidator
 from PyQt6.QtCore import Qt, QTimer
 
@@ -98,12 +99,30 @@ class QTextEditOutputStream:
 class AbstractFormMixin(): # pylint: disable=R0903  # Too few public methods
     """
     This class is for a Mixin.
-    It keeps the quasi abstract method requirements separate from the primary class hierarchy
+    It keeps the quasi abstract method requirements separate from the primary class hierarchy.
+    Also, it builds the set of layouts.
     """
+    def __init__(self):
+        # Main layout: self.main_form_layout = QHBoxLayout(self)
+        # Left part - Radio Buttons
+        self.left_layout = QVBoxLayout()
+        # Right part
+        self.right_layout = QVBoxLayout()
+        # File input and Browse button
+        self.file_layout = QHBoxLayout()
+        # Short input fields
+        self.input_fields_layout = QGridLayout()
+
     # @abstractmethod
     def check_form_completion(self):
         """
-        This method must be implemented in the child classes.
+        This method must be implemented in the child classes of BaseForm.
+        """
+
+    # @abstractmethod
+    def browse_file(self):
+        """
+        This method must be implemented in the child classes of BaseForm.
         """
 
 # Base class for our Forms
@@ -111,7 +130,7 @@ class BaseForm(QWidget, AbstractFormMixin): # pylint: disable=R0903  # Too few p
     """
     Basically, the GUI's forms are built as objects of the BaseForm class's descendant.
     This class is a skeleton.
-    This class using a Mixin for Abstract Method check_form_completion.
+    This class using a Mixin for the quasi Abstract Methods (check_form_completion, browse_file).
     """
     # Colours:  black, cyan, blue
     # background-color: #ADD8E6; /* Baby blue */
@@ -121,9 +140,11 @@ class BaseForm(QWidget, AbstractFormMixin): # pylint: disable=R0903  # Too few p
     def __init__(self):
         super().__init__()
 
-        # Ensure the subclass has implemented the required method.
+        # Ensure the subclass has implemented the required methods.
         if type(self).check_form_completion == AbstractFormMixin.check_form_completion:
             raise NotImplementedError("The subclass does not implement check_form_completion.")
+        if type(self).browse_file == AbstractFormMixin.browse_file:
+            raise NotImplementedError("The subclass does not implement browse_file.")
 
         # self.setObjectName("MyForm")
         # # self.setStyleSheet(
@@ -141,8 +162,70 @@ class BaseForm(QWidget, AbstractFormMixin): # pylint: disable=R0903  # Too few p
         self.setFont(font)
         # self.setStyleSheet("QWidget#MyForm {  font-size: 11pt; }") # font-family: Arial;
 
+        # font=self.font()
+        # print(font.family(), font.pointSize(), font.weight())
+
+        # font=super().font()
+        # print(font.family(), font.pointSize(), font.weight())
+
+        # self.setFont(super().font())
+        # font=self.font()
+        # print(font.family(), font.pointSize(), font.weight())
+
+        self.init_ui_base()
+
+    def init_ui_base(self):
+        """
+        It initializes the BaseForm
+        """
+        # Main layout: self.main_form_layout = QHBoxLayout(self)
+
+        font=self.font()
+
+        # Left part - Radio Buttons: self.left_layout = QVBoxLayout()
+        self.random_gen_radio = ReadOnlyAbleCheckBox("Random Gen.")# QCheckBox (quasi QRadioButton)
+        self.random_gen_radio.setFont(font)
+        self.text_input_radio = ReadOnlyAbleCheckBox("Text Input") # QCheckBox (quasi QRadioButton)
+        self.text_input_radio.setFont(font)
+        self.left_layout.addWidget(self.random_gen_radio)
+        self.left_layout.addWidget(self.text_input_radio)
+
+        # Right part: self.right_layout = QVBoxLayout()
+        # File input and Browse button: self.file_layout = QHBoxLayout()
+        self.file_label = QLabel("*") # Save as path & name:
+        self.file_label.setFont(font)
+
         self.file_input = QLineEdit()
         self.file_input.setFont(font)
+        self.browse_button = QPushButton("Browse")
+        # browse_button.setFixedSize(66, 30)
+        self.browse_button.clicked.connect(self.browse_file)
+        self.file_layout.addWidget(self.file_label)
+        self.file_layout.addWidget(self.file_input)
+        self.file_layout.addWidget(self.browse_button)
+
+        # Short input fields: self.input_fields_layout = QGridLayout()
+        labels = ["Nb. Machines", "Nb. Operations", "Max. Depth", "Timeout", "Log Detail"]
+        self.inputs = [IntegerLineEdit() for _ in labels]
+        self.inputs[0].setToolTip("Number of Machines. The operations set on "
+                                  "one of the same machines can not be produced one a time.")
+        self.inputs[1].setToolTip("Number of Operations. Each machine must have "
+                                  "an operation connected at least.")
+        self.inputs[2].setPlaceholderText("default 15 levels")
+        self.inputs[2].setToolTip("Maximum Depth of the solution tree using the Branch "
+                                  "and Bound method. Can be adjusted during making iterations.")
+        self.inputs[3].setPlaceholderText("default 300 sec")
+        self.inputs[3].setToolTip("Maximum  time searching of the optimum in seconds. "
+                                  "Can be adjusted during making iterations.")
+        self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
+        self.inputs[4].setToolTip("Log Detail. 0 = normal Log, > 0 = detailed Log. "
+                                  "Can be adjusted during making iterations.")
+        for i, label in enumerate(labels):
+            loc_label = QLabel(label)
+            loc_label.setFont(font)
+            self.input_fields_layout.addWidget(loc_label, 0, i)
+            self.inputs[i].setFont(font)
+            self.input_fields_layout.addWidget(self.inputs[i], 1, i)
 
         self.debounce_timer = QTimer(self)
         self.debounce_timer.setSingleShot(True)

@@ -130,8 +130,9 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
         loc_text_form.browse_button.setDisabled(False)
         for inp in loc_text_form.inputs:
             loc_line_edit_set_read_only(inp, True)
-        mw.print_status("Please, fill Input path & name of a Directed "
-                        "Disjunctive Graph description text file", -1)
+        if lrs == DgState.IDLE_INPUT_TEXT_DEF:
+            mw.print_status("Please, fill Input path & name of a Directed "
+                            "Disjunctive Graph description text file", -1)
 
     else:
         loc_line_edit_set_read_only(loc_text_form.file_input, True)
@@ -165,7 +166,8 @@ def draw_gen_form(mw: MainWindow, lrs: DgState) -> None:
         loc_gen_form.browse_button.setDisabled(False)
         for inp in loc_gen_form.inputs:
             loc_line_edit_set_read_only(inp, False)
-        mw.print_status("Please, fill Nb. Machines, Nb. Operations and "
+        if lrs == DgState.IDLE_RANDOM_GEN:
+            mw.print_status("Please, fill Nb. Machines, Nb. Operations and "
                         "Save path & name for the new Directed Disjunctive Graph", -1)
 
     else:
@@ -247,6 +249,8 @@ def redraw_my_app_window_on_state() -> None:
     main_window.form_frame.gen_form.debounce_timer.stop()
 
     loc_recent_state: DgState = gui_control_dict["rec_state"]
+
+    main_window.print_status("FSM message: " + loc_recent_state.description, -1)
 
     draw_form_stack_widget(mw= main_window, lrs= loc_recent_state)
     draw_text_form(mw= main_window, lrs= loc_recent_state)

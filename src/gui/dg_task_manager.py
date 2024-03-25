@@ -130,7 +130,6 @@ class TaskFactory:
         print(self.task_name, ":", loc_respond)
         loc_event: InfluEventSet = InfluEventSet(by_process= loc_respond)
         state_change_due_to_event(influ_event= loc_event)
-        print(gui_control_dict["rec_state"])    # DgState. ...
 
 async def carry_out_process() -> None:
     """

@@ -913,6 +913,7 @@ def state_change_due_to_event(influ_event: InfluEventSet) -> None:
     This function put accross an event in FSM.
     """
     loc_rec_state: DgState = gui_control_dict["rec_state"]
+    print(influ_event)
     loc_tr: DgTransition = None
     for trans in loc_rec_state.transitions:
         if trans.influence.is_watching_all(event_set= influ_event):
@@ -935,6 +936,7 @@ def state_change_due_to_event(influ_event: InfluEventSet) -> None:
             )
         return
     loc_tr.put_accross(influ_event= influ_event)
+    print(gui_control_dict["rec_state"])
 
 init_fsm() # It must be run only a time to avoid configuration conflicts!
 init_gui_control() # It must be run this form next time:  init_gui_control(True)  , if necessary.
