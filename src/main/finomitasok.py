@@ -2,7 +2,7 @@
 This module contains of refinements.
 """
 
-from typing import List
+from typing import List, cast
 
 from diszjunktiv_graf import Muveletcsucs
 from szabad_elek__korlatozas_egy_gepen import Szabad_elek__korlatozas_egy_gepen
@@ -28,6 +28,7 @@ class Finomitasok(Szabad_elek__korlatozas_egy_gepen):               # 800. origi
         self.aktualis_optimalis_megvaltozott: bool = False
     def kiertekeles(self) -> None:
         self.kritikus_ut_odafele()
+        assert self.nyelo
         if self.info:
             print("A kiertekeles() során elért kritikus úthossz "
                   f"(nyelo.forrastol1): {self.nyelo.forrastol1:.2f}")
@@ -41,6 +42,7 @@ class Finomitasok(Szabad_elek__korlatozas_egy_gepen):               # 800. origi
         j: int = -1 # 0 helyett, igazodva a belső indexeléshez!
         self.sorrendisegi_elek_nelkul_uthosszak_odafele()
         self.sorrendisegi_elek_nelkul_uthosszak_visszafele()
+        assert self.nyelo
         self.kisk = self.nagyk = self.nyelo.forrastol1
         if self.kisk > self.viszonyitasi_alap - 1.0e-10:            # nagyobb egyenlő (>=)  (vö. origin 470. sorral!)
             korlatozas_sikeres = True
@@ -64,7 +66,7 @@ class Finomitasok(Szabad_elek__korlatozas_egy_gepen):               # 800. origi
                                                      else self.viszonyitasi_alap))
         return korlatozas_sikeres
     def aktualis_optimalis_megoldas_nyomtatasa(self) -> None:
-        smuv: Muveletcsucs = None
+        smuv: Muveletcsucs | None = None
         self.megmaradt_fixalt_elek_eltavolitasa()
         self.aktualis_optimalis_sorrend_visszaallitas()
         self.kritikus_ut_odafele()
@@ -78,8 +80,9 @@ class Finomitasok(Szabad_elek__korlatozas_egy_gepen):               # 800. origi
             while smuv is not None:
                 print(f"{smuv.azonosito:6} {smuv.forrastol1:8.2f} "
                       f"{smuv.idotartam:8.2f} {smuv.nyeloig2:8.2f}")
-                smuv = smuv.gepen_koveto
+                smuv = cast(Muveletcsucs, smuv.gepen_koveto)
         # print("* Átfutási idő: {:8.2f}, végső alsó korlát (viszonyitasi_alap): {:8.2f} *".format(self.nyelo.forrastol1, self.viszonyitasi_alap))
+        assert self.nyelo
         print(f"* Átfutási idő: {self.nyelo.forrastol1:8.2f} *")
     def viszonyitasi_alap_ujraallitasa(self) -> None:
         self.viszonyitasi_alap = self.aktualis_opt_atfutasi_ido - 1.0e-10

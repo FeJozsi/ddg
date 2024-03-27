@@ -32,12 +32,13 @@ class InputTextFile(DgInpSource):
         self.source_file_name: str = source_file_name
         # self.f is an implicit TextIOWrapper object
         # self.f = open(source_file_name, "rt", encoding='cp1250') # encoding='utf-8'
-        self.f: TextIOWrapper = None    # The ResourceManager will open the input file
+        self.f: TextIOWrapper | None = None    # The ResourceManager will open the input file
         self.state: str = "open"
-        self.buffer: str = None
+        self.buffer: str = ""
     def serve_line(self) -> str:
-        self.buffer = None
+        self.buffer = ""
         if self.state in ("open", "serve"):
+            assert self.f
             self.state = "busy"
             while self.state == "busy":
                 buf: str = self.f.readline()
@@ -61,6 +62,7 @@ class InputTextFile(DgInpSource):
         return self.source_file_name
     def get_source_long_attribute(self) -> str:
         if self.state in ("open", "busy", "serve"):
+            assert self.f
             return path.abspath( self.f.name)
         return ""
     def close_input(self) -> None:
@@ -68,6 +70,7 @@ class InputTextFile(DgInpSource):
         This method close the input file if is still open.
         """
         if not self.state in ("eof","error","closed"):
+            assert self.f
             self.f.close()
             self.state = "closed"
 
@@ -78,7 +81,7 @@ class MyResourceManager:
     def __init__(self, name: str):
         self.name = name
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         print(f'MyResourceManager {self.name} has been acquired')
         itf: InputTextFile = InputTextFile(arg_str_fn)
         itf.f = open(arg_str_fn, "rt", encoding= 'utf-8') # encoding= 'cp1250'
@@ -89,9 +92,10 @@ class MyResourceManager:
         # It can be accessed with the 'as' command element in the 'with ...' command.
         # return self.name
 
-    def __exit__(self, loc_exc_type, loc_exc_value, loc_traceback):
-        dsi: DgStandardInput = my_dict_for_input["dg_input_object"]
-        itf: InputTextFile = dsi.input_source_obj
+    def __exit__(self, loc_exc_type, loc_exc_value, loc_traceback) -> None:
+        dsi: DgStandardInput | None = my_dict_for_input["dg_input_object"]
+        assert dsi
+        itf: DgInpSource = dsi.input_source_obj
         itf.close_input()
         if loc_exc_type is not None:
             print(f"An exception of type {loc_exc_type.__name__} occurred.")
@@ -106,7 +110,7 @@ if len(sys.argv) != 2:
 
 # Get command-line arguments
 arg_str_fn = sys.argv[1]
-dg_o: Vezerles = None
+dg_o: Vezerles | None = None
 
 with MyResourceManager('for->test_dg_input_read'):
     # Perform some operations with the resource
@@ -117,7 +121,7 @@ with MyResourceManager('for->test_dg_input_read'):
         dg_o = Vezerles(dg_inint(), dg_inint()) # muveletszam: int, gepszam: int
         my_control_dict["dg_o"] = dg_o          # propagate to lower levels
         my_control_dict["step_back"] = False    # initialize
-        my_control_dict["continue"] = True      # initialize
+        my_control_dict["my_continue"] = True   # initialize
 
         print("* The determination of the minimax critical path length "
               "of a directed disjunctive graph has commenced. *")

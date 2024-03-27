@@ -6,7 +6,7 @@ It maintains records of machines states.
 It adds functionalities to the Disjunctive Graph,
 such as specifying the beginning order of the operations on the machines.
 """
-from typing import List
+from typing import List, Sequence, cast
 
 from dg_link import DgLink
 from dg_link import dg_first
@@ -41,10 +41,15 @@ class El(DgLink):                                                  # 363. origin
             return ret_val
         except AttributeError:
             return super().__repr__()
-    def behelyezes(self, fej: List[DgLink]):   # FIGYELEM! ÁLLATIRA figyelni kell, hogy ugyanaz az objektum (muvelet-csucs) ne legyen berakva több LIST-be! Ezen problémával kapcsolatos a Csatlakozas CLASS. !!!!!
-        bentlevo: El = dg_first(fej)
+    def behelyezes(self, p_fej) -> None:   # FIGYELEM! ÁLLATIRA figyelni kell, hogy ugyanaz az objektum (muvelet-csucs) ne legyen berakva több LIST-be! Ezen problémával kapcsolatos a Csatlakozas CLASS. !!!!!
+        fej: Sequence[El] = p_fej
+        bentlevo: El | None = cast(El, dg_first(fej))
         link_index: int = 0
-        while False if bentlevo is None else bentlevo.delta < self.delta: link_index += 1; bentlevo = bentlevo.suc
+        while False if bentlevo is None else bentlevo.delta < self.delta:
+            link_index += 1
+            assert bentlevo
+            bentlevo = cast(El, bentlevo.suc)
+        assert isinstance(fej, list) # cast(list, fej)
         if bentlevo is None: fej.append(self)                       # INTO
         else: fej.insert(link_index, self)                          # PRECEDE(bentlevo)
         dg_link_elements(fej)
@@ -56,7 +61,8 @@ class El(DgLink):                                                  # 363. origin
         dg_link_elements(self.kezdet.rakovetkezok); dg_link_elements(self.veg.megelozok)
         self.kezdet.kiindulok -= 1
         self.veg.beerkezok -= 1
-    def fixalas(self, fixalt_elek: List[DgLink]) -> None:
+    def fixalas(self, p_fixalt_elek) -> None:
+        fixalt_elek: List[El] = p_fixalt_elek
         self.kezdet.rakovetkezok.append(Csatlakozas(self.veg))      # INTO
         self.veg.megelozok.append(Csatlakozas(self.kezdet))         # INTO
         dg_link_elements(self.kezdet.rakovetkezok); dg_link_elements(self.veg.megelozok)
@@ -68,8 +74,8 @@ class El(DgLink):                                                  # 363. origin
             assert not self.head, 'Alert fixalas, DgLink elem with head is not linked.'
         fixalt_elek.append(self); dg_link_elements(fixalt_elek)     # INTO
     def konjugalasaval_sorrend_modositas(self) -> None:             # 405. origin sor
-        elso: Muveletcsucs = self.kezdet.gepen_elozo
-        utolso: Muveletcsucs = self.veg.gepen_koveto
+        elso: Muveletcsucs | None = self.kezdet.gepen_elozo
+        utolso: Muveletcsucs | None = self.veg.gepen_koveto
         if elso is not None: elso.gepen_koveto = self.veg
         self.kezdet.gepen_elozo = self.veg
         self.kezdet.gepen_koveto = utolso
@@ -84,7 +90,7 @@ class Gepelem():                                                    # (424. orig
     def __init__(self, gepazon: int) -> None:
         self.gepazon: int = gepazon
         self.so: List[Muveletcsucs] = [] # Ezek legyenek diszjunkt listák egymáshoz képest!     #: Muveletcsucs LIST
-        self.utolso: Muveletcsucs = None
+        self.utolso: Muveletcsucs | None = None
         self.c: float = 0.0
         self.h: float = 1.0e+300 # 1.8 × 10 a 308-okon in magnitude (a maximális float nagyságrend)
     def __repr__(self) -> str:
@@ -113,27 +119,29 @@ class Diszjunktiv_graf_manipulacioi(Diszjunktiv_graf):              # 360. origi
         This method specifies the beginning order of operations.  
         The Disjunctive Graph must be loaded before running (see Diszjunktiv_graf.graf_beolvasasa).
         """
-        gepj: Gepelem = None                                        # 432. origin sor
-        sgep: Gepelem = None
-        gep: List[Gepelem] =  [None] * self.gepszam                                             #: Gepelem      ARRAY
-        muvj: Muveletcsucs = None
-        smuv: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        gepj: Gepelem                                               # 432. origin sor
+        sgep: Gepelem
+        gep: List[Gepelem] =  [Gepelem(-1)] * self.gepszam                                      #: Gepelem      ARRAY     The elements will be replaced soon
+        muvj: Muveletcsucs
+        smuv: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         nyelo_maradt: bool = False
-        seged: float = None
+        seged: float
         for k in range(self.gepszam):           # a shorthand notation for range(0, self.gepszam)
             gep[k] = Gepelem(k+1)   # külső, 1-től kezdődő azonosítása lesz a gépeknek is
         self.torles()
         self.sorrendisegi_elek_nelkul_uthosszak_visszafele()
-        csatolo = dg_first(self.forras.rakovetkezok)                # FIRST
+        assert self.forras
+        csatolo = cast(Csatlakozas, dg_first(self.forras.rakovetkezok)) # FIRST
+        aktmuvelet : Muveletcsucs
         while csatolo is not None:              # a forrás közvetlen rákövetkező műveleteit rárakjuk a gépjeikre:
-            aktmuvelet : Muveletcsucs = csatolo.szomszed
+            aktmuvelet = csatolo.szomszed
             aktgep: Gepelem = gep[aktmuvelet.gepje - 1]             # belső, 0-val kezdődő tartományba konvertálni
             aktgep.so.append(aktmuvelet)                            # INTO
             dg_link_elements(aktgep.so) # A műveleteket gépenként különböző sorrendező LIST-be helyezzük. A LIST-eknek, melyekbe csupasz műveleteket pakolunk - disznjunktaknak kell lenniük! Egyelőre ez ezekre a sorrendező LIST-ekre igaz, mert gépenként elkülönülnek a műveletek.
             aktmuvelet.forrastol1 = 0.0
             aktgep.h = min(aktgep.h, aktmuvelet.idotartam)
-            csatolo = csatolo.suc
+            csatolo = cast(Csatlakozas, csatolo.suc)
         while not nyelo_maradt:                                     # 456. origin sor: (1) comment jelű blokk kezdete
             gepj = gep[0]  # gep[1] helyett a belső tartomány szerinti indexeléssel (vö. Muveletcsucs.gepje külső, 1-től kezdődő sorszámozásával)!
             seged = gepj.h
@@ -141,14 +149,14 @@ class Diszjunktiv_graf_manipulacioi(Diszjunktiv_graf):              # 360. origi
                 if seged > gep[k].h:
                     gepj = gep[k]
                     seged = gepj.h
-            muvj = dg_first(gepj.so)                                # 467. origin sor: (2) comment jelű blokk kezdete; FIRST - ilyen most itt biztos hogy van, mert gepj.h nem a végtelen nagy érték már.
+            muvj = cast(Muveletcsucs, dg_first(gepj.so))            # 467. origin sor: (2) comment jelű blokk kezdete; FIRST - ilyen most itt biztos hogy van, mert gepj.h nem a végtelen nagy érték már.
             k = 0    # 1 helyett  (belső sorszámozás miatt)
             while muvj.forrastol1 > gepj.h - 1.0e-10:  # 1e-8 # ITT FEL VAN TÉTELEZVE, hogy, amennyiben ez teljesül, akkor nem az utolsó műveleten állunk a gépre rakott műveletek között. Legelején mindenesetere ez nem teljesül, így a feltételezés egyelőre megáll.
-                muvj = muvj.suc  # keressük az első olyan elemet, ahol muvj.forrastol1 < gepj.h egy pici tűréssel. A kód feltételezi, hogy van ilyen. Induláskor ez teljesül, mert a forrás rákövetkező műveleteinél forrastol1 = 0, gepj.h pedig > 0
+                muvj = cast(Muveletcsucs, muvj.suc)  # keressük az első olyan elemet, ahol muvj.forrastol1 < gepj.h egy pici tűréssel. A kód feltételezi, hogy van ilyen. Induláskor ez teljesül, mert a forrás rákövetkező műveleteinél forrastol1 = 0, gepj.h pedig > 0
                 k += 1
             smuv = muvj                                             # 475. origin sor
             for _ in range(k + 1, len(gepj.so)):                    # CARDINAL
-                smuv = smuv.suc                                     # 478. origin sor: (2a) comment jelű blokk kezdete
+                smuv = cast(Muveletcsucs, smuv.suc)                 # 478. origin sor: (2a) comment jelű blokk kezdete
                 if smuv.forrastol1 > gepj.h - 1.0e-10:  # 1e-8
                     pass
                 elif smuv.nyeloig2 > muvj.nyeloig2 + 1.0e-10:  # 1e-8
@@ -169,14 +177,14 @@ class Diszjunktiv_graf_manipulacioi(Diszjunktiv_graf):              # 360. origi
             gepj.utolso = muvj
             gepj.c = muvj.forrastol1 + muvj.idotartam
             gepj.h = 1.0e+300                                       # 509. origin sor
-            smuv = dg_first(gepj.so)                                # FIRST
+            smuv = cast(Muveletcsucs, dg_first(gepj.so))            # FIRST
             while smuv is not None:
                 smuv.forrastol1 = max(smuv.forrastol1, gepj.c)
                 gepj.h = min(gepj.h, smuv.forrastol1 + smuv.idotartam)
-                smuv = smuv.suc
+                smuv = cast(Muveletcsucs, smuv.suc)
             csatolo = dg_first(muvj.rakovetkezok)                   # FIRST
             while csatolo is not None:                              # 522. origin sor: (3) és (4) comment jelű blokk kezdete
-                aktmuvelet : Muveletcsucs = csatolo.szomszed
+                aktmuvelet = csatolo.szomszed
                 aktmuvelet.beerkezettek += 1
                 aktmuvelet.forrastol1 = max(aktmuvelet.forrastol1, gepj.c)
                 if aktmuvelet.beerkezettek == aktmuvelet.beerkezok:
@@ -203,11 +211,13 @@ class Diszjunktiv_graf_manipulacioi(Diszjunktiv_graf):              # 360. origi
         while folosleges_el.normal:
             # self.fixalt_elek = self.fixalt_elek[:-1]                # LAST OUT
             # dg_link_elements(self.fixalt_elek)
+            assert self.fixalt_elek[-1].head
             self.fixalt_elek[-1].head.out_last()    # 2024-02-27 09:00 ez még mindig nem a végleges megoldás, a fixalt_elek listája egy  head-be  kellene burkolva legyen
             folosleges_el.eltavolitas()
             folosleges_el = self.fixalt_elek[-1]                    # LAST
         # self.fixalt_elek = self.fixalt_elek[:-1]                    # LAST OUT   Ezt is kivesszük, de alább rögtön visszatesszük egy módosított formában
         # dg_link_elements(self.fixalt_elek)                          #    2024.02.
+        assert self.fixalt_elek[-1].head
         self.fixalt_elek[-1].head.out_last()    # 2024-02-27 09:00 ez még mindig nem a végleges megoldás, a fixalt_elek listája egy  head-be  kellene burkolva legyen
         folosleges_el.konjugalasaval_sorrend_modositas()
         folosleges_el.eltavolitas()
@@ -218,4 +228,5 @@ class Diszjunktiv_graf_manipulacioi(Diszjunktiv_graf):              # 360. origi
         while len(self.fixalt_elek) > 0:                            # EMPTY (NOT EMPTY)
             self.fixalt_elek[-1].eltavolitas()
             # self.fixalt_elek = self.fixalt_elek[:-1]                # LAST OUT
+            assert self.fixalt_elek[-1].head
             self.fixalt_elek[-1].head.out_last()    # 2024-02-27 09:00 ez még mindig nem a végleges megoldás, a fixalt_elek listája egy  head-be  kellene burkolva legyen

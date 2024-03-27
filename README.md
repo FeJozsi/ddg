@@ -70,6 +70,7 @@ I installed these packages manually in the virtual environment:
     pip install typing_extensions
     pip install PyQt6
     pip install qasync
+    pip install mypy
 
 ### The packages' versions in the virtual environment
 
@@ -80,6 +81,8 @@ I installed these packages manually in the virtual environment:
     dill              0.3.8
     isort             5.13.2
     mccabe            0.7.0
+    mypy              1.9.0
+    mypy-extensions   1.0.0
     pip               24.0
     platformdirs      4.2.0
     pylint            3.1.0
@@ -94,6 +97,17 @@ I installed these packages manually in the virtual environment:
 
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
+
+### 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
+
+This commit addresses and eliminates `MyPy type checking issues` identified in 20 Python source files
+spanning all sub-folders under the src directory. A prevalent issue corrected in this process
+involved variable initialization with None as an initial value, which often led to type inference
+challenges. The resolution of these issues marks a significant improvement in our code's type
+safety and adherence to static typing conventions.
+
+Development and integration efforts continue unabated, with a focus on maintaining high code quality
+and leveraging static analysis tools to preemptively identify and mitigate potential issues.
 
 ### 2024-03-13 12:41:48 We have reached the threshold of the integration
 

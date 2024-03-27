@@ -16,7 +16,7 @@ The situation is analogous with classes.
 Each module's main class shares the module's name and forms
 a chain of subclasses in the same order.
 """
-from typing import List
+from typing import List, cast
 
 from dg_link import DgLink
 from dg_link import dg_first
@@ -49,11 +49,11 @@ class Muveletcsucs(DgLink):   #: CSak később, a Diszjunktiv_graf leszármazott
         self.beerkezettek: int = 0; self.beerkezok: int = 0
         self.idotartam: float = 0.0; self.forrastol1: float = 0.0; self.forrastol2: float = 0.0
         self.nyeloig1: float = 0.0; self.nyeloig2: float = 0.0
-        self.megelozok: List[Csatlakozas] = []; self.rakovetkezok: List[Csatlakozas] = []       #: Csatlakozas  LIST
-        self.gepen_elozo: Muveletcsucs = None; self.gepen_koveto: Muveletcsucs = None           #: Muveletcsucs
-        self.opt_elozo: Muveletcsucs = None;   self.opt_koveto: Muveletcsucs = None             #: Muveletcsucs
-        self.kritikus_elozo: Muveletcsucs = None                                                #: Muveletcsucs
-        self.kritikus_elozo_sorrendi:bool = None
+        self.megelozok: List[Csatlakozas] = []; self.rakovetkezok: List[Csatlakozas] = []           #: Csatlakozas  LIST
+        self.gepen_elozo: Muveletcsucs | None = None; self.gepen_koveto: Muveletcsucs | None = None #: Muveletcsucs
+        self.opt_elozo: Muveletcsucs | None = None;   self.opt_koveto: Muveletcsucs | None = None   #: Muveletcsucs
+        self.kritikus_elozo: Muveletcsucs | None = None                                             #: Muveletcsucs
+        self.kritikus_elozo_sorrendi:bool = False
     def __repr__(self) -> str:
         if self.azonosito == 0: return super().__repr__()
         if self.azonosito == -1: return "Forras Muveletcsucs"
@@ -92,18 +92,19 @@ class Diszjunktiv_graf:
     def __init__(self, muveletszam: int, gepszam: int) -> None:
         self.muveletszam: int = muveletszam
         self.gepszam: int = gepszam
-        self.muvelet: List[Muveletcsucs] = [None] * muveletszam                                 #: Muveletcsucs ARRAY       # w: Muveletcsucs = None     # self.muvelet = [w] * muveletszam   # list (range(1, self.muveletszam + 1))
-        self.forras: Muveletcsucs = None; self.nyelo: Muveletcsucs = None
-        self.muvkod: List[int] =  [None] * muveletszam                                          #: int          ARRAY
-        self.gep_muveletszama: List[int] =  [None] * gepszam                                    #: int          ARRAY
-        self.gep_elso_muvelete: List[int] =  [None] * gepszam                                   #: int          ARRAY
+        self.muvelet: List[Muveletcsucs] = [Muveletcsucs()] * muveletszam                       #: Muveletcsucs ARRAY       # w: Muveletcsucs = None     # self.muvelet = [w] * muveletszam   # list (range(1, self.muveletszam + 1))
+        self.forras: Muveletcsucs | None = None; self.nyelo: Muveletcsucs | None = None         #                       ATTENTION!  self.muvelet will be totally re-written
+        self.muvkod: List[int] =  [-999] * muveletszam                                          #: int          ARRAY
+        self.gep_muveletszama: List[int] =  [-999] * gepszam                                    #: int          ARRAY
+        self.gep_elso_muvelete: List[int] =  [-999] * gepszam                                   #: int          ARRAY
         self.aktualis_opt_atfutasi_ido: float = 0.0                # 27. origin sor
     def kritikus_ut_odafele(self) -> None:
         elintezettek: List[Muveletcsucs] = []                                                   #: Muveletcsucs LIST
-        elintezett_csucs: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        elintezett_csucs: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         hossz: float = 0.0
         self.torles()
+        assert self.forras
         elintezettek.append(self.forras)                            # INTO
         def figyelembevetel(muvelet: Muveletcsucs, sorrendi: bool): # sorrendi == True, ha technológiai élről van szó, és False, ha gépen való műveleti sorrendet kijelölő élről, mégpedig olyanról, amivel megegyező technológiai él nincs
             muvelet.beerkezettek += 1
@@ -119,20 +120,21 @@ class Diszjunktiv_graf:
                     elintezettek.append(muvelet)                    # INTO
                     muvelet.forrastol2 = muvelet.forrastol1 + muvelet.idotartam
         while len(elintezettek) > 0:                                # EMPTY
-            elintezett_csucs = dg_first(elintezettek)               # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
+            elintezett_csucs = cast(Muveletcsucs, dg_first(elintezettek))   # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
             elintezettek = elintezettek[1:]                         # OUT     De, ha üres is volna, x = [][1:] egy üres listát ad vissza szépen!
-            csatolo = dg_first(elintezett_csucs.rakovetkezok)       # FIRST
+            csatolo = cast(Csatlakozas, dg_first(elintezett_csucs.rakovetkezok))    # FIRST
             hossz = elintezett_csucs.forrastol2
             while csatolo is not None:
                 figyelembevetel(csatolo.szomszed, False)            # (sorrendi fixen False ezen az ágon)
-                csatolo = csatolo.suc
+                csatolo = cast(Csatlakozas, csatolo.suc)
             if elintezett_csucs.gepen_koveto is not None:
                 figyelembevetel(elintezett_csucs.gepen_koveto, True) # 84. origin sor    (sorrendi fixen True nem maradhat ezen az ágon, ha itt olyan élek is lehetnek, amelyeknek van technológiai él megfelelőjük is!)
     def kritikus_uthosszak_visszafele(self) -> None:
         elintezettek: List[Muveletcsucs] = []                                                   #: Muveletcsucs LIST
-        elintezett_csucs: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        elintezett_csucs: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         hossz: float = 0.0   # self.torles()  itt nincs!!!
+        assert self.nyelo
         elintezettek.append(self.nyelo)                             # INTO
         def figyelembevetel(muvelet: Muveletcsucs): # sorrendi itt nincs
             muvelet.kiindultak += 1
@@ -145,26 +147,27 @@ class Diszjunktiv_graf:
                     elintezettek.append(muvelet)                    # INTO
                     muvelet.nyeloig1 = muvelet.nyeloig2 + muvelet.idotartam
         while len(elintezettek) > 0:                                # EMPTY
-            elintezett_csucs = dg_first(elintezettek)               # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
+            elintezett_csucs = cast(Muveletcsucs, dg_first(elintezettek))   # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
             elintezettek = elintezettek[1:]                         # OUT     De, ha üres is volna, x = [][1:] egy üres listát ad vissza szépen!
-            csatolo = dg_first(elintezett_csucs.megelozok)          # FIRST
+            csatolo = cast(Csatlakozas, dg_first(elintezett_csucs.megelozok))   # FIRST
             hossz = elintezett_csucs.nyeloig1
             while csatolo is not None:
                 figyelembevetel(csatolo.szomszed)
-                csatolo = csatolo.suc
+                csatolo = cast(Csatlakozas, csatolo.suc)
             if elintezett_csucs.gepen_elozo is not None:
                 figyelembevetel(elintezett_csucs.gepen_elozo)       # 133. origin sor
     def sorrendisegi_elek_nelkul_uthosszak_odafele(self) -> None:
         elintezettek: List[Muveletcsucs] = []                                                   #: Muveletcsucs LIST
-        elintezett_csucs: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        elintezett_csucs: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         hossz: float = 0.0
         self.torles()
+        assert self.forras
         elintezettek.append(self.forras)                            # INTO
         while len(elintezettek) > 0:                                # EMPTY
-            elintezett_csucs = dg_first(elintezettek)               # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
+            elintezett_csucs = cast(Muveletcsucs, dg_first(elintezettek))   # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
             elintezettek = elintezettek[1:]                         # OUT     De, ha üres is volna, x = [][1:] egy üres listát ad vissza szépen!
-            csatolo = dg_first(elintezett_csucs.rakovetkezok)       # FIRST
+            csatolo = cast(Csatlakozas, dg_first(elintezett_csucs.rakovetkezok))    # FIRST
             hossz = elintezett_csucs.forrastol2
             while csatolo is not None:
                 csatolo.szomszed.beerkezettek += 1
@@ -173,17 +176,18 @@ class Diszjunktiv_graf:
                     csatolo.szomszed.beerkezettek = 0
                     elintezettek.append(csatolo.szomszed)           # INTO
                     csatolo.szomszed.forrastol2 = csatolo.szomszed.forrastol1 + csatolo.szomszed.idotartam
-                csatolo = csatolo.suc                               # 168. origin sor
+                csatolo = cast(Csatlakozas, csatolo.suc)            # 168. origin sor
     def sorrendisegi_elek_nelkul_uthosszak_visszafele(self) -> None:
         elintezettek: List[Muveletcsucs] = []                                                   #: Muveletcsucs LIST
-        elintezett_csucs: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        elintezett_csucs: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         hossz: float = 0.0   # self.torles()  itt nincs!!!
+        assert self.nyelo
         elintezettek.append(self.nyelo)                             # INTO
         while len(elintezettek) > 0:                                # EMPTY
-            elintezett_csucs = dg_first(elintezettek)               # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
+            elintezett_csucs = cast(Muveletcsucs, dg_first(elintezettek))   # FIRST   Itt elintezettek[0] is jó lenne, mert tudjuk, hogy nem üres a lista
             elintezettek = elintezettek[1:]                         # OUT     De, ha üres is volna, x = [][1:] egy üres listát ad vissza szépen!
-            csatolo = dg_first(elintezett_csucs.megelozok)          # FIRST
+            csatolo = cast(Csatlakozas, dg_first(elintezett_csucs.megelozok))   # FIRST
             hossz = elintezett_csucs.nyeloig1
             while csatolo is not None:
                 csatolo.szomszed.kiindultak += 1
@@ -192,37 +196,38 @@ class Diszjunktiv_graf:
                     csatolo.szomszed.kiindultak = 0
                     elintezettek.append(csatolo.szomszed)           # INTO
                     csatolo.szomszed.nyeloig1 = csatolo.szomszed.nyeloig2 + csatolo.szomszed.idotartam
-                csatolo = csatolo.suc                               # 202. origin sor
+                csatolo = cast(Csatlakozas, csatolo.suc)            # 202. origin sor
     def aktualis_optimalis_megoldas_atirasa(self) -> None:
         for k in range(0, self.muveletszam):
             self.muvelet[k].opt_elozo = self.muvelet[k].gepen_elozo
             self.muvelet[k].opt_koveto = self.muvelet[k].gepen_koveto
+        assert self.nyelo
         self.aktualis_opt_atfutasi_ido = self.nyelo.forrastol1
     def aktualis_optimalis_sorrend_visszaallitas(self) -> None:
         for k in range(0, self.muveletszam):
             self.muvelet[k].gepen_koveto = self.muvelet[k].opt_koveto
             self.muvelet[k].gepen_elozo = self.muvelet[k].opt_elozo # 223. origin sor
     def masodik_ut_forrastol(self, muvelet: Muveletcsucs) -> float:
-        masodik_szomszed: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        masodik_szomszed: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         seged: float = 0.0
         if muvelet.gepen_elozo is not None: masodik_szomszed = muvelet.gepen_elozo.gepen_elozo
         if masodik_szomszed is not None: seged = masodik_szomszed.forrastol2
-        csatolo = dg_first(muvelet.megelozok)                       # FIRST
+        csatolo = cast(Csatlakozas, dg_first(muvelet.megelozok))    # FIRST
         while csatolo is not None:
             seged = max(seged, csatolo.szomszed.forrastol2)
-            csatolo = csatolo.suc
+            csatolo = cast(Csatlakozas, csatolo.suc)
         return seged
     def masodik_ut_nyeloig(self, muvelet: Muveletcsucs) -> float:
-        masodik_szomszed: Muveletcsucs = None
-        csatolo: Csatlakozas = None
+        masodik_szomszed: Muveletcsucs | None = None
+        csatolo: Csatlakozas | None = None
         seged: float = 0.0
         if muvelet.gepen_koveto is not None: masodik_szomszed = muvelet.gepen_koveto.gepen_koveto
         if masodik_szomszed is not None: seged = masodik_szomszed.nyeloig1
-        csatolo = dg_first(muvelet.rakovetkezok)                    # FIRST
+        csatolo = cast(Csatlakozas, dg_first(muvelet.rakovetkezok)) # FIRST
         while csatolo is not None:
             seged = max(seged, csatolo.szomszed.forrastol2)
-            csatolo = csatolo.suc
+            csatolo = cast(Csatlakozas, csatolo.suc)
         return seged                                                # 265. origin sor
 
     def graf_beolvasasa(self) -> None:
@@ -248,9 +253,10 @@ class Diszjunktiv_graf:
             self.muvkod[dg_inint() - 1] = k # a belső 0:muveletszam-1 tartományba képzése a külső 1:muveletszam művelet azonosító tartománynak. VIGYÁZAT! self.muvkod[k] = (dg_inint())  HELYETT fordítva van, és a tartomány is el van tolva eggyel!!!
         # print("** Az input adatok **")
         print("** Azon.  Gépje   Időtart.  Megelőzők         **")
+        muv: Muveletcsucs
         for k in range(0, self.muveletszam):                        # 284. origin sor
             m = dg_inint() - 1
-            muv: Muveletcsucs = self.muvelet[self.muvkod[m]]    # muv éppen az a művelet, amelynek a tulajdonságait olvassuk
+            muv = self.muvelet[self.muvkod[m]]    # muv éppen az a művelet, amelynek a tulajdonságait olvassuk
             muv.azonosito = m + 1                               # külső azonosító (1-től kezdődő tartomány!)
             muv.gepje = dg_inint()                              # külső sorszámozási tartományban (1-től keződően)
             muv.idotartam = dg_inreal()
@@ -265,7 +271,7 @@ class Diszjunktiv_graf:
             print((f"[{muv.azonosito:6}, {muv.gepje:6}, {muv.idotartam:8.2f},   {str(l)} {' ' * (17-len(str(l)))}]")) # l szerepel (a külső művelet-azonosító int értékekkel) itt a muv.megelozok helyett, ami egy komplexebb lista
         # dg_close_input()
         for k in range(0, self.muveletszam):                        # 306. origin sor
-            muv: Muveletcsucs = self.muvelet[k]    # muv az a művelet, amelyet szükség esetén a forráshoz és/vagy a nyelőhöz hozzákötjük
+            muv = self.muvelet[k]    # muv az a művelet, amelyet szükség esetén a forráshoz és/vagy a nyelőhöz hozzákötjük
             if len(muv.megelozok) == 0:                             # EMPTY
                 muv.megelozok.append(Csatlakozas(self.forras))
                 self.forras.rakovetkezok.append(Csatlakozas(muv))
@@ -273,7 +279,7 @@ class Diszjunktiv_graf:
                 muv.rakovetkezok.append(Csatlakozas(self.nyelo))
                 self.nyelo.megelozok.append(Csatlakozas(muv))
         for k in range(0, self.muveletszam):                        # 326. origin sor
-            muv: Muveletcsucs = self.muvelet[k]    # muv az a művelet, amelynél néhány db szám nyilvántartó attribútumot kitöltünk
+            muv = self.muvelet[k]    # muv az a művelet, amelynél néhány db szám nyilvántartó attribútumot kitöltünk
             muv.kiindulok = len(muv.rakovetkezok)                   # CARDINAL
             muv.beerkezok = len(muv.megelozok)                      # CARDINAL
             dg_link_elements(muv.megelozok)                         # Link the nodes together for a linked list
@@ -313,7 +319,7 @@ class Diszjunktiv_graf:
                 circle.extend(cpath[i:])  # Preserve the original circle list
             return
 
-        circle: List[Muveletcsucs] = None
+        circle: List[int] = []
         for o in self.muvelet:
             circle = []
             check_for_cycle(cobj= o, pred= o.megelozok[0:], cpath= [o.azonosito], clevel= 1, circle= circle)
@@ -332,6 +338,7 @@ class Diszjunktiv_graf:
 
 
     def cpm_veget_ert(self) -> bool:                                # Check Critical Path Method ended
+        assert self.nyelo
         seged: bool = self.nyelo.forrastol2 > 0
         # seged: bool = True    Csak teszteléshez kellett
         j: int = -1 # 0 helyett belső sorszámozásra felkészülve
@@ -349,5 +356,7 @@ class Diszjunktiv_graf:
             self.muvelet[k].nyeloig2 = -1.0
             self.muvelet[k].kritikus_elozo = None           #  ???  2024.02. utólag/utóbb berakott két sor:  !!!
             self.muvelet[k].kritikus_elozo_sorrendi = False
+        assert self.nyelo
         self.nyelo.forrastol1 = 0.0
+        assert self.forras
         self.forras.nyeloig2 = 0.0                                  # 359. origin sor

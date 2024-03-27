@@ -37,7 +37,7 @@ class Megoldasfa(Finomitasok):                                      # 900. origi
     def __init__(self, muveletszam: int, gepszam: int) -> None:
         super().__init__(muveletszam, gepszam)
         self.megoldasok_szama: int = 0
-        self.ag: List[Megoldascsucs] = None
+        self.ag: List[Megoldascsucs] = []    # It will be replaced soon
 
     def init_megoldascsucs(self, mcs: Megoldascsucs) -> None:
         self.megoldasok_szama += 1

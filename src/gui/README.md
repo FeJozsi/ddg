@@ -4,6 +4,10 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
+
+This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.
+
 ## 2024-03-25 11:08:41 refactor: Streamline form structure and improve UI guidance
 
 - Implemented consistent FSM status messages, enhancing clarity and reliability

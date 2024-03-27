@@ -3,7 +3,7 @@ This module encapsulates the functionality of the SIMSET class from SIMULA'67,
 with a focus on the `HEAD` and `LINK` classes, representing a *linked list structure*.
 """
 
-from typing import List
+from typing import Sequence # List,
 # from typing import Any
 
 from typing_extensions import deprecated
@@ -18,9 +18,9 @@ class DgLink:
         Args:
             head: refers to the `DgHead` object managing the element's linked list
         """
-        self.head: DgHead = head    # the linked list itself
-        self.suc:  DgLink = None    # successor DgLink element
-        self.pred: DgLink = None    # predecessor DgLink element
+        self.head: DgHead | None = head    # the linked list itself
+        self.suc:  DgLink | None = None    # successor DgLink element
+        self.pred: DgLink | None = None    # predecessor DgLink element
     def is_free(self) -> bool:
         """
         Ensure that the DgLink element is not already part of a linked list
@@ -42,6 +42,9 @@ class DgLink:
                      not (self.suc is None and self.pred is None and len(self.head.l) > 1)
         )
         if loc_bool:    # 2024-02-27 08:51
+            if not self.head:
+                assert bool(self.head), "Alert is_linked! A DgLink element's head is empty."
+                return False
             if not self in self.head.l:
                 assert self in self.head.l, "Alert is_linked! A DgLink element's head is corrupt."
         return loc_bool
@@ -57,6 +60,7 @@ class DgLink:
         assert self.is_free(), "Alert INTO! The DgLink element is already member of a DgHead!"
         h: DgHead = head
         assert h is not None and h.is_loaded(), "Alert INTO! The DgHead is totally empty!"
+        assert isinstance(h.l, list) # cast(list, h.l)
         h.l.append(self)
         h.link_elements()
     def precede(self, internal) -> None:
@@ -73,7 +77,11 @@ class DgLink:
         assert s is not None and s.is_linked(), (
             "Alert PRECEDE! The following element (internal) is not linked yet!"
         )
-        h: DgHead = s.head
+        h: DgHead | None = s.head
+        if not h:
+            assert bool(h), "Alert PRECEDE! The internal.head is empty!"
+            return
+        assert isinstance(h.l, list) # cast(list, h.l)
         h.l.insert(h.l.index(s), self)
         h.link_elements()
     def out(self) -> None:
@@ -82,10 +90,14 @@ class DgLink:
         It throws exception if the self is not linked yet, i.e. is_linked() False.
         """
         assert self.is_linked(), "Alert OUT! The DgLink element is not linked yet!"
-        h: DgHead = self.head
+        h: DgHead | None = self.head
         self.suc = None
         self.pred = None
         self.head = None
+        if not h:
+            assert bool(h), "Alert OUT! The self.head is empty!"
+            return
+        assert isinstance(h.l, list) # cast(list, h.l)
         h.l.remove(self)
         h.link_elements()
 
@@ -94,8 +106,8 @@ class DgHead:
     This class represents HEAD of the linked list.
     Actually, it contains the whole linked list in a Python list also.
     """
-    def __init__(self, l: List[DgLink] = None) -> None:
-        self.l:  List[DgLink] = []      # the whole linked list
+    def __init__(self, l: Sequence[DgLink] | None = None) -> None: # List[DgLink] helyett
+        self.l:  Sequence[DgLink] = []      # the whole linked list # List[DgLink] helyett
         if l is not None:
             self.l = l
     def is_loaded(self) -> bool:
@@ -119,7 +131,7 @@ class DgHead:
                 node.suc = self.l[i + 1]     # next
             else:
                 node.suc = None
-    def first(self) -> DgLink:
+    def first(self) -> DgLink | None:
         """
         This method presents the first element of the linked list, if any exists in.  
         It throws exception if the head is totally empty, i. e. head.is_loaded() False.
@@ -128,7 +140,7 @@ class DgHead:
         if self.l:
             return self.l[0]
         return None
-    def last(self) -> DgLink:
+    def last(self) -> DgLink | None:
         """
         This method presents the last element of the linked list, if any exists in.  
         It throws exception if the head is totally empty, i. e. head.is_loaded() False.
@@ -137,7 +149,7 @@ class DgHead:
         if self.l:
             return self.l[-1]
         return None
-    def out_first(self) -> DgLink:
+    def out_first(self) -> DgLink | None:
         """
         Take the first DgLink element out from the linked list, and returns it.
         It throws exception if the head is totally empty, i. e. head.is_loaded() False.
@@ -145,10 +157,11 @@ class DgHead:
         assert self.is_loaded(), "Alert out_first! The DgHead object totally empty!"
         if not self.l:
             return None
-        f: DgLink = self.first()
-        f.out()
+        f: DgLink | None = self.first()
+        if f:
+            f.out()
         return f
-    def out_last(self) -> DgLink:
+    def out_last(self) -> DgLink | None:
         """
         Take the last DgLink element out from the linked list, and returns it.
         It throws exception if the head is totally empty, i. e. head.is_loaded() False.
@@ -156,8 +169,9 @@ class DgHead:
         assert self.is_loaded(), "Alert out_last! The DgHead object totally empty!"
         if not self.l:
             return None
-        l: DgLink = self.last()
-        l.out()
+        l: DgLink | None = self.last()
+        if l:
+            l.out()
         return l
 
 # class Dg_link:
@@ -169,8 +183,9 @@ class DgHead:
 #     if len(l) > 0: return l[0]
 #     return None
 
+# "List" is invariant; Consider using "Sequence" instead, which is covariant
 @deprecated("Use DgHead.first() instead of it.")
-def dg_first(l: List[DgLink]) -> DgLink:
+def dg_first(l: Sequence[DgLink]) -> DgLink | None:  # instead of Link[DgLink]
     """
     Deprecated: This method presents the first element of the linked list, if any exists in.  
     It is deprecated. Use DgHead.first() instead of it.
@@ -186,7 +201,7 @@ def dg_first(l: List[DgLink]) -> DgLink:
 #     dg_link_elements(l)
 
 @deprecated("Use DgLink.out() instead of it.")
-def dg_out(l: List[DgLink], e: DgLink) -> None:
+def dg_out(l: Sequence[DgLink], e: DgLink) -> None:  # List[DgLink]
     """
     Deprecated: Take the DgLink element out from the linked list.  
     It throws exception if the element e is not linked yet, i.e. e.is_linked() False,
@@ -197,6 +212,8 @@ def dg_out(l: List[DgLink], e: DgLink) -> None:
         "Alert dg_out! The e not linked yet, i.e. e is None or e.is_linked() False.!"
     )
     assert l, "Alert dg_out! The parameter l (list) is empty!"
+    if not l or not e.head:
+        return
     assert l == e.head.l, "Alert dg_out! The parameter l (list) is different from e.head.l!"
     e.out()
 
@@ -211,8 +228,9 @@ def dg_out(l: List[DgLink], e: DgLink) -> None:
 #         else:
 #             nodes[i].suc = None
 
+# "List" is invariant; Consider using "Sequence" instead, which is covariant
 @deprecated("Use DgHead.link_elements() instead of it.")
-def dg_link_elements(nodes: List[DgLink]) -> None:
+def dg_link_elements(nodes: Sequence[DgLink]) -> None: # instead of Link[DgLink]
     """
     Deprecated: This method updates the successor (SUC) and predecessor (PRED)
     information throughout the entire linked list (it links the nodes together).  
@@ -231,12 +249,12 @@ def dg_link_elements(nodes: List[DgLink]) -> None:
             node.suc = None
     dg_set_head(nodes)                  # only for backward compatibility
 
-def dg_set_head(nodes: List[DgLink]) -> None:
+def dg_set_head(nodes: Sequence[DgLink]) -> None: # instead of Link[DgLink]
     """
     This method complements DgLink objects by setting the missing
     'head' attribute for backward compatibility purposes.  2024-02-27
     """
-    h: DgHead = None
+    h: DgHead | None = None
     for node in nodes:
         if node.head is not None:
             if h is not None:

@@ -15,7 +15,7 @@ import traceback
 
 from PyQt6.QtWidgets import QApplication
 
-import qasync
+import qasync # type: ignore
 
 # from typing_extensions import deprecated
 
@@ -65,7 +65,7 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
             # Your event processing logic here
             # Check if there are events in your high-level event-stack
             # Process them accordingly
-            event: InfluEventSet = my_event_stack.get_next_prepared_event()
+            event: InfluEventSet | None = my_event_stack.get_next_prepared_event()
             if event is not None:
                 state_change_due_to_event(influ_event= event)
                 if gui_control_dict["rec_state"] == DgState.STOP:

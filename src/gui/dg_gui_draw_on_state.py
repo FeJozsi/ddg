@@ -187,7 +187,7 @@ def draw_button1(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button1
     loc_text = None
-    if lrs.influ_events.by_buttons[0]:
+    if lrs.influ_events and lrs.influ_events.by_buttons[0]:
         loc_text = lrs.influ_events.by_buttons[0]
     if loc_text is not None:
         loc_button.setDisabled(False)
@@ -212,7 +212,7 @@ def draw_button3(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button3
     loc_text = None
-    if lrs.influ_events.by_buttons[1]:
+    if lrs.influ_events and lrs.influ_events.by_buttons[1]:
         loc_text = lrs.influ_events.by_buttons[1]
     if loc_text is not None:
         loc_button.setDisabled(False)
@@ -228,7 +228,7 @@ def draw_button4(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button4
     loc_text = None
-    if lrs.influ_events.by_buttons[2]:
+    if lrs.influ_events and lrs.influ_events.by_buttons[2]:
         loc_text = lrs.influ_events.by_buttons[2]
     if loc_text is not None:
         loc_button.setDisabled(False)

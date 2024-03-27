@@ -2,6 +2,7 @@
 This modul demonstrates the GUI for the ddg project
 and its asynchronous behaviors.
 """
+# pylint: disable="R0801" # : Similar lines in 2 files
 import sys
 import asyncio
 
@@ -11,7 +12,7 @@ from PyQt6.QtWidgets import (QTextEdit, QWidget, QPushButton, QVBoxLayout, QLabe
 from PyQt6.QtGui import QTextCursor, QPixmap, QPainter #, QColor, QFont
 from PyQt6.QtCore import Qt #, QRectF
 
-import qasync
+import qasync # type: ignore
 
 class QTextEditOutputStream:
     """
@@ -190,7 +191,7 @@ class AsyncApp(QMainWindow):  # QWidget
         """
 
         # Redirect print statements to QTextEdit
-        sys.stdout = QTextEditOutputStream(self.text_edit, max_char)
+        sys.stdout = QTextEditOutputStream(self.text_edit, max_char) # type: ignore
         # sys.stderr = QTextEditOutputStream(self.text_edit)
 
     def browse_file(self):

@@ -33,12 +33,13 @@ class InputTextFile(DgInpSource):
         self.source_file_name: str = source_file_name
         # self.f is an implicit TextIOWrapper object
         # self.f = open(source_file_name, "rt", encoding='cp1250') # encoding='utf-8'
-        self.f: TextIOWrapper = None    # The ResourceManager will open the input file
+        self.f: TextIOWrapper | None = None    # The ResourceManager will open the input file
         self.state: str = "open"
-        self.buffer: str = None
+        self.buffer: str = ""
     def serve_line(self) -> str:
-        self.buffer = None
+        self.buffer = ""
         if self.state in ("open", "serve"):
+            assert self.f
             self.state = "busy"
             while self.state == "busy":
                 buf: str = self.f.readline()
@@ -62,6 +63,7 @@ class InputTextFile(DgInpSource):
         return self.source_file_name
     def get_source_long_attribute(self) -> str:
         if self.state in ("open", "busy", "serve"):
+            assert self.f
             return path.abspath( self.f.name)
         return ""
     def close_input(self) -> None:
@@ -69,6 +71,7 @@ class InputTextFile(DgInpSource):
         This method close the input file if is still open.
         """
         if not self.state in ("eof","error","closed"):
+            assert self.f
             self.f.close()
             self.state = "closed"
 
@@ -112,10 +115,10 @@ def teszt_olvasas() -> None:
         muv_azon.append(dg_inint())
     print (muv_azon)
 
-    azonosito: int = None
-    gepje: int = None
-    vegrehajt_ido: float = None
-    megelozok: List[int] = None
+    azonosito: int = -1
+    gepje: int = -1
+    vegrehajt_ido: float = -1.0
+    megelozok: List[int] = []
 
     for _ in range(0, m):
         azonosito = dg_inint()
@@ -126,8 +129,8 @@ def teszt_olvasas() -> None:
         while seged >= 0:
             megelozok.append(seged)
             seged = dg_inint()
-        m: str = str(megelozok)
-        print(f"[{azonosito}, {gepje}, {vegrehajt_ido}, {m}]")
+        ms: str = str(megelozok)
+        print(f"[{azonosito}, {gepje}, {vegrehajt_ido}, {ms}]")
 
 #    dg_close_input()
 
@@ -139,7 +142,7 @@ class MyResourceManager:
     def __init__(self, name: str):
         self.name = name
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         print(f'MyResourceManager {self.name} has been acquired')
         itf: InputTextFile = InputTextFile(arg_str_fn)
         itf.f = open(arg_str_fn, "rt", encoding='cp1250') # encoding='utf-8'
@@ -149,9 +152,10 @@ class MyResourceManager:
         # It can be accessed with the 'as' command element in the 'with ...' command.
         # return self.name
 
-    def __exit__(self, loc_exc_type, loc_exc_value, loc_traceback):
-        dsi: DgStandardInput = my_dict_for_input["dg_input_object"]
-        itf: InputTextFile = dsi.input_source_obj
+    def __exit__(self, loc_exc_type, loc_exc_value, loc_traceback) -> None:
+        dsi: DgStandardInput | None = my_dict_for_input["dg_input_object"]
+        assert dsi
+        itf: DgInpSource = dsi.input_source_obj
         itf.close_input()
         if loc_exc_type is not None:
             print(f"An exception of type {loc_exc_type.__name__} occurred.")

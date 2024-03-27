@@ -7,7 +7,7 @@ user interface.
 """
 
 from enum import Enum, auto
-from typing import List, Union
+from typing import List, Union, TypedDict
 from datetime import datetime
 
 class MyButton(Enum):
@@ -23,9 +23,9 @@ class InfluEventSet:
     Represents a set of events whitch can change the given state of GUI
     or could be occurred by the GUI and / or System.
     """
-    def __init__(self, by_process: Union[List[str], str] = None,
-                       by_forms: Union[List[str], str] = None,
-                       by_buttons: List[str] = None) -> None:
+    def __init__(self, by_process: Union[List[str], str, None] = None,
+                       by_forms: Union[List[str], str, None] = None,
+                       by_buttons: Union[List[str], None] = None) -> None:
         self.by_process: List[str] = [] # ["Confirmed Close Win"]
         if by_process is not None:
             if isinstance(by_process, list):
@@ -296,13 +296,13 @@ class DgState(Enum):
     IDLE_RESULTS_PRESENT    =(auto(), "View of last result")
     STOP                    =(auto(), "Stop Program")
 
-    def __init__(self, *args) -> int:
+    def __init__(self, *args) -> None:
         # self.nb: int = numb # trick: args[0] can be retrived as DgState.XXX.value[0]
-        self.step: DimStep = None
-        self.property: DimProp = None
-        self.busy: DimBusy = None
-        self.input_type: DimInpT = None
-        self.influ_events: InfluEventSet = None
+        self.step: DimStep | None = None
+        self.property: DimProp | None = None
+        self.busy: DimBusy | None = None
+        self.input_type: DimInpT | None = None
+        self.influ_events: InfluEventSet | None = None
         self.transitions: List [DgTransition] = []
         self.description : str = args[1] # It can be retrived as DgState.XXX.value[1] also
 
@@ -311,24 +311,24 @@ class DgState(Enum):
         """
         This method fills the DgState member's attributes
         """
-        self.step: DimStep = dim_step
-        self.property: DimProp = dim_property
-        self.busy: DimBusy = dim_busy
-        self.input_type: DimInpT = dim_input_type
+        self.step = dim_step
+        self.property = dim_property
+        self.busy = dim_busy
+        self.input_type = dim_input_type
 
     def roll_up_influ_events(self) -> None:
         """
         This method fills the DgState member's influ_events attribute
         """
-        event_set: InfluEventSet = None
         if self.transitions:
-            event_set = InfluEventSet(by_forms=   self.transitions[0].influence.by_forms,
+            event_set: InfluEventSet = InfluEventSet(
+                                      by_forms=   self.transitions[0].influence.by_forms,
                                       by_process= self.transitions[0].influence.by_process,
                                       by_buttons= self.transitions[0].influence.by_buttons
             )    # make a copy!
-        for tr in self.transitions[1:]:
-            event_set.dg_merge(tr.influence)
-        self.influ_events = event_set
+            for tr in self.transitions[1:]:
+                event_set.dg_merge(tr.influence)
+            self.influ_events = event_set
 
     def add_transition(self, transition) -> None:
         """
@@ -353,7 +353,7 @@ class DgState(Enum):
         if isinstance(prop, DimInpT):
             ret_val = [dg_state for dg_state in cls if dg_state.input_type == prop]
         if isinstance(prop, int):
-            ret_val = [dg_state for dg_state in cls if dg_state.nb == prop]
+            ret_val = [dg_state for dg_state in cls if dg_state.value[0] == prop]
         if isinstance(prop, str):
             ret_val = [dg_state for dg_state in cls if prop.lower() in dg_state.description.lower()]
         return ret_val
@@ -433,13 +433,13 @@ class DgTransition:
     def __init__(self,
                  influence: InfluEventSet,
                  new_state: DgState,
-                 new_alter_state: DgState = None):
+                 new_alter_state: DgState | None = None):
         self.influence: InfluEventSet = influence
         self.new_state : DgState = new_state # for cases based on Random generated input
                                              # and/or for processes going "slow"
         # Here is an alternative for cases based on Text input when it's necessary
-        self.new_alter_state : DgState = new_alter_state # and/or for processes going "quick"
-                                                         # See loc_new_st_alt var. name also.
+        self.new_alter_state : DgState | None = new_alter_state # and/or for processes going "quick"
+                                                                # See loc_new_st_alt var. name also.
     def __repr__(self) -> str:
         return repr(self.influence) + self.new_state.name
 
@@ -460,7 +460,7 @@ class DgTransition:
         loc_quick_flow: bool = gui_control_dict["quick_flow"]
         loc_success: bool = gui_control_dict["success"]
         loc_new_state: DgState = self.new_state
-        loc_new_alter_state: DgState = self.new_alter_state
+        loc_new_alter_state: DgState | None = self.new_alter_state
 
         # # Can the input type be determined?     This part of code can be simplified. See below!
         # if ( loc_rec_state in [DgState.BUSY_RAND_GEN_INPUT, DgState.BUSY_INP_TEXT_READ] and
@@ -573,8 +573,8 @@ def connect_transitions_a() -> None:
     """
     Connecting transitions to their initial state. Part a of a,b,c and d.
     """
-    loc_influ: InfluEventSet = None
-    loc_new_state : DgState = None
+    loc_influ: InfluEventSet | None = None
+    loc_new_state : DgState | None = None
     #   1	INIT	The program started
     loc_influ = InfluEventSet(by_process="Start Eventloop")
     loc_new_state = DgState.IDLE_INIT
@@ -640,8 +640,8 @@ def connect_transitions_b() -> None:
     """
     Connecting transitions to their initial state. Part b of a,b,c and d.
     """
-    loc_influ: InfluEventSet = None
-    loc_new_state : DgState = None
+    loc_influ: InfluEventSet| None = None
+    loc_new_state : DgState| None = None
     #   7	IDLE_INPUT_TEXT_DEF	Form for input text file
     loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
     loc_new_state = DgState.IDLE_INIT
@@ -678,9 +678,9 @@ def connect_transitions_c() -> None:
     """
     Connecting transitions to their initial state. Part c of a,b,c and d.
     """
-    loc_influ: InfluEventSet = None
-    loc_new_state : DgState = None
-    loc_new_st_alt : DgState = None
+    loc_influ: InfluEventSet | None = None
+    loc_new_state : DgState | None = None
+    loc_new_st_alt : DgState | None = None
     #   11, 13, 15, 17, 19, 21, 22, 24, 28
     loc_influ = InfluEventSet(by_buttons=["Cancel","",""]) # Back, Action, Next
     loc_new_state = DgState.IDLE_RAND_GEN_SATISFIED
@@ -771,8 +771,8 @@ def connect_transitions_d() -> None:
     """
     Connecting transitions to their initial state. Part d of a,b,c and d.
     """
-    loc_influ: InfluEventSet = None
-    loc_new_state : DgState = None
+    loc_influ: InfluEventSet | None = None
+    loc_new_state : DgState | None = None
     # 20	BUSY_SEARCH_OPTIM_EXEC	Searching optimum
     loc_influ = InfluEventSet(by_process="SearchOpt Failed")
     loc_new_state = DgState.IDLE_SEARCH_OPT_ERROR
@@ -855,8 +855,20 @@ def roll_up_influence_events() -> None:
     for st in DgState:
         st.roll_up_influ_events()
 
+class GuiControlInfo(TypedDict):
+    """
+    Typing gui_control_dict
+    """
+    prev_state: DgState | None
+    last_influ_event: InfluEventSet | None
+    last_put_accross: InfluEventSet | None
+    rec_state: DgState
+    rec_inp_type : DimInpT
+    quick_flow: bool
+    success: bool
 
-gui_control_dict: dict[str, None | DgState | InfluEventSet | DimInpT | bool] = {
+# gui_control_dict: dict[str, None | DgState | InfluEventSet | DimInpT | bool] = {
+gui_control_dict: GuiControlInfo = {
     "prev_state" : None,
     "last_influ_event" : None,
     "last_put_accross" : None,
@@ -890,7 +902,7 @@ def init_fsm() -> None:
 
     roll_up_influence_events()
 
-def init_gui_control(not_origin_init: bool = None) -> None:
+def init_gui_control(not_origin_init: bool = False) -> None:
     """
     This function initializes the gui_control_dict
     """
@@ -914,7 +926,7 @@ def state_change_due_to_event(influ_event: InfluEventSet) -> None:
     """
     loc_rec_state: DgState = gui_control_dict["rec_state"]
     print(influ_event)
-    loc_tr: DgTransition = None
+    loc_tr: DgTransition | None = None
     for trans in loc_rec_state.transitions:
         if trans.influence.is_watching_all(event_set= influ_event):
             if not loc_tr:
@@ -924,10 +936,11 @@ def state_change_due_to_event(influ_event: InfluEventSet) -> None:
                                    "The transition cannot be clearly defined by is_watching_all()")
     if not loc_tr:
         # if not gui_control_dict["last_influ_event"].is_watching_all(influ_event):
-        for trans in gui_control_dict["prev_state"].transitions:
-            if trans.influence.is_watching(event_set= influ_event):
-                loc_tr = trans
-                break
+        if gui_control_dict["prev_state"]:
+            for trans in gui_control_dict["prev_state"].transitions:
+                if trans.influence.is_watching(event_set= influ_event):
+                    loc_tr = trans
+                    break
         if not loc_tr:
             raise RuntimeError("Alert state_change_due_to_event! "
                                "The transition cannot be found.\n"
@@ -943,16 +956,6 @@ init_gui_control() # It must be run this form next time:  init_gui_control(True)
 
  # # # Example usage:
 if __name__ == '__main__':
-    # print(DgState.INIT)         # Output: DgState.INIT
-    # print(DgState.INIT.step)    # Output: DimStep.INIT_WAIT
-    # print(DgState.STOP.busy)    # Output: DimBusy.BUSY
-    # print(DgState.STOP)         # Output: DgState.STOP
-    # print(DgState.states_by_prop(DimStep.WATCH))
-    # print(DgState.states_by_prop(DimProp.LAST_RESULT))
-    # print(DgState.states_by_prop(DimBusy.BUSY))
-    # print(DgState.states_by_prop(DimInpT.RANDOM_GEN))
-    # print(DgState.states_by_prop(27))
-    # print(DgState.states_by_prop("fill"))
     print(DgState.INIT.value)
     print(DgState.INIT.value[0])
     print(DgState.INIT.value[1])

@@ -165,7 +165,7 @@ class GenForm(BaseForm):
         if file_name:
             self.file_input.setText(file_name)
 
-    def check_form_completion(self): # debounce_timer.timeout
+    def check_form_completion(self) -> None: # debounce_timer.timeout
         """
         Check the Generate form to make sure it's been completely filled out
         """
@@ -207,9 +207,9 @@ class TitleFrame(BaseFrame):
                             /* Semi-transparent white (gray) */
                     }
                     """)
-        self.layout = QVBoxLayout()
+        self.loc_layout = QVBoxLayout()
         self.init_gui_t(title_text)
-        self.setLayout(self.layout)
+        self.setLayout(self.loc_layout)
     def __repr__(self) -> str:
         return "Frame for Title: " + self.title_label.text()
     def init_gui_t(self, title_text: str):
@@ -226,7 +226,7 @@ class TitleFrame(BaseFrame):
         font.setBold(True)
         self.title_label.setFont(font)
 
-        self.layout.addWidget(self.title_label)
+        self.loc_layout.addWidget(self.title_label)
 
 # 2. Top part, II. Forms (Interchanging forms)
 class FormFrame(BaseFrame):
@@ -244,9 +244,9 @@ class FormFrame(BaseFrame):
         # sizePolicy.setHeightForWidth(False)
         self.setSizePolicy(size_policy)
 
-        self.layout = QVBoxLayout()
+        self.loc_layout = QVBoxLayout()
         self.init_gui_a()
-        self.setLayout(self.layout)
+        self.setLayout(self.loc_layout)
     def __repr__(self) -> str:
         return "Frame for Interchanging Forms"
     def init_gui_a(self):
@@ -269,7 +269,7 @@ class FormFrame(BaseFrame):
         self.gen_form = GenForm()
         self.form_stack_widget.addWidget(self.gen_form)
 
-        self.layout.addWidget(self.form_stack_widget)
+        self.loc_layout.addWidget(self.form_stack_widget)
 
         self.text_form.text_input_radio.stateChanged.connect(self.check_state_change)
         self.text_form.random_gen_radio.stateChanged.connect(self.check_state_change)
@@ -277,7 +277,7 @@ class FormFrame(BaseFrame):
         self.gen_form.random_gen_radio.stateChanged.connect(self.check_state_change)
 
 
-    def check_state_change(self):
+    def check_state_change(self) -> None:
         """
         Keep the quasi Radio Buttons of the two forms synchronized and
         replace the Forms according to them.
@@ -287,7 +287,11 @@ class FormFrame(BaseFrame):
         # Check which quasi radio button sent the signal
         # radio_button: QRadioButton = self.sender()
         # radio_button: QCheckBox = self.sender()
-        radio_button: ReadOnlyAbleCheckBox = self.sender()
+        s = self.sender()
+        if s is None or not isinstance(s, ReadOnlyAbleCheckBox):
+            return
+        assert isinstance(s, ReadOnlyAbleCheckBox)  # These informs MyPy about the type of 's'
+        radio_button: ReadOnlyAbleCheckBox = s      #  in prev. line or cast(ReadOnlyAbleCheckBox,s)
 
         # Check if the quasi radio button is checked # and print its label
         if radio_button.isChecked():
@@ -355,12 +359,12 @@ class CentralFrame(BaseFrame):
         # sizePolicy.setHeightForWidth(False)
         self.setSizePolicy(size_policy)
 
-        self.layout = QHBoxLayout()
+        self.loc_layout = QHBoxLayout()
         # # self.central_widget = QStackedWidget()
         self.init_gui_b()
         # self.switch_central_widget()
         # # self.addWidget(self.central_widget)
-        self.setLayout(self.layout)
+        self.setLayout(self.loc_layout)
     def __repr__(self) -> str:
         return "Frame for Central part"
     def init_gui_b(self):
@@ -394,7 +398,7 @@ class CentralFrame(BaseFrame):
         self.central_widget.addWidget(self.text_edit)
         self.central_widget.addWidget(graphics_view)
 
-        self.layout.addWidget(self.central_widget)
+        self.loc_layout.addWidget(self.central_widget)
     def switch_central_widget(self, switch_button: QPushButton) -> None:
         """
         This method switches between Text and Image in the central widget.
@@ -419,14 +423,14 @@ class ButtonsFrame(BaseFrame):
     """
     Frame for 4. bottom part: Buttons.
     """
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
         super().__init__()
         self.main_window: MainWindow = main_window
-        self.layout = QHBoxLayout()
+        self.loc_layout = QHBoxLayout()
         # Set the layout margins to 0
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.loc_layout.setContentsMargins(0, 0, 0, 0)
         self.init_gui_c()
-        self.setLayout(self.layout)
+        self.setLayout(self.loc_layout)
     def __repr__(self) -> str:
         return "Frame for Buttons"
     def init_gui_c(self):
@@ -439,11 +443,11 @@ class ButtonsFrame(BaseFrame):
         #                   'Run Async Search Optim') # here without , parent= self param.
         # self.task_button.setFixedSize(200, 30)
         # self.task_button.clicked.connect(self.run_async_task)
-        # self.layout.addWidget(self.task_button)
+        # self.loc_layout.addWidget(self.task_button)
         # self.switch_button = QPushButton("Switch to Image (D. GRAPH)") # see it on another place
         # self.switch_button.setFixedSize(200, 30)
         # self.switch_button.clicked.connect(self.main_window.central_frame.switch_central_widget)
-        # self.layout.addWidget(self.switch_button)
+        # self.loc_layout.addWidget(self.switch_button)
 
         # Button placeholders
         self.button_placeholders = [QFrame(self) for _ in range(4)]
@@ -490,7 +494,7 @@ class ButtonsFrame(BaseFrame):
             elif i == 3:
                 layout.setContentsMargins(0, 0, 5, 0)
             layout.addWidget(btn)
-            self.layout.addWidget(self.button_placeholders[i])
+            self.loc_layout.addWidget(self.button_placeholders[i])
 
         # Example event handle I.: Start async task
         # self.button1.clicked.connect(self.run_async_task) # task_button
@@ -520,7 +524,7 @@ class ButtonsFrame(BaseFrame):
         This method propagates the button clicks through the high level event stack
         """
         loc_event_text: str = button.text()
-        loc_by_buttons: list[None | str] = [None, None, None]
+        loc_by_buttons: list[str] = ["", "", ""]
         loc_by_buttons[index] = loc_event_text
         my_event_stack.post_event(InfluEventSet(by_buttons= loc_by_buttons))
 
@@ -575,11 +579,11 @@ class StatusFrame(BaseFrame):
                     }
                     """)
         # self.setMaximumHeight(35) # setFixedHeight
-        self.layout = QHBoxLayout()
+        self.loc_layout = QHBoxLayout()
         # Set the layout margins to 0
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.loc_layout.setContentsMargins(0, 0, 0, 0)
         self.init_gui_d()
-        self.setLayout(self.layout)
+        self.setLayout(self.loc_layout)
     def __repr__(self) -> str:
         return "Frame for Status"
     def init_gui_d(self):
@@ -640,7 +644,7 @@ class StatusFrame(BaseFrame):
         status_bar.addPermanentWidget(container, 1)
 
         #status_bar.showMessage("Status Info")
-        self.layout.addWidget(status_bar)
+        self.loc_layout.addWidget(status_bar)
 
 # Main Application Window
 class MainWindow(QMainWindow):
@@ -710,8 +714,9 @@ class MainWindow(QMainWindow):
     def redirect_print(self) -> None:
         """
         Redirect print statements to QTextEdit
+        Please, consider  max_char == 1300
         """
-        sys.stdout = QTextEditOutputStream(self.central_frame.text_edit, 1300) # max_char
+        sys.stdout = QTextEditOutputStream(self.central_frame.text_edit, 1300) # type: ignore
         # sys.stderr = QTextEditOutputStream(self.text_edit)
 
     def print_status(self, message: str = "", alaign_nb: int = 0) -> None:
@@ -809,13 +814,15 @@ class MainWindow(QMainWindow):
         """
         This method stops the application
         """
-        QApplication.instance().quit()
+        i = QApplication.instance()
+        assert i # This informs MyPy about the type of i of "QCoreApplication | None"
+        i.quit()
 
 # # Create a module-level instance that will be shared
 # mw: MainWindow = MainWindow() # main_window
 # This does not work, because the instantiation of QApplication must precede
 #   the instantiation of MainWindow or any other widgets.
-_instance: MainWindow = None
+_instance: MainWindow | None = None
 
 def get_main_window_instance() -> MainWindow:
     """

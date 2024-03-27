@@ -46,6 +46,11 @@ class DgInpSource(ABC):
         """
         For example input file name with absolute path.
         """
+    @abstractmethod
+    def close_input(self) -> None:
+        """
+        Close the input source.
+        """
 
 # class Input_text_file:
 #     def __init__(self, source_file: str) -> None:
@@ -117,7 +122,7 @@ class DgStandardInput:
         This method represents SIMULA'67's ININT.
         It serves an int from the input.
         """
-        ret_value: int = None
+        ret_value: int = -1 # default hiba van
         self.ask_line_when_necessary()
         if (not self.input_source_obj.get_state() == "serve" or
             self.dg_index >= len(self.dg_list_buff)):
@@ -135,16 +140,16 @@ class DgStandardInput:
             self.dg_list_buff = self.dg_list_buff[self.dg_index] + [-1]
             self.dg_index = 0
             ret_value = self.dg_inint()     # recursio
-        else:
-            # print("---- else -----")
-            ret_value = -1
+        # else:
+        #     # print("---- else -----")
+        #     ret_value = -1
         return ret_value
     def dg_inreal(self) -> float:
         """
         This method represents SIMULA'67's INREAL.
         It serves a float from the input.
         """
-        ret_value: float = None
+        ret_value: float = -1.0 # default hiba van
         self.ask_line_when_necessary()
         if (not self.input_source_obj.get_state() == "serve" or
             self.dg_index >= len(self.dg_list_buff)):
@@ -153,7 +158,7 @@ class DgStandardInput:
             # print("---- float -----")
             ret_value = self.dg_list_buff[self.dg_index]
             self.dg_index += 1
-        else: ret_value = -1.0
+        # else: ret_value = -1.0
         return ret_value
     def dg_lastitem(self) -> bool:
         """

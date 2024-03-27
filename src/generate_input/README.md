@@ -2,6 +2,11 @@
 # `src\generate_input` folder
 
 Start date: 2024-02-23
+Generate text files describe random produced Directed Disjunctive Graphs
+
+## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
+
+This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.
 
 ## 2024-02-23 12:37:11
 

@@ -48,7 +48,7 @@ class GrdgControl:
         self.file_name: str = ("dg_gen_input_" +
                                f"{muvszam}m_{gepszam}g_" +
                                self.dtn.strftime("%Y%m%d%H%M%S") + ".txt")
-        self.f: TextIOWrapper = None
+        self.f: TextIOWrapper | None = None
 
     def next_mach_suggest(self) -> int:
         """
@@ -188,10 +188,10 @@ def break_cycles() -> None:
     """
     while True:
         i: int = 0
-        x: OperationIntput = None
-        y: OperationIntput = None
+        x: OperationIntput | None = None
+        y: OperationIntput | None = None
         for o in grdg.l:
-            circle = []
+            circle: List[int] = []
             check_for_cycle(cobj= o,
                             pred= o.predecessors[0:],
                             cpath= [o.oi_id],
@@ -235,6 +235,7 @@ def generate_random_input() -> None:
     inner_order: List[int] = []  # Inner order of operations
     machine_load: List[int] = [] # How many operations is for the machine?
 
+    assert grdg.f
     grdg.f.write(
         "# This is a text file describing a directed disjunctive graph "
         "(for calculating the minmax critical path of it).\n"

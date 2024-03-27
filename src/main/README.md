@@ -4,6 +4,10 @@
 Start date: 2024-02-26  
 The `src\main` directory houses the essential components of the project.
 
+## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
+
+This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.
+
 ## 2024-02-29 10:00:59
 
 I've added the missing parts of the entire project as it is nowdays.  

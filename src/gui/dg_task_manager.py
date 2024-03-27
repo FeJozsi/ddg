@@ -44,7 +44,7 @@ class CommonRealTask(MyTask):
     """
     async def execute(self) -> int:
         # Implementation or pass if not ready
-        pass
+        return 1
 
 class CommonImitatedTask(MyTask):
     """
@@ -78,12 +78,12 @@ class TaskFactory:
     This class creates relation between FSM and the tasks
     """
     def __init__(self,
-                 real_task_class: Type[MyTask],
-                 imitated_class: Type[MyTask],
+                 real_task_class: Type[CommonRealTask],
+                 imitated_class: Type[CommonImitatedTask],
                  answers: tuple[str, ...],
                  task_name: str) -> None:
-        self.real_task_class: Type[MyTask] = real_task_class
-        self.imitated_class: Type[MyTask] = imitated_class
+        self.real_task_class: Type[CommonRealTask] = real_task_class
+        self.imitated_class: Type[CommonImitatedTask] = imitated_class
         self.answers: tuple[str, ...] = answers
         self.task_name: str = task_name
     def get_task(self) -> MyTask:
@@ -137,7 +137,7 @@ async def carry_out_process() -> None:
     using MyTask classes and TaskFactory.
     """
     loc_rec_state: DgState = gui_control_dict["rec_state"]
-    if not loc_rec_state.name.startswith("BUSY_"):
+    if not (loc_rec_state.name.startswith("BUSY_") and loc_rec_state.influ_events):
         return
     loc_events: list[str] = [event for event
                                    in loc_rec_state.influ_events.by_process
@@ -150,46 +150,44 @@ async def carry_out_process() -> None:
     loc_events            = [event for event
                                    in loc_rec_state.influ_events.by_process
                                    if "Success" in event]
+    loc_answers: tuple[str, ...]
     if loc_events:
-        loc_answers: tuple[str, ...] = (loc_answer1,
-                                        loc_answer2,
-                                        loc_events[0])
+        loc_answers = (loc_answer1, loc_answer2, loc_events[0])
     else:
-        loc_answers: tuple[str, ...] = (loc_answer1,
-                                        loc_answer2)
-    loc_factory: TaskFactory = None
+        loc_answers = (loc_answer1, loc_answer2)
+    loc_factory: TaskFactory | None = None
     if   loc_rec_state == DgState.BUSY_RAND_GEN_INPUT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_INP_TEXT_READ:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_TECHN_INP_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_FIRST_ORDER_CREATE:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_SEARCH_OPTIM_EXEC:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_RECENT_OPT_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_RESULTS_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask,
+        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
@@ -202,11 +200,11 @@ async def carry_out_process() -> None:
  # Real MyTask (potentially abstract if not fully implemented)
 class TestRealTask(MyTask):
     """
-    This is a test "real" task.
+    This is a test "real" task. It is not ready yet.
     """
     async def execute(self) -> int:
         # Implementation or pass if not ready
-        pass
+        return 1
 
 # Imitated MyTask
 class ImitatedTask(MyTask):

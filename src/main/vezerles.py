@@ -2,7 +2,7 @@
 This module is responsible for controlling the traversal of solution tree.
 """
 
-import datetime
+from datetime import datetime, timedelta
 
 from megoldasfa        import Megoldasfa
 from dg_standard_input import dg_inreal, dg_inint
@@ -21,6 +21,8 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         Megoldasfa,  
         Vezerles.  
     """
+    kezdesi_ido: datetime
+
     def __init__(self, muveletszam: int, gepszam: int) -> None:
         super().__init__(muveletszam, gepszam)
         self.also_felso_korlat_megegyezik: bool = False
@@ -33,10 +35,15 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         self.visszalepesek_szama: int = 0
         self.ismetelt_korlatozasok_szama: int = 0
         self.sikeres_ismetelt_korlatozasok_szama: int = 0
-        self.kezdesi_ido: datetime = datetime.datetime.now() # Record the start time
+        self.kezdesi_ido = datetime.now() # Record the start time
         self.futas_maximalis_ideje: float = 0.0
         self.feladat_also_korlatja: float = 0.0
         self.remenybeli_felso_korlat: float = 0.0
+
+    def duration_in_seconds(self) -> float:
+        duration: timedelta = datetime.now() - self.kezdesi_ido
+        return duration.total_seconds()
+
     def megelozo_elemzes_mast_nem_mond(self) -> bool:
         if self.rigid_check_acyclicity(): # This test inserted at 2024.02.
             self.sorrendisegi_elek_nelkul_uthosszak_odafele()
@@ -48,7 +55,7 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         print("***** A techonológiai követelmények ellentmondásosak! *****")
         return False
     def vezerles_inicializalasa(self) -> None:
-        self.kezdesi_ido = datetime.datetime.now() # Record the start time
+        self.kezdesi_ido = datetime.now() # Record the start time
         self.futas_maximalis_ideje = dg_inreal()
         self.maximalis_melysegszint = dg_inint()
         if dg_inint() > 0:
@@ -57,7 +64,8 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         print("** Futás maximális ideje (sec), maximális mélységszint, lépésenkénti információ kérése **")
         print((f"[{self.futas_maximalis_ideje}, {self.maximalis_melysegszint}, {self.info}]"))
     def vezerles_aktualizalasa(self) -> None:
-        if (datetime.datetime.now() - self.kezdesi_ido).total_seconds() > self.futas_maximalis_ideje and self.futas_maximalis_ideje > 0: # 2. tag: 2024.02.
+        # if (datetime.datetime.now() - self.kezdesi_ido).total_seconds() > self.futas_maximalis_ideje and self.futas_maximalis_ideje > 0: # 2. tag: 2024.02.
+        if  self.duration_in_seconds() > self.futas_maximalis_ideje and self.futas_maximalis_ideje > 0:
             self.idohiany = True
         if self.aktualis_optimalis_megvaltozott:
             self.viszonyitasi_alap_ujraallitasa()
@@ -94,7 +102,8 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         #     print("********************** Normal termination. We traversed the entire solution tree.  **********************")
         #     print("*              SUCCESS! We have founnd an optimal order for the operations on the machines.             *")
         print("   Eltöltött idő: "
-              f"{1000 * (datetime.datetime.now() - self.kezdesi_ido).total_seconds():.3f} "
+            #   f"{1000 * (datetime.datetime.now() - self.kezdesi_ido).total_seconds():.3f} "
+              f"{1000 * self.duration_in_seconds():.3f} "
               "ms (millisecond)")
         print(f"   Feladat kezdeti alsó korlátja: {self.feladat_also_korlatja:.2f}")
         print(f"   Kiértékelések száma: {self.kiertekelesek_szama:6}")

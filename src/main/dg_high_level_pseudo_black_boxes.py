@@ -10,25 +10,59 @@ This module serves high level functionalities based on the class and subclasses
  This module continues the concept of "black boxes" of the above classes but
  it does not create new classes for all level as was the case in the origin SIMULA program.
 """
-# from typing import Dict, Union, Optional
+from typing import TypedDict
 
 from vezerles  import Vezerles
 
 # visszalepes_kovetkezik: bool - Instead of this origin property see my_control_dict["step_back"]
 # grabowsky_algoritmus_nem_allt_le: bool -
-#                                Instead of this origin property see my_control_dict["continue"]
+#                                Instead of this origin property see my_control_dict["my_continue"]
+
+
+# class GuiControlInfo(TypedDict):
+#     """
+#     Typing gui_control_dict
+#     """
+#     prev_state: DgState | None
+#     last_influ_event: InfluEventSet | None
+#     last_put_accross: InfluEventSet | None
+#     rec_state: DgState
+#     rec_inp_type : DimInpT
+#     quick_flow: bool
+#     success: bool
+
+# # gui_control_dict: dict[str, None | DgState | InfluEventSet | DimInpT | bool] = {
+# gui_control_dict: GuiControlInfo = {
+#     "prev_state" : None,
+#     "last_influ_event" : None,
+#     "last_put_accross" : None,
+#     "rec_state": DgState.INIT,
+#     "rec_inp_type" : DimInpT.TYPE_NONE,
+#     "quick_flow" : False,
+#     "success" : False
+# }
+
+class MyControlInfo(TypedDict):
+    """
+    Typing my_control_dict
+    """
+    dg_o : Vezerles | None
+    step_back: bool
+    my_continue: bool
+
 # my_control_dict: Dict[str, Optional[Union[Vezerles, bool]]] = {
-my_control_dict: dict[str, Vezerles | None | bool] = {
-    "dg_o"     : None,  # a Vezerles object. The dg_main module is responsible for it.
-    "step_back": False, # Controls stepping back on the solution tree
-    "continue" : True   # Controls the main loop of solution tree traversaling
+# my_control_dict: dict[str, Vezerles | None | bool] = {
+my_control_dict: MyControlInfo = {
+    "dg_o"       : None,  # a Vezerles object. The dg_main module is responsible for it.
+    "step_back"  : False, # Controls stepping back on the solution tree
+    "my_continue": True   # Controls the main loop of solution tree traversaling
 }
 """
 This global variable includes some important main control property:  
-"dg_o" : a Vezerles object, representing the whole "Disjunctiv Graph'.
-         The dg_main module is responsible for its production and preparation here.
-"step_back" : Controls stepping back on the solution tree
-"continue"  : Controls the main loop of solution tree traversaling
+"dg_o"        :  a Vezerles object, representing the whole "Disjunctiv Graph'.
+                  The dg_main module is responsible for its production and propagation this place.
+"step_back"   : Controls stepping back on the solution tree
+"my_continue" : Controls the main loop of solution tree traversaling
 """
 
 # These functions below forming a pseudo class or pseudo black box implement
@@ -43,6 +77,7 @@ def korlatozas_alapjan_visszalephetek() -> bool:
 
         TODO:
     """
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     return dg_o.korlatozas(False)
 
@@ -52,6 +87,7 @@ def regi_csucs_vizsgalata() -> None:
 
         TODO:
     """
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     if dg_o.van_szabad_el():
         esszeru_ismetelt_korlatozas()
@@ -62,6 +98,7 @@ def esszeru_ismetelt_korlatozas() -> None:
 
         TODO:
     """
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     korlatozas_sikeres: bool = False
     if dg_o.remenyteli_az_ismetelt_korlatozas():
@@ -81,17 +118,18 @@ def esszeru_ismetelt_korlatozas() -> None:
 #   CLASS REGI MEGOLDASOKON KERESZTUL UJ MEGOLDASBA
 
 def uj_megoldas_kereses_hatra_indulva() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     my_control_dict["step_back"]  = True
     while my_control_dict["step_back"] :
         if dg_o.gyokerben_vagyok():
-            my_control_dict["continue"] = False
+            my_control_dict["my_continue"] = False
             my_control_dict["step_back"]  = False
         else:
             dg_o.visszalepes()
             dg_o.visszalepesek_szama += 1
             regi_csucs_vizsgalata()
-    if my_control_dict["continue"]: # itt my_control_dict["step_back"] == False
+    if my_control_dict["my_continue"]: # itt my_control_dict["step_back"] == False
         dg_o.uj_megoldas_illesztese_megoldasfara()
 
 # These functions below forming a pseudo class or pseudo black box implement
@@ -102,10 +140,11 @@ def uj_megoldas_kereses_hatra_indulva() -> None:
 
 def uj_kiertekelendo_megoldas_keresese() -> None:
     uj_megoldas_kereses_elore_indulva()
-    while False if not my_control_dict["continue"] else korlatozas_alapjan_visszalephetek():
+    while False if not my_control_dict["my_continue"] else korlatozas_alapjan_visszalephetek():
         uj_megoldas_kereses_hatra_indulva()
 
 def uj_megoldas_kereses_elore_indulva() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     if dg_o.megoldasfa_melyitheto() and dg_o.van_szabad_el():
         dg_o.uj_megoldas_illesztese_megoldasfara()
@@ -119,19 +158,22 @@ def uj_megoldas_kereses_elore_indulva() -> None:
 #   CLASS GRABOWSKY ALGORITMUS VEGET FIGYELI
 
 def iteracio() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     if dg_o.megoldasfa_melyitheto():
         dg_o.szabad_elek_valasztasi_sorrendjukben_valo_felsorolasa()
     uj_kiertekelendo_megoldas_keresese()
-    if my_control_dict["continue"]:
+    if my_control_dict["my_continue"]:
         dg_o.kiertekeles()
         dg_o.kiertekelesek_szama += 1
 
 def kell_a_tovabbi_kutatas() -> bool:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
-    return my_control_dict["continue"] and not dg_o.egyeb_ok_van_leallasra()
+    return my_control_dict["my_continue"] and not dg_o.egyeb_ok_van_leallasra()
 
 def elso_iteracio() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     dg_o.gyokeret_megoldasfaba()
     dg_o.kiertekeles()
@@ -140,6 +182,7 @@ def elso_iteracio() -> None:
         print("** A kezdeti sorrend **")
         dg_o.aktualis_optimalis_megoldas_nyomtatasa()
     else:
+        assert dg_o.nyelo
         print("* A kezdetként felállított sorrend kritikus úthossza: "
               f"{dg_o.nyelo.forrastol1:8.2f} *")
 
@@ -150,11 +193,13 @@ def elso_iteracio() -> None:
 #   CLASS VEZERLESI HELYEK
 
 def adatelokeszites() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     dg_o.vezerles_inicializalasa()
     dg_o.graf_beolvasasa()
 
 def iteraciok() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     elso_iteracio()
     dg_o.vezerles_aktualizalasa()
@@ -185,6 +230,7 @@ def iteraciok() -> None:
         dg_o.vezerles_aktualizalasa()
 
 def eredmeny() -> None:
+    assert my_control_dict["dg_o"]
     dg_o: Vezerles = my_control_dict["dg_o"]
     dg_o.informaciok_nyomtatasa()
     print("** A talált legjobb megoldás **")

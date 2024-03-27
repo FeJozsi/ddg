@@ -24,11 +24,11 @@ class MyEventStack(QObject):
                                                  # This is connected with using QObject.
     my_application_quit = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__() # It is very important. This is also connected with using QObject.
         self.start_dtn: datetime = datetime.now()
-        self.ready_dtn: datetime = datetime.now() + timedelta(seconds=0.100)
-        self.busy_start: datetime = None
+        self.ready_dtn: datetime | None = datetime.now() + timedelta(seconds=0.100)
+        self.busy_start: datetime | None = None
         self.busy_td: timedelta = self.start_dtn - self.start_dtn
         self.my_stack: deque[InfluEventSet] = deque()
     def post_event(self, e: InfluEventSet) -> None:
@@ -39,7 +39,7 @@ class MyEventStack(QObject):
             e.is_not_interested(InfluEventSet(by_process="Confirmed Close Win"))):
             if ((not bool(self.busy_start) and
                  bool(e.by_process)) or
-                ((not bool(self.ready_dtn) or e.triggered_dtn < self.ready_dtn) and
+                ((not self.ready_dtn or e.triggered_dtn < self.ready_dtn) and
                  not bool(e.by_process))):
                 # sys.stderr.write("This is an error message.\n")
                 print(f"The event ({e}) was dropped because of too early triggered time.",
@@ -72,7 +72,7 @@ class MyEventStack(QObject):
             self.busy_td = self.busy_td + (datetime.now() - self.busy_start)
             self.busy_start = None
         self.ready_dtn = datetime.now() + timedelta(seconds=0.100)
-    def get_next_prepared_event(self) ->  InfluEventSet:
+    def get_next_prepared_event(self) ->  InfluEventSet | None:
         """
         This method serves the next event to handle and
         removes it from the deque.
