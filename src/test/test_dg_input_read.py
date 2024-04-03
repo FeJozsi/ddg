@@ -22,6 +22,8 @@ from typing import List
 from dg_standard_input import DgInpSource, DgStandardInput, my_dict_for_input
 from dg_standard_input import dg_inint, dg_inreal, dg_lastitem
 
+from dg_exceptions import EmptyInputError, EarlyInputEOF, UnexpectedIORequest #, InputValueError
+
 class InputTextFile(DgInpSource):
     """
         This class will be the valid object that conforms
@@ -39,6 +41,32 @@ class InputTextFile(DgInpSource):
     def serve_line(self) -> str:
         self.buffer = ""
         if self.state in ("open", "serve"):
+            st: str = self.state
+            assert self.f
+            self.state = "busy"
+            while self.state == "busy":
+                buf: str = self.f.readline()
+                self.buffer = buf.replace("\n","")
+                # print("  >"+self.buffer)
+                if not buf:
+                    self.state = "eof"
+                    self.f.close()
+                    # break
+                    if st == "open":
+                        raise EmptyInputError("Input cannot be an empty file")
+                    raise EarlyInputEOF("An early EOF was detected on the input file")
+                if not self.buffer:
+                    continue
+                if self.buffer[0] == "#":
+                    continue
+                self.state = "serve"
+        else:
+            self.state = "error"
+            raise UnexpectedIORequest("Unexpected subsequent operation on the input file")
+        return self.buffer
+    def serve_line_if_any(self) -> str:
+        self.buffer = ""
+        if self.state in ("open", "serve"):
             assert self.f
             self.state = "busy"
             while self.state == "busy":
@@ -54,8 +82,9 @@ class InputTextFile(DgInpSource):
                 if self.buffer[0] == "#":
                     continue
                 self.state = "serve"
-                break
-        else: self.state = "error"
+        else:
+            self.state = "error"
+            raise UnexpectedIORequest("Unexpected subsequent operation on the input file")
         return self.buffer
     def get_state(self) -> str:
         return self.state
@@ -139,13 +168,14 @@ class MyResourceManager:
     """
     This is a ResourceManager for open and close the INPUT file under read test
     """
-    def __init__(self, name: str):
+    def __init__(self, name: str, fn: str):
         self.name = name
+        self.fn = fn
 
     def __enter__(self) -> None:
         print(f'MyResourceManager {self.name} has been acquired')
-        itf: InputTextFile = InputTextFile(arg_str_fn)
-        itf.f = open(arg_str_fn, "rt", encoding='cp1250') # encoding='utf-8'
+        itf: InputTextFile = InputTextFile(self.fn)
+        itf.f = open(self.fn, "rt", encoding= 'utf-8') # encoding='cp1250'
         my_dict_for_input["dg_input_object"] = DgStandardInput(itf)
         print(f'The {itf.get_source_long_attribute()} input file has been opened to write')
         # Return any resource or None if no resource is needed.
@@ -164,14 +194,15 @@ class MyResourceManager:
             print_tb(loc_traceback)
         print(f'MyResourceManager {self.name} has been released')
 
-if len(sys.argv) != 2:
-    print("Usage: python test_dg_input_read.py <input file name and/or full path>")
-    sys.exit(1)
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("Usage: python test_dg_input_read.py <input file name and/or full path>")
+        sys.exit(1)
 
-# Get command-line arguments
-arg_str_fn = sys.argv[1]
+    # Get command-line arguments
+    arg_str_fn = sys.argv[1]
 
-with MyResourceManager('for->test_dg_input_read'):
-    # Perform some operations with the resource
-    while not dg_lastitem():
-        teszt_olvasas()
+    with MyResourceManager(name= 'for->test_dg_input_read', fn= arg_str_fn):
+        # Perform some operations with the resource
+        while not dg_lastitem():
+            teszt_olvasas()

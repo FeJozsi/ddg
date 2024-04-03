@@ -3,6 +3,7 @@
 .vscode
 #  settings.json  It is in .vscode
 sandbox
+teszt_*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

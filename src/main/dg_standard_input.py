@@ -6,13 +6,16 @@ defined in this module.
 When constructing a `DgStandardInput` object, we need to share a valid object that conforms
 to the properties of DgInpSource in the constructor's parameter.
 """
+from collections.abc import Iterable
 from abc import ABC, abstractmethod
 
-from typing import List
+from typing import List, Any
 # from typing import Dict, Any, Optional
 from ast import literal_eval
 
 from typing_extensions import deprecated # import functools (for the same: @deprecated)?!?!
+
+from dg_exceptions import UnexpectedValueType
 
 class DgInpSource(ABC):
     """
@@ -22,6 +25,23 @@ class DgInpSource(ABC):
     def serve_line(self) -> str:
         """
         This method serves a new row for processing.
+        It does not unconditionally tolerate depending on the implementation that
+        there is no more data on the input.
+
+        Raises:
+            EmptyInputError: Custom exception to reject empty or non-existent or unavailable input.
+            EarlyInputEOF: Custom exception for refuse an incomplete input.
+            UnexpectedIORequest: Unexpected subsequent operation on the input file
+        """
+    @abstractmethod
+    def serve_line_if_any(self) -> str:
+        """
+        This method serves a new row for processing.  
+        It tolerates the first time when there is no more data on the input,
+        it just sets the "eof" status.
+
+        Raises:
+            UnexpectedIORequest: Unexpected subsequent operation on the input file
         """
     @abstractmethod
     def get_state(self) -> str:
@@ -99,24 +119,39 @@ class DgStandardInput:
       #                               else None)
         self.input_source_obj: DgInpSource =  input_source_obj
         self.dg_buffer: str = self.input_source_obj.serve_line()
-        self.dg_list_buff: List = literal_eval(self.dg_buffer)
+        self.dg_list_buff: List = self.dg_my_eval() # literal_eval(self.dg_buffer)
         self.dg_index: int = 0
       # assert not self.dg_lastitem(), ( # As an assert, it is a bad solutin, ...
       #     "Alert DgStandardInput()! Not waited EOF at first using of input."
       # )  # mostly, without rows above. With ... if not self.dg_lastitem()
            #  ... would better; but it is a job of invoker.
-    def ask_line_when_necessary(self) -> None:
+    def ask_line_when_necessary(self, only_ping: bool = False) -> None:
         """
         This method asks for a new input row if it is necessary.
         """
         if self.input_source_obj.get_state() == "serve":
             if self.dg_index >= len(self.dg_list_buff):
-                self.dg_buffer = self.input_source_obj.serve_line()
+                if only_ping:
+                    self.dg_buffer = self.input_source_obj.serve_line_if_any()
+                else:
+                    self.dg_buffer = self.input_source_obj.serve_line()
                 if self.input_source_obj.get_state() == "serve":
-                    self.dg_list_buff = literal_eval(self.dg_buffer)
+                    self.dg_list_buff = self.dg_my_eval() # literal_eval(self.dg_buffer)
                 else:
                     self.dg_list_buff = []
                 self.dg_index = 0
+    def dg_my_eval(self) -> List:
+        """
+        This method gives the values in self.dg_buffer as a list of values.
+        """
+        values_as_is: Any = literal_eval(self.dg_buffer)
+        if values_as_is is None:
+            return []
+        if isinstance(values_as_is, list):
+            return values_as_is
+        if isinstance(values_as_is, Iterable) and not isinstance(values_as_is, (str, bytes)):
+            return list(values_as_is)
+        return [values_as_is]
     def dg_inint(self) -> int:
         """
         This method represents SIMULA'67's ININT.
@@ -140,9 +175,15 @@ class DgStandardInput:
             self.dg_list_buff = self.dg_list_buff[self.dg_index] + [-1]
             self.dg_index = 0
             ret_value = self.dg_inint()     # recursio
-        # else:
-        #     # print("---- else -----")
-        #     ret_value = -1
+        elif ( isinstance(self.dg_list_buff[self.dg_index], Iterable) and
+               not isinstance(self.dg_list_buff[self.dg_index], (str, bytes)) ):
+            self.dg_list_buff = list(self.dg_list_buff[self.dg_index]) + [-1]
+            self.dg_index = 0
+            ret_value = self.dg_inint()     # recursio
+        else:
+            # print("---- else -----")
+            # ret_value = -1
+            raise UnexpectedValueType("Unexpected data value type on the input file")
         return ret_value
     def dg_inreal(self) -> float:
         """
@@ -154,11 +195,17 @@ class DgStandardInput:
         if (not self.input_source_obj.get_state() == "serve" or
             self.dg_index >= len(self.dg_list_buff)):
             ret_value = -1.0
+        elif isinstance(self.dg_list_buff[self.dg_index], int):
+            # print("---- int -----")
+            ret_value = float(self.dg_list_buff[self.dg_index])
+            self.dg_index += 1
         elif isinstance(self.dg_list_buff[self.dg_index], float):
             # print("---- float -----")
             ret_value = self.dg_list_buff[self.dg_index]
             self.dg_index += 1
-        # else: ret_value = -1.0
+        else:
+            # ret_value = -1.0
+            raise UnexpectedValueType("Unexpected data value type on the input file")
         return ret_value
     def dg_lastitem(self) -> bool:
         """
@@ -166,7 +213,7 @@ class DgStandardInput:
         It checks if the input is at the end-of-file (EOF).
         """
         ret_bool: bool = True
-        self.ask_line_when_necessary()
+        self.ask_line_when_necessary(only_ping= True)
         if (not self.input_source_obj.get_state() == "serve" or
             self.dg_index >= len(self.dg_list_buff)):
             ret_bool = True
@@ -180,6 +227,13 @@ class DgStandardInput:
             self.dg_list_buff = self.dg_list_buff[self.dg_index] + [-1]
             self.dg_index = 0
             ret_bool = self.dg_lastitem()   # recursio
+        elif ( isinstance(self.dg_list_buff[self.dg_index], Iterable) and
+               not isinstance(self.dg_list_buff[self.dg_index], (str, bytes)) ):
+            self.dg_list_buff = list(self.dg_list_buff[self.dg_index]) + [-1]
+            self.dg_index = 0
+            ret_bool = self.dg_lastitem()   # recursio
+        else:
+            raise UnexpectedValueType("Unexpected data value type on the input file")
         return ret_bool
     @deprecated("It must be done in a ResourceManager")
     def close_input(self) -> None:      # deprecated!

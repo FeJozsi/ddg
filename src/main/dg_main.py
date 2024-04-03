@@ -22,6 +22,8 @@ from dg_high_level_pseudo_black_boxes import my_control_dict, adatelokeszites, i
 from dg_standard_input import DgInpSource, DgStandardInput, my_dict_for_input
 from dg_standard_input import dg_inint, dg_lastitem # , dg_inreal
 
+from dg_exceptions import EmptyInputError, EarlyInputEOF, UnexpectedIORequest #, InputValueError
+
 class InputTextFile(DgInpSource):
     """
         This class will be the valid object that conforms
@@ -36,6 +38,32 @@ class InputTextFile(DgInpSource):
         self.state: str = "open"
         self.buffer: str = ""
     def serve_line(self) -> str:
+        self.buffer = ""
+        if self.state in ("open", "serve"):
+            st: str = self.state
+            assert self.f
+            self.state = "busy"
+            while self.state == "busy":
+                buf: str = self.f.readline()
+                self.buffer = buf.replace("\n","")
+                # print("  >"+self.buffer)
+                if not buf:
+                    self.state = "eof"
+                    self.f.close()
+                    # break
+                    if st == "open":
+                        raise EmptyInputError("Input cannot be an empty file")
+                    raise EarlyInputEOF("An early EOF was detected on the input file")
+                if not self.buffer:
+                    continue
+                if self.buffer[0] == "#":
+                    continue
+                self.state = "serve"
+        else:
+            self.state = "error"
+            raise UnexpectedIORequest("Unexpected subsequent operation on the input file")
+        return self.buffer
+    def serve_line_if_any(self) -> str:
         self.buffer = ""
         if self.state in ("open", "serve"):
             assert self.f
@@ -53,8 +81,9 @@ class InputTextFile(DgInpSource):
                 if self.buffer[0] == "#":
                     continue
                 self.state = "serve"
-                break
-        else: self.state = "error"
+        else:
+            self.state = "error"
+            raise UnexpectedIORequest("Unexpected subsequent operation on the input file")
         return self.buffer
     def get_state(self) -> str:
         return self.state

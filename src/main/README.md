@@ -4,6 +4,17 @@
 Start date: 2024-02-26  
 The `src\main` directory houses the essential components of the project.
 
+## 2024-04-03 13:50:05 Continue development with enhanced input handling
+
+- Introduced custom exceptions for input management, centralized in `src/main/dg_exceptions.py`.
+- Refined EOF detection to enhance reliability. For this purpose, the DgInpSource ABC within
+the dg_standard_input.py module has been updated with a new method named serve_line_if_any.
+This method tolerates the case when no more data is present on the input;
+it merely sets the 'eof' status.
+- Made input text parsing more flexible while enforcing stricter data type requirements.
+
+Note: Integration of main functions into the GUI is ongoing and far from complete.
+
 ## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
 
 This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.

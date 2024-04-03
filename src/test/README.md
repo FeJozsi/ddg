@@ -4,6 +4,13 @@
 Start date: 2024-02-26
 The `src\test` directory houses the test (unittest) components of the project.
 
+## 2024-04-03 13:50:05 Continue development with enhanced input handling
+
+- Implemented the use of new custom exceptions for input management.
+- Implemented the DgInpSource class's new serve_line_if_any method.
+
+For more details, see src/main/README.md.
+
 ## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
 
 This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.
