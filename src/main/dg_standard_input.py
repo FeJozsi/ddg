@@ -9,11 +9,10 @@ to the properties of DgInpSource in the constructor's parameter.
 from collections.abc import Iterable
 from abc import ABC, abstractmethod
 
-from typing import List, Any
-# from typing import Dict, Any, Optional
+from typing import List, Any # , Dict, Optional
 from ast import literal_eval
 
-from typing_extensions import deprecated # import functools (for the same: @deprecated)?!?!
+from typing_extensions import deprecated # i m port functools (for the same: @deprecated)?!?!
 
 from dg_exceptions import UnexpectedValueType
 

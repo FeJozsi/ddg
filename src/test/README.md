@@ -4,6 +4,16 @@
 Start date: 2024-02-26
 The `src\test` directory houses the test (unittest) components of the project.
 
+## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization
+
+Added `src\test\dg_modules_map.py` for visualizing import relationships between modules.
+The results are created in this folder, but the latest ones are placed in the doc folder
+for documentation purposes.
+
+You will probably try this command if you have the required Python tools and the Graphviz installed:
+
+- `python src\test\dg_modules_map.py`
+
 ## 2024-04-03 13:50:05 Continue development with enhanced input handling
 
 - Implemented the use of new custom exceptions for input management.

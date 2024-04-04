@@ -1,0 +1,38 @@
+// Modules Dependency Graph
+digraph dg_modules_graph {
+	fontname=Arial
+	generate_random_dg_problem [fontname=Arial]
+	dg_gui_draw_on_state [fontname=Arial]
+	dg_gui_window [fontname=Arial]
+	dg_gui_read_only_able_checkbox [fontname=Arial]
+	dg_gui_finite_state_machine [fontname=Arial]
+	dg_gui_draw_on_state -> dg_gui_window
+	dg_gui_draw_on_state -> dg_gui_read_only_able_checkbox
+	dg_gui_draw_on_state -> dg_gui_finite_state_machine
+	dg_gui_main [fontname=Arial]
+	dg_gui_own_event_stack [fontname=Arial]
+	dg_task_manager [fontname=Arial]
+	dg_gui_main -> dg_gui_window
+	dg_gui_main -> dg_gui_own_event_stack
+	dg_gui_main -> dg_gui_finite_state_machine
+	dg_gui_main -> dg_task_manager
+	dg_gui_main -> dg_gui_draw_on_state
+	dg_gui_own_event_stack -> dg_gui_finite_state_machine
+	dg_gui_window -> dg_gui_own_event_stack
+	dg_gui_window -> dg_gui_read_only_able_checkbox
+	dg_gui_window -> dg_gui_finite_state_machine
+	dg_task_manager -> dg_gui_finite_state_machine
+	dg_exceptions [fontname=Arial]
+	dg_high_level_pseudo_black_boxes [fontname=Arial]
+	dg_link [fontname=Arial]
+	dg_main [fontname=Arial]
+	dg_standard_input [fontname=Arial]
+	dg_main -> dg_high_level_pseudo_black_boxes
+	dg_main -> dg_standard_input
+	dg_main -> dg_exceptions
+	dg_standard_input -> dg_exceptions
+	dg_main -> dg_link [style=dashed]
+	generate_random_dg_problem -> dg_gui_main [arrowhead=none style=invisible]
+	dg_gui_own_event_stack -> dg_task_manager [arrowhead=none style=invisible]
+	dg_gui_finite_state_machine -> dg_main [arrowhead=none style=invisible]
+}

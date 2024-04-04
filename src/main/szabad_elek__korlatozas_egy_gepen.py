@@ -9,7 +9,7 @@ from dg_link import dg_first, dg_link_elements, dg_out # DgLink,
 from diszjunktiv_graf import Muveletcsucs
 from diszjunktiv_graf_manipulacioi import Diszjunktiv_graf_manipulacioi, El
 
-# from dg_main import print_cp, print_fixed_edges, print_free_edges  cirkulális betöltési hibát okozna
+# f r om dg_main i m port print_cp, print_fixed_edges, print_free_edges körkörös betöltési hibára fut
 
 class Szabad_elek__korlatozas_egy_gepen(Diszjunktiv_graf_manipulacioi): # 600. origin sor
     """
@@ -166,8 +166,8 @@ class Szabad_elek__korlatozas_egy_gepen(Diszjunktiv_graf_manipulacioi): # 600. o
         in_out_attr[0] = also; in_out_attr[1] = felso           # 785. origin sor: (4), (2) és (1) comment jelű blokkok vége
 
     # # Functions for test (treadmill)  2024.02.
-    # from diszjunktiv_graf import Diszjunktiv_graf, Muveletcsucs
-    # from diszjunktiv_graf_manipulacioi import El
+    # f r om diszjunktiv_graf i m port Diszjunktiv_graf, Muveletcsucs
+    # f r om diszjunktiv_graf_manipulacioi i m port El
     def print_cp(self) -> None:
         l: List[int] = []
         assert self.nyelo

@@ -71,6 +71,7 @@ I installed these packages manually in the virtual environment:
     pip install PyQt6
     pip install qasync
     pip install mypy
+    pip install graphviz
 
 ### The packages' versions in the virtual environment
 
@@ -79,6 +80,7 @@ I installed these packages manually in the virtual environment:
     astroid           3.1.0
     colorama          0.4.6
     dill              0.3.8
+    graphviz          0.20.3
     isort             5.13.2
     mccabe            0.7.0
     mypy              1.9.0

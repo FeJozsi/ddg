@@ -45,8 +45,8 @@ from dg_gui_read_only_able_checkbox import (ReadOnlyAbleCheckBox, QTextEditOutpu
       BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
 
 # The slot will be "finished" in dg_gui_main because of module import issues
-# import dg_gui_draw_on_state
-# from dg_gui_draw_on_state import redraw_my_app_window_on_state
+# i m port dg_gui_draw_on_state
+# f r om dg_gui_draw_on_state i m port r e draw_my_app_window_on_state
 
 class TextForm(BaseForm):
     """
@@ -800,8 +800,8 @@ class MainWindow(QMainWindow):
         The slot will be "filled" using self.set_redraw_my_app_window_on_state()
         in dg_gui_draw_on_state because of module import issues:
         """
-        # dg_gui_draw_on_state.redraw_my_app_window_on_state()
-        # redraw_my_app_window_on_state()
+        # dg_gui_draw_on_state.r e draw_my_app_window_on_state()
+        # r e draw_my_app_window_on_state()
 
         # If an update callable is set, use it; otherwise, use default logic
         if self.redraw_my_app_window_on_state_callable:

@@ -3,8 +3,7 @@ This module encapsulates the functionality of the SIMSET class from SIMULA'67,
 with a focus on the `HEAD` and `LINK` classes, representing a *linked list structure*.
 """
 
-from typing import Sequence # List,
-# from typing import Any
+from typing import Sequence # , List, Any
 
 from typing_extensions import deprecated
 

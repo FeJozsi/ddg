@@ -22,9 +22,7 @@ from dg_link import DgLink
 from dg_link import dg_first
 from dg_link import dg_link_elements
 
-from dg_standard_input import dg_inint
-from dg_standard_input import dg_inreal
-# from dg_standard_input import dg_close_input
+from dg_standard_input import dg_inint, dg_inreal # , dg_close_input
 
 # In Python, you can disable assertions globally by running the interpreter with the -O (optimize) option.
 

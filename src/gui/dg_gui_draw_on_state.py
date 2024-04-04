@@ -2,7 +2,7 @@
 This modul contains functions that draw the elements of the main window according to the state.
 """
 
-# from PyQt6.QtWidgets import (#QApplication, QMainWindow, QFrame, QVBoxLayout, QHBoxLayout,
+# f r om PyQt6.QtWidgets i m port (#QApplication, QMainWindow, QFrame, QVBoxLayout, QHBoxLayout,
 #                              #QPushButton, QLineEdit, QWidget, QLabel, QFileDialog,
 #                              #QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene,
 #                              #QStatusBar, QSpacerItem, QSizePolicy,
@@ -263,15 +263,15 @@ def redraw_my_app_window_on_state() -> None:
 
 # This slot was temporary placed here (in dg_gui_draw_on_state) because of module import issues.
 # # Originally it was in dg_gui_window:
-# #    my_event_stack.redraw_my_app_window_on_state.connect(self.loc_redraw_my_app_window_on_state)
+# # my_event_stack.r e draw_my_app_window_on_state.connect(self.loc_r e draw_my_app_window_on_state)
 
 # BUT, this is wrong, because the connected code does not run in QMainWindow's thread.
-# MyEventStack.redraw_my_app_window_on_state.connect(redraw_my_app_window_on_state())
+# MyEventStack.r e draw_my_app_window_on_state.connect(r e draw_my_app_window_on_state())
 
 # This is ALSO wrong here. Nobody calls (imports) the module.
 #   And..., We must be ensured that main window not instantiated before application.
 # dg_gui_window.get_main_window_instance().\
-#     set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
+#     set_r e draw_my_app_window_on_state(r e draw_my_app_window_on_state)
 
 # Finally it has went into the dg_gui_main.py
 # See in dg_gui_main.py

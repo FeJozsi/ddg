@@ -17,11 +17,10 @@ from PyQt6.QtWidgets import QApplication
 
 import qasync # type: ignore
 
-# from typing_extensions import deprecated
+# f r om typing_extensions i m port deprecated
 
 # Ensure you import your MainWindow class correctly
 from dg_gui_window import get_main_window_instance
-# import dg_gui_window
 
 from dg_gui_finite_state_machine import ( InfluEventSet, DgState, # DimInpT,
                                           state_change_due_to_event,
@@ -31,13 +30,13 @@ from dg_task_manager import carry_out_process
 
 from dg_gui_draw_on_state import redraw_my_app_window_on_state
 
-# from dg_gui_draw_on_state import draw_form_stack_widget
+# f r om dg_gui_draw_on_state i m port d r aw_form_stack_widget
 # # The line above triggered:
-# #  ImportError: cannot import name 'draw_form_stack_widget' from partially
+# #  ImportError: cannot i m port name 'd r aw_form_stack_widget' from partially
 # #               initialized module 'dg_gui_draw_on_state' (most likely due to
 # #               a circular import)
-# import dg_gui_draw_on_state     <<< was the temporary solution
-# [[The reason was: dg_gui_draw_on_state.py contained: from d g _gui_main import M a inWindow]]
+# i m port dg_gui_draw_on_state     <<< was the temporary solution
+# [[The reason was: dg_gui_draw_on_state.py contained: f r om d g _gui_main i m port M a inWindow]]
 from dg_gui_own_event_stack import my_event_stack
 
 original_stdout = sys.stdout  # Save a reference to the original standard output

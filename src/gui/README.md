@@ -4,6 +4,12 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization
+
+Added src\test\dg_modules_map.py for visualizing import relationships between modules.
+Placed dot and PNG outputs in the doc folder.
+Removed sensitive references in comments to ensure relationship accuracy.
+
 ## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
 
 This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.

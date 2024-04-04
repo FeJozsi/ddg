@@ -4,6 +4,14 @@
 Start date: 2024-03-04  
 This folder contains the project's documentations.
 
+## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization; results in doc folder
+
+Added src\test\dg_modules_map.py for visualizing import relationships between modules.
+Placed the latest dot and PNG outputs here; in the doc folder:
+
+- dg_modules_graph_20240404.dot
+- `dg_modules_graph_20240404.png` .
+
 ## 2024-03-13 12:41:48 Added dg_gui_Screenshot_20240313.PNG screenshot
 
 A new screenshot, `dg_gui_Screenshot_20240313.PNG`, has been added to the doc folder

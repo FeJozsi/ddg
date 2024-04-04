@@ -7,7 +7,7 @@ Later, some smaller auxiliary classes were moved here from the dg_gui_window mod
 import os
 import errno
 
-# from abc import ABC, abstractmethod
+# f r om abc i m port ABC, abstractmethod
 
 from PyQt6.QtWidgets import (QCheckBox, QWidget, QTextEdit, QFrame, QLineEdit,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout)
