@@ -4,6 +4,15 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-05 11:31:10 Added dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism
+
+- Added src\test\dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism.
+The generated dot and PNG files have been placed in the doc folder.
+- Introduced a new signal (`message_on_gui` signal) to update the GUI from an asynchronous thread.
+- Refactored to utilize the `MyButton` enum, replacing direct usage of indices 0, 1, 2.
+
+Development continues with the integration of core functionalities and GUI enhancements.
+
 ## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization
 
 Added src\test\dg_modules_map.py for visualizing import relationships between modules.

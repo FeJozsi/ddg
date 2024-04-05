@@ -18,11 +18,14 @@ from dg_gui_finite_state_machine import InfluEventSet
 class MyEventStack(QObject):
     """
     This is a FIFO event stack for the application's own high level events
-    The Close Win events are exceptionally handled as LIFO (Last In, First Out).
+    The Close Win event is exceptionally handled as LIFO (Last In, First Out).
     """
-    redraw_my_app_window_on_state = pyqtSignal() # It must be a class attribute.
+    # Signals for GUI (listen-connect: dg_gui_window.py)
+    redraw_my_app_window_on_state = pyqtSignal() # Signals must be a class attribute.
                                                  # This is connected with using QObject.
     my_application_quit = pyqtSignal()
+    # Message add-ons data: unique code str, type str, control int, message text str:
+    message_on_gui = pyqtSignal(str, str, int, str)
 
     def __init__(self) -> None:
         super().__init__() # It is very important. This is also connected with using QObject.
@@ -91,6 +94,14 @@ class MyEventStack(QObject):
         Emit a signal to quit the application
         """
         self.my_application_quit.emit() # Emit a signal to quit
+    def emit_message_on_gui(self, m_code: str,
+                                  m_type: str = "error_win",
+                                  m_control: int = 0,
+                                  m_text: str = "Unexpected runtime error") -> None:
+        """
+        Emit a signal to quit the application
+        """
+        self.message_on_gui.emit(m_code, m_type, m_control, m_text) # Emit a signal to message
 
 # Create a module-level instance that will be shared
 my_event_stack = MyEventStack()

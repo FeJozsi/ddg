@@ -495,9 +495,9 @@ class DgTransition:
         # quick flow flag management I.
         # Trick: the two If statments below are active in different phases!
         if (loc_rec_state == DgState.IDLE_HAVE_TECHN_INPUT and
-            self.influence.by_buttons[1] and  # ["","Investigate","Continue"]
-            self.influence.by_buttons[2]):
-            loc_quick_flow = bool(influ_event.by_buttons[2])
+            self.influence.by_buttons[MyButton.ACTION.value] and # 1 //["","Investigate","Continue"]
+            self.influence.by_buttons[MyButton.NEXT.value]): # 2
+            loc_quick_flow = bool(influ_event.by_buttons[MyButton.NEXT.value]) # 2
         # Intersection according to "quick_flow" flag I.:
         if ( loc_new_state == DgState.IDLE_TECHN_INP_PRESENT and
              loc_new_alter_state == DgState.IDLE_HAVE_LOWER_BOUND ):
@@ -523,9 +523,9 @@ class DgTransition:
         # quick flow flag management II.
         # Trick: the two If statments below are active in different phases!
         if (loc_rec_state == DgState.IDLE_HAVE_LOWER_BOUND and
-            self.influence.by_buttons[1] and  # ["","Investigate","Continue"]
-            self.influence.by_buttons[2]):
-            loc_quick_flow = bool(influ_event.by_buttons[2])
+            self.influence.by_buttons[MyButton.ACTION.value] and # 1 //["","Investigate","Continue"]
+            self.influence.by_buttons[MyButton.NEXT.value]): # 2
+            loc_quick_flow = bool(influ_event.by_buttons[MyButton.NEXT.value]) # 2
         # Intersection according to "quick_flow" flag II.:
         if ( ( loc_new_state == DgState.IDLE_FIRST_ORD_PRESENT and
                loc_new_alter_state == DgState.IDLE_HAVE_ROOT_INPUT ) or

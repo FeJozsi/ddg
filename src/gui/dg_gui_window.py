@@ -39,7 +39,7 @@ from PyQt6.QtGui import QPixmap, QPainter # QTextCursor,
 
 from typing_extensions import deprecated
 
-from dg_gui_finite_state_machine import DgState, InfluEventSet, gui_control_dict
+from dg_gui_finite_state_machine import DgState, InfluEventSet, gui_control_dict, MyButton
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_read_only_able_checkbox import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
       BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
@@ -499,7 +499,7 @@ class ButtonsFrame(BaseFrame):
         # Example event handle I.: Start async task
         # self.button1.clicked.connect(self.run_async_task) # task_button
         self.button1.clicked.connect(
-            lambda: self.propagate_button_click(0, self.button1)
+            lambda: self.propagate_button_click(MyButton.BACK, self.button1) # 0
         )
 
         # Example event handle II.: Hide the second button
@@ -509,23 +509,23 @@ class ButtonsFrame(BaseFrame):
         # Example event handle III.: Swich GUI Input FORM
         self.button3.clicked.connect(
             # lambda: self.main_window.form_frame.switch_form_stack_widget(self.button3)
-            lambda: self.propagate_button_click(1, self.button3)
+            lambda: self.propagate_button_click(MyButton.ACTION, self.button3) # 1
 
         )
 
         # Example event handle IV.: Swich central part
         self.button4.clicked.connect(
             # lambda: self.main_window.central_frame.switch_central_widget(self.button4)
-            lambda: self.propagate_button_click(2, self.button4)
+            lambda: self.propagate_button_click(MyButton.NEXT, self.button4) # 2
         )
 
-    def propagate_button_click(self, index: int, button: QPushButton) -> None:
+    def propagate_button_click(self, my_button: MyButton, button: QPushButton) -> None:
         """
         This method propagates the button clicks through the high level event stack
         """
         loc_event_text: str = button.text()
         loc_by_buttons: list[str] = ["", "", ""]
-        loc_by_buttons[index] = loc_event_text
+        loc_by_buttons[my_button.value] = loc_event_text
         my_event_stack.post_event(InfluEventSet(by_buttons= loc_by_buttons))
 
     @deprecated("Just for an early demonstration.")

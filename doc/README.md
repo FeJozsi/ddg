@@ -4,6 +4,14 @@
 Start date: 2024-03-04  
 This folder contains the project's documentations.
 
+## 2024-04-05 11:31:10 Added dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism
+
+Added src\test\dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism.
+The generated dot and PNG files have been placed in the doc folder:
+
+- dg_signals_graph.dot
+- `dg_signals_graph.png`
+
 ## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization; results in doc folder
 
 Added src\test\dg_modules_map.py for visualizing import relationships between modules.

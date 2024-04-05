@@ -11,7 +11,7 @@ This modul contains functions that draw the elements of the main window accordin
 #                             )
 from PyQt6.QtWidgets import QLineEdit
 
-from dg_gui_finite_state_machine import DgState, gui_control_dict, DimInpT # , InfluEventSet
+from dg_gui_finite_state_machine import DgState, MyButton, gui_control_dict, DimInpT #,InfluEventSet
 from dg_gui_window import MainWindow, get_main_window_instance  # These occured circular import
 from dg_gui_read_only_able_checkbox import ReadOnlyAbleCheckBox
 
@@ -187,8 +187,8 @@ def draw_button1(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button1
     loc_text = None
-    if lrs.influ_events and lrs.influ_events.by_buttons[0]:
-        loc_text = lrs.influ_events.by_buttons[0]
+    if lrs.influ_events and lrs.influ_events.by_buttons[MyButton.BACK.value]: # 0
+        loc_text = lrs.influ_events.by_buttons[MyButton.BACK.value] # 0
     if loc_text is not None:
         loc_button.setDisabled(False)
         loc_button.setText(loc_text)
@@ -212,8 +212,8 @@ def draw_button3(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button3
     loc_text = None
-    if lrs.influ_events and lrs.influ_events.by_buttons[1]:
-        loc_text = lrs.influ_events.by_buttons[1]
+    if lrs.influ_events and lrs.influ_events.by_buttons[MyButton.ACTION.value]: # 1
+        loc_text = lrs.influ_events.by_buttons[MyButton.ACTION.value] # 1
     if loc_text is not None:
         loc_button.setDisabled(False)
         loc_button.setText(loc_text)
@@ -228,8 +228,8 @@ def draw_button4(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_button = loc_bframe.button4
     loc_text = None
-    if lrs.influ_events and lrs.influ_events.by_buttons[2]:
-        loc_text = lrs.influ_events.by_buttons[2]
+    if lrs.influ_events and lrs.influ_events.by_buttons[MyButton.NEXT.value]: # 2
+        loc_text = lrs.influ_events.by_buttons[MyButton.NEXT.value] # 2
     if loc_text is not None:
         loc_button.setDisabled(False)
         loc_button.setText(loc_text)

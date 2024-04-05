@@ -4,9 +4,20 @@
 Start date: 2024-02-26
 The `src\test` directory houses the test (unittest) components of the project.
 
+## 2024-04-05 11:31:10 Added dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism
+
+- Added `dg_signals_graph.py` to visualize the usage of the pyqtSignal() mechanism.
+The results are created in this folder, but the latest ones are placed in the doc folder
+for documentation purposes.
+- Introduced a new signal (message_on_gui) to update the GUI from an asynchronous thread.
+
+You will probably try this command if you have the required Python tools and the Graphviz installed:
+
+- `python src\test\dg_signals_map.py`
+
 ## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization
 
-Added `src\test\dg_modules_map.py` for visualizing import relationships between modules.
+Added `dg_modules_map.py` for visualizing import relationships between modules.
 The results are created in this folder, but the latest ones are placed in the doc folder
 for documentation purposes.
 
