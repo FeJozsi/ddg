@@ -4,7 +4,7 @@ This modul serves the application's own high level event stack
 # Use shared_instance
     from dg_gui_own_event_stack import my_event_stack
 
-    my_event_stack.post_event( influ_event # <InfluEventSet>)
+    my_event_stack.post_event( influ_event # <InfluEventSet>
                              ) 
 """
 import sys
@@ -13,7 +13,7 @@ from collections import deque
 
 from PyQt6.QtCore import pyqtSignal, QObject
 
-from dg_gui_finite_state_machine import InfluEventSet
+from dg_gui_finite_state_machine import InfluEventSet, NewsType
 
 class MyEventStack(QObject):
     """
@@ -24,8 +24,8 @@ class MyEventStack(QObject):
     redraw_my_app_window_on_state = pyqtSignal() # Signals must be a class attribute.
                                                  # This is connected with using QObject.
     my_application_quit = pyqtSignal()
-    # Message add-ons data: unique code str, type str, control int, message text str:
-    message_on_gui = pyqtSignal(str, str, int, str)
+    # Message add-ons data: unique code str, type NewsType, control int, message text str:
+    message_on_gui = pyqtSignal(str, NewsType, int, str)
 
     def __init__(self) -> None:
         super().__init__() # It is very important. This is also connected with using QObject.
@@ -95,7 +95,7 @@ class MyEventStack(QObject):
         """
         self.my_application_quit.emit() # Emit a signal to quit
     def emit_message_on_gui(self, m_code: str,
-                                  m_type: str = "error_win",
+                                  m_type: NewsType = NewsType.ERROR_WIN,
                                   m_control: int = 0,
                                   m_text: str = "Unexpected runtime error") -> None:
         """

@@ -20,7 +20,7 @@ import qasync # type: ignore
 # f r om typing_extensions i m port deprecated
 
 # Ensure you import your MainWindow class correctly
-from dg_gui_window import get_main_window_instance
+from dg_gui_window import MainWindow, get_main_window_instance
 
 from dg_gui_finite_state_machine import ( InfluEventSet, DgState, # DimInpT,
                                           state_change_due_to_event,
@@ -75,12 +75,20 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
             await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
         print("The process_event_stack() was broken.",
                 file= sys.stderr)
+    except (MemoryError, SystemError, OverflowError, RecursionError, SyntaxError) as e:
+        # raise e
+        print(f"The process_event_stack raised an exception: {e}",
+                file= sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        raise # by itself is used to re-raise the current exception
     except Exception as e: # pylint: disable=W0718 # Catching too general
                            #  ... exception Exception (broad-exception-caught)
         gui_control_dict["rec_state"] = DgState.STOP
         print(f"The process_event_stack raised an exception: {e}",
                 file= sys.stderr)
         traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
 
     my_event_stack.emit_my_application_quit()
 
@@ -100,12 +108,20 @@ async def carry_out_processes() -> None:
                 continue
             # Simulate async work with sleep
             await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
+    except (MemoryError, SystemError, OverflowError, SyntaxError) as e: # , RecursionError
+        # raise e
+        print(f"The process_event_stack raised an exception: {e}",
+                file= sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        raise # by itself is used to re-raise the current exception
     except Exception as e: # pylint: disable=W0718 # Catching too general
                            #  ... exception Exception (broad-exception-caught)
         gui_control_dict["rec_state"] = DgState.STOP
         print(f"The carry_out_processes raised an exception: {e}",
                 file= sys.stderr)
         traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
 
         my_event_stack.emit_my_application_quit()
 
@@ -156,7 +172,7 @@ def dg_gui_main():
 
     # main_window = MainWindow()
     # main_window = mw
-    main_window = get_main_window_instance()
+    main_window: MainWindow = get_main_window_instance()
 
     main_window.set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
 

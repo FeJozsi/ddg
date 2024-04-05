@@ -133,50 +133,51 @@ class MyResourceManager:
             print_tb(loc_traceback)
         print(f'MyResourceManager {self.name} has been released')
 
-if len(sys.argv) != 2:
-    print("Usage: python dg_main.py <input file name and/or full path>")
-    sys.exit(1)
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("Usage: python dg_main.py <input file name and/or full path>")
+        sys.exit(1)
 
-# Get command-line arguments
-arg_str_fn = sys.argv[1]
-dg_o: Vezerles | None = None
+    # Get command-line arguments
+    arg_str_fn = sys.argv[1]
+    dg_o: Vezerles | None = None
 
-with MyResourceManager('for->test_dg_input_read'):
-    # Perform some operations with the resource
+    with MyResourceManager('for->test_dg_input_read'):
+        # Perform some operations with the resource
 
-    # Main iteration for analyzing one or more disjunctive graphs   # 1230. origin sor
-    #
-    while not dg_lastitem():
-        dg_o = Vezerles(dg_inint(), dg_inint()) # muveletszam: int, gepszam: int
-        my_control_dict["dg_o"] = dg_o          # propagate to lower levels
-        my_control_dict["step_back"] = False    # initialize
-        my_control_dict["my_continue"] = True   # initialize
+        # Main iteration for analyzing one or more disjunctive graphs   # 1230. origin sor
+        #
+        while not dg_lastitem():
+            dg_o = Vezerles(dg_inint(), dg_inint()) # muveletszam: int, gepszam: int
+            my_control_dict["dg_o"] = dg_o          # propagate to lower levels
+            my_control_dict["step_back"] = False    # initialize
+            my_control_dict["my_continue"] = True   # initialize
 
-        print("* The determination of the minimax critical path length "
-              "of a directed disjunctive graph has commenced. *")
-        print("* The 'engine' structure (i.e. the main utilized custom class hierarchy) *")
-        dg_class_name_list: List = [x.__name__ for x in Vezerles.__mro__]
-        dg_class_name_list.reverse()
-        print(dg_class_name_list[1:])
+            print("* The determination of the minimax critical path length "
+                "of a directed disjunctive graph has commenced. *")
+            print("* The 'engine' structure (i.e. the main utilized custom class hierarchy) *")
+            dg_class_name_list: List = [x.__name__ for x in Vezerles.__mro__]
+            dg_class_name_list.reverse()
+            print(dg_class_name_list[1:])
 
-        print("** Az input adatok **")
-        print("** Műveletszám, gépszám **")
-        print((f"[{dg_o.muveletszam}, {dg_o.gepszam}]"))
+            print("** Az input adatok **")
+            print("** Műveletszám, gépszám **")
+            print((f"[{dg_o.muveletszam}, {dg_o.gepszam}]"))
 
-        # Megelőző elemzést végez
-        adatelokeszites()
-        print("** Gépeken végrehajtandó műveletek darabszáma a gépek sorrendjében **")
-        l: List = [dg_o.gep_muveletszama[k] for k in range(dg_o.gepszam)]
-        print(l)
-        print("** Művelet azonosítók a gépek sorrendjében, "
-              "azaz elöl az első gépen végrehajtandók és így továb **")
-        l = [dg_o.muvelet[k].azonosito for k in range(dg_o.muveletszam)]
-        print(l)
+            # Megelőző elemzést végez
+            adatelokeszites()
+            print("** Gépeken végrehajtandó műveletek darabszáma a gépek sorrendjében **")
+            l: List = [dg_o.gep_muveletszama[k] for k in range(dg_o.gepszam)]
+            print(l)
+            print("** Művelet azonosítók a gépek sorrendjében, "
+                "azaz elöl az első gépen végrehajtandók és így továb **")
+            l = [dg_o.muvelet[k].azonosito for k in range(dg_o.muveletszam)]
+            print(l)
 
-        if dg_o.megelozo_elemzes_mast_nem_mond():
-            dg_o.kezdeti_sorrend_felallitasa()
-            iteraciok()
-            eredmeny()
-            dg_o.print_cp()
-        print("* The determination of the minimax critical path length "
-              "of the directed disjunctive graph has finished. *")
+            if dg_o.megelozo_elemzes_mast_nem_mond():
+                dg_o.kezdeti_sorrend_felallitasa()
+                iteraciok()
+                eredmeny()
+                dg_o.print_cp()
+            print("* The determination of the minimax critical path length "
+                "of the directed disjunctive graph has finished. *")

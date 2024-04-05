@@ -100,6 +100,15 @@ I installed these packages manually in the virtual environment:
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
+### 2024-04-05 23:39:47 The first real task of the Task Factory has been created
+
+We reached a new milestone. `The first real task` of the GUI's Task Factory has been done
+(in the dg_task_manager module).  
+This task (represented by BusyInpTextRead(CommonRealTask) class) reads the Directed Disjunctiv
+Graph description input file and checks all requirements of data.
+
+For more details, see src\gui\README.md.
+
 ### 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
 
 This commit addresses and eliminates `MyPy type checking issues` identified in 20 Python source files

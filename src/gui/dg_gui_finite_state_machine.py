@@ -4,19 +4,42 @@ based on Finite State Machine (FSM) principles.
 It provides the necessary states and transitions for managing GUI operations,
 facilitating decision-making, observation, and iteration processes within a
 user interface.
-"""
+""" # pylint: disable=C0302 # Too many lines in module (.../1000) (too-many-lines)
 
 from enum import Enum, auto
 from typing import List, Union, TypedDict
 from datetime import datetime
 
+class NewsType(Enum):
+    """
+    This class lists the message types of the MyEventStack.message_on_gui signal.
+    (See dg_gui_own_event_stack and dg_gui_window modules.)
+    
+    Members:
+        ERROR_WIN:       Modal error window message
+        WARNING_WIN:     Modal warning window message
+        FILL_NB_MACHINE: Fill Nb. Machines
+        FILL_NB_OPER:    Fill Nb. Operations
+        FILL_MAX_DEPTH:  Fill Max. Depth
+        FILL_TIMEOUT:    Fill Timeout
+        FILL_LOG_DETAIL: Fill if ask Log Detail
+    """
+    ERROR_WIN       = auto()
+    WARNING_WIN     = auto()
+    FILL_NB_MACHINE = auto()
+    FILL_NB_OPER    = auto()
+    FILL_MAX_DEPTH  = auto()
+    FILL_TIMEOUT    = auto()
+    FILL_LOG_DETAIL = auto()
+
 class MyButton(Enum):
     """
-    This class lists the three used buttons
+    This class lists the three used control buttons' inside representations.
+    The values used in the enum (0, 1 and 2) matter.
     """
-    BACK = 0
-    ACTION = 1
-    NEXT = 2
+    BACK = 0    # see button1
+    ACTION = 1  # see button3
+    NEXT = 2    # see button4
 
 class InfluEventSet:
     """

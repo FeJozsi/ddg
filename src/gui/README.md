@@ -4,6 +4,18 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-05 23:39:47 The first real task of the Task Factory has been created
+
+We reached a new milestone.  
+`The first real task` of the Task Factory has been done (in the dg_task_manager module).  
+This task (represented by `BusyInpTextRead(CommonRealTask)` class) reads the Directed Disjunctiv
+Graph description input file and checks all requirements of data.
+It sends messages to the GUI about the most important attributes of description data.  
+Introduced also the `NewsType` enum (see in dg_gui_finite_state_machine module) to control
+the handle of asynchronous GUI messages.
+
+Development continues with the integration of core functionalities and GUI enhancements.
+
 ## 2024-04-05 11:31:10 Added dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism
 
 - Added src\test\dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism.

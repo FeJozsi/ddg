@@ -286,7 +286,7 @@ def generate_random_input() -> None:
         "on the first machine listed first, and so forth.\n"
          "#   We need to specify an equal number of positive number IDs "
          "as there are operations. These number IDs must be distinct, "
-         "with none exceeding the total number of operations:)\n"
+         "with none exceeding the total number of operations:\n"
     )
     grdg.f.write(str(inner_order) + "\n\n")
 

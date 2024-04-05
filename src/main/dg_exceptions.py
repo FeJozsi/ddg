@@ -19,12 +19,22 @@ class UnexpectedIORequest(RuntimeError):
         Unexpected subsequent operation on the input file
     """
 
+class UnexpectedValueType(ValueError):
+    """
+        Unexpected data value type on the input file
+    """
+
 class InputValueError(ValueError):
     """
         Bad value from the input
     """
 
-class UnexpectedValueType(ValueError):
+class TooLargeDescription(FileNotFoundError):
     """
-        Unexpected data value type on the input file
+        The DDG description file is too large (> 500 kb)
+    """
+
+class UnknownEncodingError(FileNotFoundError):
+    """
+        The encoding of the DDG description file is unknown. It is neither UTF-8 nor CP1250
     """
