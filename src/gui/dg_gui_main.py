@@ -28,7 +28,7 @@ from dg_gui_finite_state_machine import ( InfluEventSet, DgState, # DimInpT,
                                          )
 from dg_task_manager import carry_out_process
 
-from dg_gui_draw_on_state import redraw_my_app_window_on_state
+from dg_gui_draw_on_state import redraw_my_app_window_on_state, message_on_gui
 
 # f r om dg_gui_draw_on_state i m port d r aw_form_stack_widget
 # # The line above triggered:
@@ -69,6 +69,8 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
                 state_change_due_to_event(influ_event= event)
                 if gui_control_dict["rec_state"] == DgState.STOP:
                     break
+                if event.by_process:
+                    my_event_stack.set_ready_dtn()
                 my_event_stack.emit_redraw_my_app_window_on_state()
 
             # Simulate async work with sleep
@@ -101,7 +103,8 @@ async def carry_out_processes() -> None:
             if gui_control_dict["rec_state"] == DgState.STOP:
                 break
             # Check if there is a task to execute
-            if gui_control_dict["rec_state"].name.startswith("BUSY_"):
+            if ( gui_control_dict["rec_state"].name.startswith("BUSY_")
+                 and not bool(my_event_stack.busy_start) ):
                 await carry_out_process()
                 await asyncio.sleep(0.00001) # Prevents hogging the CPU, adjust the time as needed
                 my_event_stack.emit_redraw_my_app_window_on_state()
@@ -155,7 +158,7 @@ def on_about_to_quit(tasks: List[asyncio.Task]):
 #     msg = context.get("exception", context["message"])
 #     print(f"Caught an asyncio exception: {msg}", file= sys.stderr)
 
-def dg_gui_main():
+def dg_gui_main() -> None:
     """
     This function is the main runable one of the GUI controlled version of ddg project.
     """
@@ -174,7 +177,9 @@ def dg_gui_main():
     # main_window = mw
     main_window: MainWindow = get_main_window_instance()
 
+    # "push when ready" (the main window) and "propagate via push":
     main_window.set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
+    main_window.set_message_on_gui(message_on_gui)
 
     main_window.show()
 

@@ -14,7 +14,7 @@ from ast import literal_eval
 
 from typing_extensions import deprecated # i m port functools (for the same: @deprecated)?!?!
 
-from dg_exceptions import UnexpectedValueType
+from dg_exceptions import InputSyntaxError, UnexpectedValueType
 
 class DgInpSource(ABC):
     """
@@ -143,7 +143,19 @@ class DgStandardInput:
         """
         This method gives the values in self.dg_buffer as a list of values.
         """
-        values_as_is: Any = literal_eval(self.dg_buffer)
+        my_mes: str = ""
+        values_as_is: Any
+        try:
+            values_as_is = literal_eval(self.dg_buffer)
+        except (SyntaxError, SyntaxWarning) as e:
+            my_mes = ("The input data lines must be able to eval as Iterable of number elements.\n"
+                      "For example: '[42, 24, 12]', or 42 stand alone, than 24 etc.\n\n"
+                      "There is a SyntaxError in this line")
+            if len(self.dg_buffer) <= 256:
+                my_mes += ":\n" + self.dg_buffer + "\n"
+            else:
+                my_mes += " (begining with):\n" + self.dg_buffer[0:255] + "\n"
+            raise InputSyntaxError(my_mes) from e
         if values_as_is is None:
             return []
         if isinstance(values_as_is, list):
@@ -151,6 +163,14 @@ class DgStandardInput:
         if isinstance(values_as_is, Iterable) and not isinstance(values_as_is, (str, bytes)):
             return list(values_as_is)
         return [values_as_is]
+    def prepare_wrong_data(self, my_data: Any) -> str:
+        """
+            Prepare wrong data to show in exception message
+        """
+        ret_value: str = str(my_data)
+        if len(ret_value) <= 259:
+            return ret_value
+        return ret_value[0:255] + " ..."
     def dg_inint(self) -> int:
         """
         This method represents SIMULA'67's ININT.
@@ -182,7 +202,9 @@ class DgStandardInput:
         else:
             # print("---- else -----")
             # ret_value = -1
-            raise UnexpectedValueType("Unexpected data value type on the input file")
+            raise UnexpectedValueType("Unexpected data value type on the input file.\n"
+                                      "The data being refused is: " +
+                                      self.prepare_wrong_data(self.dg_list_buff[self.dg_index]))
         return ret_value
     def dg_inreal(self) -> float:
         """
@@ -204,7 +226,9 @@ class DgStandardInput:
             self.dg_index += 1
         else:
             # ret_value = -1.0
-            raise UnexpectedValueType("Unexpected data value type on the input file")
+            raise UnexpectedValueType("Unexpected data value type on the input file.\n"
+                                      "The data being refused is: " +
+                                      self.prepare_wrong_data(self.dg_list_buff[self.dg_index]))
         return ret_value
     def dg_lastitem(self) -> bool:
         """
@@ -232,7 +256,9 @@ class DgStandardInput:
             self.dg_index = 0
             ret_bool = self.dg_lastitem()   # recursio
         else:
-            raise UnexpectedValueType("Unexpected data value type on the input file")
+            raise UnexpectedValueType("Unexpected data value type on the input file.\n"
+                                      "The data being refused is: " +
+                                      self.prepare_wrong_data(self.dg_list_buff[self.dg_index]))
         return ret_bool
     @deprecated("It must be done in a ResourceManager")
     def close_input(self) -> None:      # deprecated!

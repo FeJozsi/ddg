@@ -4,6 +4,7 @@ to the main operations, which are represented here as tasks.
 
 Tasks that are not ready will be replaced with their corresponding imitated versions.
 """
+import sys
 import os
 
 from abc import ABC, abstractmethod
@@ -12,6 +13,9 @@ import inspect
 import random
 
 from typing import Type
+import traceback
+
+from typing_extensions import deprecated
 
 from dg_gui_finite_state_machine import (DgState, InfluEventSet, NewsType,
                                          state_change_due_to_event,
@@ -19,7 +23,7 @@ from dg_gui_finite_state_machine import (DgState, InfluEventSet, NewsType,
 
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_window import MainWindow, get_main_window_instance
-from dg_exceptions import (EmptyInputError, EarlyInputEOF, UnexpectedValueType,
+from dg_exceptions import (EmptyInputError, EarlyInputEOF, InputSyntaxError, UnexpectedValueType,
                            InputValueError, TooLargeDescription, UnknownEncodingError)
 from dg_main import InputTextFile
 from dg_standard_input import DgStandardInput, dg_inint, dg_inreal, my_dict_for_input # DgInpSource,
@@ -59,9 +63,52 @@ class CommonRealTask(MyTask):
         self.answers: tuple[str, ...] = answers
         self.task_name: str = task_name
         self.main_window: MainWindow = get_main_window_instance()
+        self.my_success: bool = False
     async def execute(self) -> int:
-        # Implementation or pass if not ready
-        return 1
+        try_exception_str: str | None = None
+        message_code: str | None = None
+        try:
+            await self.to_run()
+        except (FileNotFoundError, TooLargeDescription, UnknownEncodingError, InputValueError,
+                EmptyInputError, EarlyInputEOF, UnexpectedValueType, InputSyntaxError) as e:
+            # my_event_stack.emit_message_on_gui("TR11-" + self.__class__.__name__,
+            #                m_text= "An exception occurred, the task was interrupted.\n\n"
+            #                "Details:\n" + str(e))
+            # return 0
+            try_exception_str = ( "An exception occurred, the task was interrupted.\n\n"
+                                  "Details:\n" + str(e) )
+            message_code = "TR11-" + self.__class__.__name__
+
+            print(f"The CommonRealTask.to_run() raised an exception: {try_exception_str}",
+                    file= sys.stdout)
+            sys.stdout.flush()
+        except (MemoryError, SystemError, OverflowError, SyntaxError,
+                LookupError, ImportError, AssertionError, AttributeError,
+                BufferError, NameError, ArithmeticError, StopAsyncIteration,
+                StopIteration, TypeError): # , RecursionError
+            raise # by itself is used to re-raise the current exception
+        except Exception as e: # pylint: disable=W0718 # Catching too general broad-exception-caught
+            try_exception_str = str(e)
+            print(f"The CommonRealTask.to_run() raised an exception: {try_exception_str}",
+                    file= sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            sys.stderr.flush()
+            # my_event_stack.emit_message_on_gui("TR12-" + self.__class__.__name__,
+            #             m_text= "An UNEXPECTED exception occurred, the task was interrupted.\n\n"
+            #             "Details:\n" + str(e))
+            # return 0
+            try_exception_str = ( "An UNEXPECTED exception occurred, the task was interrupted.\n\n"
+                                  "Details:\n" + try_exception_str )
+            message_code = "TR12-" + self.__class__.__name__
+        if try_exception_str:
+            assert message_code
+            my_event_stack.emit_message_on_gui(m_code= message_code,
+                                               m_text= try_exception_str)
+            return 0
+        return 2 if self.my_success else 1
+    @abstractmethod
+    async def to_run(self) -> None:
+        """ The core of the functionality"""
 
 class A(CommonRealTask):
     """
@@ -71,16 +118,11 @@ class A(CommonRealTask):
                  answers: tuple[str, ...],
                  task_name: str) -> None:
         super().__init__(answers= answers, task_name= task_name)
-    async def execute(self) -> int:
+    async def to_run(self) -> None:
         # Implementation or pass if not ready
-        try:
-            pass
-        except Exception as _: # pylint: disable=W0718 # Catching too general broad-exception-caught
-            pass
-        return 1
+        pass
 
-
-def check_encoding(file_path):
+def check_encoding(file_path) -> str:
     """ Check the file access and detect code page"""
     fp: str = file_path
     file_size: int
@@ -129,7 +171,7 @@ def my_ordinal(n: int) -> str:
         suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
     return str(n) + suffix
 
-def my_gep_ind(first_ind: list[int], last_ind: list[int], op_index: int) -> str:
+def my_gep_ind(first_ind: list[int], last_ind: list[int], op_index: int) -> int:
     """
         Search for the index of range 
     """
@@ -177,7 +219,8 @@ def test_read() -> None:
         raise InputValueError(f"Error! The {str_ind} number (data) from the input is incorrect. "
                               "The maximum depth level of solution tree can not be negative.")
     index += 1                           # True if dg_inint() else False
-    info_demand: bool = bool(dg_inint()) # Step-by-step information
+    # info_demand: bool = bool(dg_inint()) # Step-by-step information
+    info_demand: int = dg_inint()        # Step-by-step information
     if info_demand is None:
         str_ind = my_ordinal(index)
         raise InputValueError(f"Error! The {str_ind} number (data) from the input is incorrect. "
@@ -209,8 +252,8 @@ def test_read() -> None:
     #   with the identifiers of operations on the first machine listed first, and so forth.
     #   We need to specify an equal number of positive number IDs as there are operations.
     #   These number IDs must be distinct, with none exceeding the total number of operations)
-    ind_1: str = my_ordinal(index)
-    ind_2: str = my_ordinal(index + m - 1)
+    ind_1 = my_ordinal(index)
+    ind_2 = my_ordinal(index + m - 1)
     muv_azon: list[int] = []
     for _ in range(0, m):
         muv_azon.append(dg_inint())
@@ -307,8 +350,9 @@ def test_read_4(muv_azon, gep_first_ind, gep_last_ind, index) -> None:
             raise InputValueError(f"Error! The {str_ind} number (data) from the input is incorrect."
                                   f" We found {gepje} as machine ID. The proper value would be "
                                   f"{my_gep_id}.\n"
-                                  "Because the ID of the operation in the previous listing is "
-                                  "in the range belonging to the machine mentioned later.\n"
+                                  f"Because the ID of the operation ({azonosito}) is "
+                                  "in the range belonging to the machine mentioned later "
+                                  "in the previous operation list.\n"
                                   "Identifiers of operations grouped by machines in sequential "
                                   "order, with the identifiers of operations on the first machine "
                                   "listed first, and so forth, in that previous operation ID list.")
@@ -359,36 +403,19 @@ class BusyInpTextRead(CommonRealTask):
                  answers: tuple[str, ...],
                  task_name: str) -> None:
         super().__init__(answers= answers, task_name= task_name)
-    async def execute(self) -> int:
+    async def to_run(self) -> None:
         file_path: str = self.main_window.form_frame.text_form.file_input.text()
         loc_encoding: str
-        try:
-            loc_encoding = check_encoding(file_path)
-            # read via text mode
-            with open(file_path, "rt", encoding= loc_encoding) as loc_file:
-                itf: InputTextFile = InputTextFile(file_path)
-                itf.f = loc_file
-                # Propagate a new DgStandardInput to the dg_standard_input module
-                my_dict_for_input["dg_input_object"] = DgStandardInput(itf)
+        loc_encoding = check_encoding(file_path)
+        # read via text mode
+        with open(file_path, "rt", encoding= loc_encoding) as loc_file:
+            itf: InputTextFile = InputTextFile(file_path)
+            itf.f = loc_file
+            # Propagate a new DgStandardInput to the dg_standard_input module
+            my_dict_for_input["dg_input_object"] = DgStandardInput(itf)
 
-                test_read()
-        except (FileNotFoundError, TooLargeDescription, UnknownEncodingError, InputValueError,
-                EmptyInputError, EarlyInputEOF, UnexpectedValueType) as e:
-            my_event_stack.emit_message_on_gui("TR11",
-                           m_text= "An exception occurred, the task was interrupted.\n\n"
-                           "Details:\n" + str(e))
-            return 0
-        except (MemoryError, SystemError, OverflowError, SyntaxError,
-                LookupError, ImportError, AssertionError, AttributeError,
-                BufferError, NameError, ArithmeticError, StopAsyncIteration,
-                StopIteration, TypeError): # , RecursionError
-            raise # by itself is used to re-raise the current exception
-        except Exception as e: # pylint: disable=W0718 # Catching too general broad-exception-caught
-            my_event_stack.emit_message_on_gui("TR12",
-                           m_text= "An UNEXPECTED exception occurred, the task was interrupted.\n\n"
-                           "Details:\n" + str(e))
-            return 0
-        return 1
+            test_read()
+
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
         return True
@@ -464,9 +491,10 @@ class TaskFactory:
         loc_task: MyTask = self.get_task()
         loc_result: int = await loc_task.execute()
         return self.answers[loc_result]
+    @deprecated("Use run_and_post_result_event() instead of it.")
     async def run_and_propagate_result(self) -> None:
         """
-        This method executes the functionality
+        Deprecated: This method executes the functionality
         via a task object, and propagates the result
         vie the state_change_due_to_event() function of FSM.
 
@@ -479,6 +507,25 @@ class TaskFactory:
         print(self.task_name, ":", loc_respond)
         loc_event: InfluEventSet = InfluEventSet(by_process= loc_respond)
         state_change_due_to_event(influ_event= loc_event)
+
+    async def run_and_post_result_event(self) -> None:
+        """
+        This method executes the functionality
+        via a task object, and post the result
+        by the my_event_stack.post_event() method.
+
+        REAL_USE global variable:
+            False: the method runs the imitator's object definitely.
+            True:  the method tries to run the real class' object,
+                     if their Class already is not ABC.
+        """
+        my_event_stack.set_busy_start()
+        loc_respond: str = await self.run_task()
+        print(self.task_name, ":", loc_respond)
+        loc_event: InfluEventSet = InfluEventSet(by_process= loc_respond)
+        # state_change_due_to_event(influ_event= loc_event)
+        my_event_stack.post_event(e= loc_event)
+        # my_event_stack.set_ready_dtn()   -- Only after event handle in dg_gui_main.py
 
 async def carry_out_process() -> None:
     """
@@ -543,7 +590,8 @@ async def carry_out_process() -> None:
     else:
         raise ValueError("Attention carry_out_process! "
                         f"Unknown DgState sate ({loc_rec_state.value}) named {loc_rec_state.name}")
-    await loc_factory.run_and_propagate_result()
+    # await loc_factory.run_and_propagate_result()
+    await loc_factory.run_and_post_result_event()
 
 # # # Just for test for here:
  # Real MyTask (potentially abstract if not fully implemented)

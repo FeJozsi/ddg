@@ -4,6 +4,14 @@
 Start date: 2024-02-26
 The `src\test` directory houses the test (unittest) components of the project.
 
+## 2024-04-09 16:44:37 Enhancements in GUI Module
+
+- Began implementing handling for message_on_gui PyQT signal in src\gui\dg_gui_draw_on_state.py.
+- In src\test\dg_signals_map.py, facilitated the integration of the new `message_on_gui` signal,
+where it is "listened" by dg_gui_window.py and "implemented" by dg_gui_draw_on_state.py,
+mirroring the approach used for the redraw_my_app_window_on_state signal.
+The appropriate callable is pushed into MainWindow by dg_gui_main after its creation.
+
 ## 2024-04-05 11:31:10 Added dg_signals_graph.py to visualize the usage of the pyqtSignal() mechanism
 
 - Added `dg_signals_graph.py` to visualize the usage of the pyqtSignal() mechanism.

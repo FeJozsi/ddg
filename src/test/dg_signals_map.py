@@ -12,11 +12,11 @@ def generate_graph():
                     engine= "circo" ) # engine= "dot" , rankdir= "TB"
     graph.attr(fontname= "Arial") # "Times New Roman" "Helvetica"
 
-    my_nodes = ["dg_gui_main",
+    my_nodes = ["dg_gui_own_event_stack",
+                "dg_gui_main",
                 "dg_gui_window",
                 "dg_gui_draw_on_state",
-                "dg_task_manager",
-                "dg_gui_own_event_stack"]
+                "dg_task_manager"]
     my_signals_nodes = ["my_application_quit", "redraw_my_app_window_on_state", "message_on_gui"]
     # Add nodes I.: modules
     for my_node in my_nodes:
@@ -57,10 +57,6 @@ def generate_graph():
     graph.edge("dg_task_manager", "message_on_gui",
                label= "emit",
                fontname= "Arial")
-    # Add edges IV.: implement
-    graph.edge("redraw_my_app_window_on_state", "dg_gui_draw_on_state",
-               label= "implement",
-               fontname= "Arial")
     # Add edges IV.: listen (connect)
     graph.edge("my_application_quit", "dg_gui_window",
                label= "listen & implem",
@@ -69,7 +65,14 @@ def generate_graph():
                label= "listen",
                fontname= "Arial")
     graph.edge("message_on_gui", "dg_gui_window",
-               label= "listen & implem",
+               label= "listen",
+               fontname= "Arial")
+    # Add edges V.: implement
+    graph.edge("redraw_my_app_window_on_state", "dg_gui_draw_on_state",
+               label= "implement",
+               fontname= "Arial")
+    graph.edge("message_on_gui", "dg_gui_draw_on_state",
+               label= "implement",
                fontname= "Arial")
 
     # Tricks to rotate:
@@ -98,28 +101,28 @@ my_graph.render(filename= "src/test/dg_signals_graph.dot",
                 view= True,
                 outfile= "src/test/dg_signals_graph.png")
 
-"""
-from graphviz import Digraph
+# """
+# from graphviz import Digraph
 
-dot = Digraph()
+# dot = Digraph()
 
-# Default style for modules
-dot.attr('node', shape='box', style='filled', color='lightgrey')
+# # Default style for modules
+# dot.attr('node', shape='box', style='filled', color='lightgrey')
 
-# Add module nodes
-dot.node('module1', 'Module 1')
-dot.node('module2', 'Module 2')
+# # Add module nodes
+# dot.node('module1', 'Module 1')
+# dot.node('module2', 'Module 2')
 
-# Custom style for signal nodes
-dot.attr('node', shape='ellipse', style='filled', fillcolor='lightblue')
+# # Custom style for signal nodes
+# dot.attr('node', shape='ellipse', style='filled', fillcolor='lightblue')
 
-# Add signal nodes
-dot.node('signal1', 'Signal A')
-dot.node('signal2', 'Signal B')
+# # Add signal nodes
+# dot.node('signal1', 'Signal A')
+# dot.node('signal2', 'Signal B')
 
-# Add edges
-dot.edges(['module1signal1', 'signal1module2', 'module2signal2'])
+# # Add edges
+# dot.edges(['module1signal1', 'signal1module2', 'module2signal2'])
 
-# Generate the graph
-print(dot.source)  # or dot.render('filename.gv') to save the graph
-"""
+# # Generate the graph
+# print(dot.source)  # or dot.render('filename.gv') to save the graph
+# """

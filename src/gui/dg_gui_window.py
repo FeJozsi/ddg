@@ -39,9 +39,9 @@ from PyQt6.QtGui import QPixmap, QPainter # QTextCursor,
 
 from typing_extensions import deprecated
 
-from dg_gui_finite_state_machine import DgState, InfluEventSet, gui_control_dict, MyButton
+from dg_gui_finite_state_machine import DgState, InfluEventSet, NewsType, gui_control_dict, MyButton
 from dg_gui_own_event_stack import my_event_stack
-from dg_gui_read_only_able_checkbox import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
+from dg_gui_prepare_window import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
       BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
 
 # The slot will be "finished" in dg_gui_main because of module import issues
@@ -655,6 +655,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.redraw_my_app_window_on_state_callable = None
+        self.message_on_gui_callable = None
 
         self.setWindowTitle("ddg Project")
         self.setGeometry(100, 100, 800, 600)
@@ -668,7 +669,7 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
 
         # Initialize frames
-        self.title_frame = TitleFrame("ddg Project")
+        title_frame = TitleFrame("ddg Project")
         # print(self.title_frame)
         self.form_frame = FormFrame()
         self.central_frame = CentralFrame()
@@ -676,7 +677,7 @@ class MainWindow(QMainWindow):
         self.status_frame = StatusFrame()
 
         # Add frames to the main_layout
-        main_layout.addWidget(self.title_frame)
+        main_layout.addWidget(title_frame)
         main_layout.addWidget(self.form_frame)
         main_layout.addWidget(self.central_frame)
         main_layout.addWidget(self.buttons_frame)
@@ -689,6 +690,7 @@ class MainWindow(QMainWindow):
         self.redirect_print()
 
         my_event_stack.redraw_my_app_window_on_state.connect(self.loc_redraw_my_app_window_on_state)
+        my_event_stack.message_on_gui.connect(self.loc_message_on_gui)
         my_event_stack.my_application_quit.connect(self.loc_my_application_quit)
 
     def __repr__(self) -> str:
@@ -798,7 +800,7 @@ class MainWindow(QMainWindow):
         """
         This method call the redrawing of the main window.
         The slot will be "filled" using self.set_redraw_my_app_window_on_state()
-        in dg_gui_draw_on_state because of module import issues:
+        in dg_gui_main because of module import issues:
         """
         # dg_gui_draw_on_state.r e draw_my_app_window_on_state()
         # r e draw_my_app_window_on_state()
@@ -806,6 +808,27 @@ class MainWindow(QMainWindow):
         # If an update callable is set, use it; otherwise, use default logic
         if self.redraw_my_app_window_on_state_callable:
             self.redraw_my_app_window_on_state_callable()
+        else:
+            # Default logic to update or redraw the main window
+            pass
+
+    def set_message_on_gui(self, update_callable) -> None:
+        """
+        This method "fills" the functionality used for handle of
+        message_on_gui signal
+        """
+        # Assign the passed callable to be used for messages
+        self.message_on_gui_callable = update_callable
+
+    def loc_message_on_gui(self, m_code: str, m_type: NewsType, m_control: int, m_text: str) ->None:
+        """
+        This method call the message manager on the main window.
+        The slot will be "filled" using self.set_message_on_gui()
+        in dg_gui_main because of module import issues:
+        """
+        # If a message callable is set, use it; otherwise, use default logic
+        if self.message_on_gui_callable:
+            self.message_on_gui_callable(m_code, m_type, m_control, m_text)
         else:
             # Default logic to update or redraw the main window
             pass

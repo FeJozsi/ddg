@@ -36,7 +36,7 @@ class MyEventStack(QObject):
         self.my_stack: deque[InfluEventSet] = deque()
     def post_event(self, e: InfluEventSet) -> None:
         """
-        Event Posting and Enqueuing
+        Event Posting, but Enqueuing only if all conditions are satisfied.
         """
         if (e.is_not_interested(InfluEventSet(by_process="Close Win")) and
             e.is_not_interested(InfluEventSet(by_process="Confirmed Close Win"))):

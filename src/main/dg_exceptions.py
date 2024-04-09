@@ -38,3 +38,8 @@ class UnknownEncodingError(FileNotFoundError):
     """
         The encoding of the DDG description file is unknown. It is neither UTF-8 nor CP1250
     """
+
+class InputSyntaxError(SyntaxError):
+    """
+        The DDG description input file has a SyntaxError.
+    """

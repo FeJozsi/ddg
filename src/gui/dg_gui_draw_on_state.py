@@ -1,19 +1,14 @@
 """
 This modul contains functions that draw the elements of the main window according to the state.
 """
+# import sys
 
-# f r om PyQt6.QtWidgets i m port (#QApplication, QMainWindow, QFrame, QVBoxLayout, QHBoxLayout,
-#                              #QPushButton, QLineEdit, QWidget, QLabel, QFileDialog,
-#                              #QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene,
-#                              #QStatusBar, QSpacerItem, QSizePolicy,
-#                              QCheckBox
-#                              #, QGridLayout, QMessageBox
-#                             )
-from PyQt6.QtWidgets import QLineEdit
+from PyQt6.QtWidgets import QLineEdit, QMessageBox #, QErrorMessage
 
-from dg_gui_finite_state_machine import DgState, MyButton, gui_control_dict, DimInpT #,InfluEventSet
+from dg_gui_finite_state_machine import DgState, MyButton, NewsType, gui_control_dict, DimInpT
 from dg_gui_window import MainWindow, get_main_window_instance  # These occured circular import
-from dg_gui_read_only_able_checkbox import ReadOnlyAbleCheckBox
+from dg_gui_prepare_window import ReadOnlyAbleCheckBox
+# from dg_gui_own_event_stack import my_event_stack
 
 def loc_checkbox_set_checked(rb: ReadOnlyAbleCheckBox, c: bool) -> None:
     """
@@ -260,7 +255,6 @@ def redraw_my_app_window_on_state() -> None:
     draw_button3(mw= main_window, lrs= loc_recent_state)
     draw_button4(mw= main_window, lrs= loc_recent_state)
 
-
 # This slot was temporary placed here (in dg_gui_draw_on_state) because of module import issues.
 # # Originally it was in dg_gui_window:
 # # my_event_stack.r e draw_my_app_window_on_state.connect(self.loc_r e draw_my_app_window_on_state)
@@ -275,3 +269,62 @@ def redraw_my_app_window_on_state() -> None:
 
 # Finally it has went into the dg_gui_main.py
 # See in dg_gui_main.py
+
+def message_on_gui(m_code: str, m_type: NewsType, m_control: int, m_text: str) -> None:
+    """ Manage sending messages on GUI """
+    main_window: MainWindow = get_main_window_instance()
+    if m_type.name.startswith("FILL_"):
+        fill(main_window, m_code, m_type, m_control, m_text)
+    if m_type.name.endswith("_WIN"):
+        win(main_window, m_code, m_type, m_control, m_text)
+
+def fill(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> None:
+    """ Manage writing into fields on GUI """
+    assert m_code
+    if m_type == NewsType.FILL_NB_MACHINE:
+        mw.form_frame.text_form.inputs[0].setText(m_text)
+    elif m_type == NewsType.FILL_NB_OPER:
+        mw.form_frame.text_form.inputs[1].setText(m_text)
+    elif m_type == NewsType.FILL_MAX_DEPTH:
+        mw.form_frame.text_form.inputs[2].setText(m_text)
+    elif m_type == NewsType.FILL_TIMEOUT:
+        mw.form_frame.text_form.inputs[3].setText(m_text)
+    elif m_type == NewsType.FILL_LOG_DETAIL:
+        mw.form_frame.text_form.inputs[4].setText(m_text)
+
+def win(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> None:
+    """ Manage open modal window for messages on GUI """
+    if m_type.name.startswith("ERROR_"):
+        # print(gui_control_dict["rec_state"],
+        #         file= sys.stderr)
+        # print(len(my_event_stack.my_stack),
+        #         file= sys.stderr)
+        # sys.stderr.flush()
+
+        # QErrorMessage(mw).showMessage(m_text + "\n(" + m_code + ")") # "Something went wrong!"
+        # QErrorMessage(mw).showMessage(...) does not(!) occur the problemm, below:
+        #     RuntimeError: Cannot enter into task <Task pending name='Task-1' running at ...
+        #        wait_for=<Future finished result=None>> while another task
+        #        <Task pending name='Task-2' coro=<carry_out_processes() running at ...
+        #       is being executed.
+
+        # # This, below, does occur the problem (explained above):
+        # reply = QMessageBox.warning(mw,
+        #         "ddg Project - Error message",
+        #         m_text + "\n(" + m_code + ")",  # "Something went wrong!"
+        #         QMessageBox.StandardButton.Ok, # QMessageBox.StandardButton.Yes | ... .No,
+        #         QMessageBox.StandardButton.Ok)
+        #         # QMessageBox.Icon.Warning
+
+        error_dialog = QMessageBox(mw)
+        error_dialog.setWindowTitle("ddg Project - Error message")
+        error_dialog.setIcon(QMessageBox.Icon.Warning)
+        error_dialog.setText( m_text + "\n(" + m_code + ")")  # "Something went wrong!"
+        error_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+
+        # error_dialog.exec() # Avoid(!) using exec() in asyncio applications because it's
+        #                         a blocking call that can interfere with the asyncio event loop!
+        # The conflict arises because exec() is a blocking call that starts a local event loop
+        #   to wait for the dialog to close. It blocks the asyncio-driven PyQt loop mechanism.
+        error_dialog.setModal(True)  # Make the dialog modal if needed
+        error_dialog.show()

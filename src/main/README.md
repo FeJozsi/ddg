@@ -4,6 +4,11 @@
 Start date: 2024-02-26  
 The `src\main` directory houses the essential components of the project.
 
+## 2024-04-09 16:44:37 Enhancements in Event Management
+
+- Enhanced exception handling for improved reliability
+- Improved clarity and informativeness of input syntax checks
+
 ## 2024-04-04 14:56:02 Added dg_modules_map.py for module relationship visualization
 
 Added src\test\dg_modules_map.py for visualizing import relationships between modules.

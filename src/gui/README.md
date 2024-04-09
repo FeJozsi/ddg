@@ -4,6 +4,24 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-09 16:44:37 Enhancements and Refactorings in GUI Module and Event Management
+
+- Refactored module: dg_gui_read_only_able_checkbox.py renamed to dg_gui_prepare_window.py
+- Began implementing handling for message_on_gui PyQT signal in src\gui\dg_gui_draw_on_state.py
+- Improved robustness of high-level event management by utilizing MyEventStack.set_busy_start() and MyEventStack.set_ready_dtn() methods
+- Introduced new abstraction layer for Real Tasks in Task Manager to handle exceptions more effectively
+- Enhanced exception handling for improved reliability
+- Extended high-level event management to include core event processing
+- Improved clarity and informativeness of input syntax checks
+- Additionally, successfully resolved a challenging issue in the asyncio-PyQt environment
+caused by the use of the exec() method, which impacted the event loop mechanism.
+
+## 2024-04-09 15:02:56 refactor: dg_gui_read_only_able_checkbox.py renamed to dg_gui_prepare_window.py
+
+The dg_gui_read_only_able_checkbox.py module has been renamed to dg_gui_prepare_window.py, because
+it contains not only ReadOnlyAbleCheckBox(QCheckBox) but some other classes and function for
+the Main GUI Window.
+
 ## 2024-04-05 23:39:47 The first real task of the Task Factory has been created
 
 We reached a new milestone.  
@@ -84,7 +102,7 @@ You will probably try these commands if you have the required Python tools insta
 - `python src\gui\dg_gui_main.py`
 - `pylint src\gui\dg_gui_draw_on_state.py`
 - `pylint src\gui\dg_gui_own_event_stack.py`
-- `pylint src\gui\dg_gui_read_only_able_checkbox.py`
+- ~~pylint src\gui\dg_gui_read_only_able_checkbox.py~~
 - `pylint src\gui\dg_gui_window.py`
 
 ## 2024-03-13 12:41:48 Refine UI elements and interactions in dg_gui_main.py

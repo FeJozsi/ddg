@@ -1,8 +1,11 @@
 """
-This modul serves a child class for QCheckBox.
-It can be set as read-only.
+This modul serves the ReadOnlyAbleCheckBox child class for QCheckBox.
+This new one can be set as read-only.
 
 Later, some smaller auxiliary classes were moved here from the dg_gui_window module for clarity.
+
+As a result, even later, it was renamed from dg_gui_read_only_able_checkbox.py
+to dg_gui_prepare_window.py at 2024-04-09 15:02:56.
 """
 import os
 import errno
