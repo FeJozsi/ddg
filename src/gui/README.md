@@ -4,6 +4,25 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-11 20:26:52 Enhancements and Integrations in DDG Generation
+
+- Completed integration of the second core function, enabling initiation of new DDG descriptive
+file generation with filled-in properties from the application's GUI.
+Provided by the Task Manager's BusyRandGenInput class.
+- Significant changes occurred in the instantiation of the GrdgControl instance within
+the src\generate_input\generate_random_dg_problem.py module.
+A more parameterizable version has been derived from its original form.
+- Implemented a confirmation overwrite message window to prevent unintentional accidental
+overwrites when handling the 'Generate' button click event.
+- User permission to continue is communicated through the newly introduced
+initiate_generation_new_ddg pyqtSignal() emission, triggering appropriate high-level event
+and entering the custom event stack for main process control.
+- Refined the user input options on the form for text file generation. Users can now specify
+either a folder or a full path with a file name, and can also browse for it specifically,
+distinguishing between the two modes. If necessary, the program generates a unique output file name.
+
+Development continues with further enhancements to core functionalities.
+
 ## 2024-04-09 16:44:37 Enhancements and Refactorings in GUI Module and Event Management
 
 - Refactored module: dg_gui_read_only_able_checkbox.py renamed to dg_gui_prepare_window.py

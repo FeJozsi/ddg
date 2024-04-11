@@ -305,34 +305,55 @@ def is_valid_write_path(path) -> int:
 
     Return: 0 - path is wrong
             1 - path is a writable file URL
-            2 - path is a writable file URL
+            2 - path is an existing folder
     """
-    # Check if the directory exists
     ret_val: int = 1
-    try:
-        directory = os.path.dirname(path)
-        if not os.path.isdir(directory):
-            # print(f"Directory does not exist: {directory}")
-            ret_val = 0 # return False
 
-        # Check if the file exists and is writable
-        elif os.path.exists(path) and not os.path.isfile(path):
-            # print(f"Path exists but is not a file: {path}")
-            # return False
-            ret_val = 2 # only a path without file name
+    path_abs: str = os.path.abspath(path)
 
-        if (ret_val > 0 and
-            os.path.exists(path) and not os.access(path, os.W_OK)):
-            # print(f"File exists but is not writable: {path}")
-            ret_val = 0 # return False
-    except Exception as _: # pylint: disable=W0718 # Catching too general
-                           #  ... exception Exception (broad-exception-caught)
-        # print(f"An unexpected error occurred: {e}")
+    if ( not bool(path) or not os.path.isdir(os.path.dirname(path_abs)) or
+         ( not bool(os.path.basename(path)) and not os.path.isdir(path) ) ):
         ret_val = 0 # return False
+    elif os.path.isdir(path):
+        if os.access(path_abs, os.W_OK):
+            ret_val = 2
+        else:
+            ret_val = 0
+
+    # # Check if the directory exists
+    # try:
+    #     directory = os.path.dirname(path)
+    #     if not os.path.isdir(directory):
+    #         # print(f"Directory does not exist: {directory}")
+    #         ret_val = 0 # return False
+
+    #     # Check if the file exists and is writable
+    #     elif os.path.exists(path) and not os.path.isfile(path):
+    #         # print(f"Path exists but is not a file: {path}")
+    #         # return False
+    #         ret_val = 2 # only a path without file name
+
+    #     if (ret_val > 0 and
+    #         os.path.exists(path) and not os.access(path, os.W_OK)):
+    #         # print(f"File exists but is not writable: {path}")
+    #         ret_val = 0 # return False
+    # except Exception as _: # p y lint: d i sable=W0718 # Catching too general
+    #                        #  ... exception Exception (broad-exception-caught)
+    #     # print(f"An unexpected error occurred: {e}")
+    #     ret_val = 0 # return False
 
     if not ret_val == 1:
         return ret_val
+    return is_writable_file(path)
 
+def is_writable_file(path) -> int:
+    """
+    Check if a path is a valid writable file URL
+
+    Return: 0 - path is wrong
+            1 - path is a writable file URL
+    """
+    ret_val: int = 1
     # Try to open the file in append mode to check write permission without altering the file
     my_length:int = -1
     try:
@@ -340,27 +361,30 @@ def is_valid_write_path(path) -> int:
         my_length = max(os.stat(path).st_size, 1)
     except FileNotFoundError:
         my_length = 0
-    try:
-        with open(path, 'a'): # pylint: disable=W1514 # Using open without explicitly
-            pass              # specifying an encoding (unspecified-encoding)
-    except IOError as e:      # This is only a test.
-        if e.errno == errno.EACCES:
-            # print(f"No write permission for the file: {path}")
-            ret_val = 0 # return False
-        # Directory does not exist or no permission to create file
-        elif e.errno in [errno.ENOENT, errno.EPERM, errno.EACCES]:
-            # print(f"Directory '{directory}' does not exist or no permission to write: {path}")
-            ret_val = 0 # return False
-        else:
-            # Other IO errors
-            # print(f"Unable to write to file due to an IOError: {path}")
-            ret_val = 0 # return False
-    except Exception as _: # pylint: disable=W0718 # Catching too general
-                           #  ... exception Exception (broad-exception-caught)
-        # print(f"An unexpected error occurred: {e}")
+    except OSError:
         ret_val = 0 # return False
+    if ret_val:
+        try:
+            with open(path, 'a'): # pylint: disable=W1514 # Using open without explicitly
+                pass              # specifying an encoding (unspecified-encoding)
+        except IOError as e:      # This is only a test.
+            if e.errno == errno.EACCES:
+                # print(f"No write permission for the file: {path}")
+                ret_val = 0 # return False
+            # Directory does not exist or no permission to create file
+            elif e.errno in [errno.ENOENT, errno.EPERM, errno.EACCES]:
+                # print(f"Directory '{directory}' does not exist or no permission to write: {path}")
+                ret_val = 0 # return False
+            else:
+                # Other IO errors
+                # print(f"Unable to write to file due to an IOError: {path}")
+                ret_val = 0 # return False
+        except Exception as _: # pylint: disable=W0718 # Catching too general
+                            #  ... exception Exception (broad-exception-caught)
+            # print(f"An unexpected error occurred: {e}")
+            ret_val = 0 # return False
 
-    if ret_val == 1 and my_length == 0:
+    if ret_val == 1 and my_length == 0: # We came from the FileNotFoundError branch
         os.remove(path) # Erasing the trace of the experiment
 
     return ret_val # True

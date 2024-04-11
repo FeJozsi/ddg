@@ -29,9 +29,9 @@ from typing import List
 import random
 import datetime
 
-class GrdgControl:
+class GrdgControlOri:
     """
-    This class represents the main attributes and coroutines
+    This class represents the main attributes and coroutines for this module
     and is designed to be instantiated only once
     """
     def __init__(self, muvszam: int, gepszam: int) -> None:
@@ -117,6 +117,7 @@ class OperationIntput:
         """
         This method sets the predecessors of the operations but not for all
         """
+        assert grdg
         if grdg.random_percent() >= 45:
             w: int = grdg.random_pred() # the number of predecessors we will put in
             for _ in range(w):
@@ -146,6 +147,7 @@ def check_for_cycle(
         clevel: level of recursion of the method
         circle: the first found cyrcle, if any
     """
+    assert grdg
     if circle:
         return
     if cobj.oi_id in cpath[1:] or len(cpath) > len(grdg.l):
@@ -186,6 +188,7 @@ def break_cycles() -> None:
     This function resolves all cycles in the techological graph if any.  
     It lists the cases of resolved cycles into the terminal window.
     """
+    assert grdg
     while True:
         i: int = 0
         x: OperationIntput | None = None
@@ -235,24 +238,26 @@ def generate_random_input() -> None:
     inner_order: List[int] = []  # Inner order of operations
     machine_load: List[int] = [] # How many operations is for the machine?
 
+    assert grdg
     assert grdg.f
-    grdg.f.write(
-        "# This is a text file describing a directed disjunctive graph "
-        "(for calculating the minmax critical path of it).\n"
-        "# Created at date-time: {dt}\n"
-        "# (The lines starting with # are comments.)\n"
-        "# Number of operations: {muvszam}, number of machines: {gepszam}\n"
-        "[{muvszam}, {gepszam}]\n"
-        "# Maximum run time: {mrt} sec (0 = no limit), maximum depth level: {mdl} "
-        "(0 = no limit), step-by-step information: {info}\n"
-        "[{mrt}, {mdl}, {info}]\n\n".
-        format(dt=str(grdg.dtn)[:-7],
-               muvszam=grdg.muvszam,
-               gepszam=grdg.gepszam,
-               mrt=20.0,
-               mdl=15,
-               info=False)
-    )
+    # grdg.f.write(
+    #     "# This is a text file describing a directed disjunctive graph "
+    #     "(for calculating the minmax critical path of it).\n"
+    #     "# Created at date-time: {dt}\n"
+    #     "# (The lines starting with # are comments.)\n"
+    #     "# Number of operations: {muvszam}, number of machines: {gepszam}\n"
+    #     "[{muvszam}, {gepszam}]\n"
+    #     "# Maximum run time: {mrt} sec (0 = no limit), maximum depth level: {mdl} "
+    #     "(0 = no limit), step-by-step information: {info}\n"
+    #     "[{mrt}, {mdl}, {info}]\n\n".
+    #     format(dt=str(grdg.dtn)[:-7],
+    #            muvszam=grdg.muvszam,
+    #            gepszam=grdg.gepszam,
+    #            mrt=20.0,
+    #            mdl=15,
+    #            info=False)
+    # )
+    grdg.f.write(grdg.create_initial_text())
     while not satisfied:
         grdg.l.clear()
         grdg.mach_suggest = 0
@@ -334,18 +339,84 @@ class MyResourceManager:
             print_tb(loc_traceback)
         print(f'MyResourceManager {self.name} has been released')
 
-if len(sys.argv) != 3:
-    print("Usage: python generate_random_dg_problem.py <number of operations> <number of machines>")
-    sys.exit(1)
+class GrdgControl(GrdgControlOri):
+    """
+    This class extends GrdgControlOri,
+    and is designed to be instantiated only once for one running of the module also.
+    """
+    def __init__(self, muvszam: int, gepszam: int) -> None:
+        super().__init__(muvszam= muvszam, gepszam= gepszam)
+        self.mrt: float = 20.0
+        self.mdl: int = 15
+        self.info: bool = False
+    def set_further_parameters(self, mrt: float, mdl: int, info: int) -> None:
+        """
+        Set further parameters
+        """
+        self.mrt = mrt
+        self.mdl = mdl
+        # True if info != 0 else False
+        # R1719: The if expression can be replaced with 'test' (simplifiable-if-expression):
+        self.info = info != 0
+    def create_initial_text(self) -> str:
+        """
+        Produce the initial lines of output text
+        """
+        return ("# This is a text file describing a directed disjunctive graph "
+                "(for calculating the minmax critical path of it).\n"
+                "# Created at date-time: {dt}\n"
+                "# (The lines starting with # are comments.)\n"
+                "# Number of operations (alias muvszam): {muvszam}, "
+                "number of machines (alias gepszam): {gepszam}\n"
+                "[{muvszam}, {gepszam}]\n"
+                "# Maximum run time: {mrt} sec (0 = no limit), maximum depth level: {mdl} "
+                "(0 = no limit), step-by-step information: {info}\n"
+                "[{mrt}, {mdl}, {info}]\n\n".
+                format(dt=str(self.dtn)[:-7],
+                    muvszam=self.muvszam,
+                    gepszam=self.gepszam,
+                    mrt=self.mrt,
+                    mdl=self.mdl,
+                    info=self.info)
+               )
 
-# Get command-line arguments
-arg_numb_op = int(sys.argv[1])
-arg_numb_mc = int(sys.argv[2])
+# _instance: GrdgControl | None = None
+grdg: GrdgControl | None = None
 
-grdg: GrdgControl = GrdgControl(muvszam= arg_numb_op, gepszam= arg_numb_mc)
-"""
-It is the main control object of process
-"""
-with MyResourceManager('for->generate_random_dg_problem'):
-    # Perform some operations with the resource
-    generate_random_input()
+def get_grdg_instance(muvszam: int, gepszam: int) -> GrdgControl:
+    """
+    This function serve the recent GrdgControl instance if any.
+    If necesseary, it produce a new one
+    """
+    if grdg is None:
+        produce_grdg_instance(muvszam= muvszam, gepszam= gepszam)
+    assert grdg
+    return grdg
+
+def produce_grdg_instance(muvszam: int, gepszam: int) -> None:
+    """
+    This function instantiates the GrdgControl class considering the local requirement
+    """
+    # global _instance  # p y lint: d i sable=W0603 # Using the global statement (global-statement)
+    # if _instance is None:
+    #     _instance = GrdgControl()
+    # return _instance
+    global grdg # pylint: disable=W0603 # Using the global statement (global-statement)
+    grdg = GrdgControl(muvszam= muvszam, gepszam= gepszam)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print("Usage: python generate_random_dg_problem.py "
+              "<number of operations> <number of machines>")
+        sys.exit(1)
+
+    # Get command-line arguments
+    arg_numb_op = int(sys.argv[1])
+    arg_numb_mc = int(sys.argv[2])
+
+    # grdg: GrdgControl = GrdgControl(muvszam= arg_numb_op, gepszam= arg_numb_mc)
+    produce_grdg_instance(muvszam= arg_numb_op, gepszam= arg_numb_mc)
+
+    with MyResourceManager('for->generate_random_dg_problem'):
+        # Perform some operations with the resource
+        generate_random_input()

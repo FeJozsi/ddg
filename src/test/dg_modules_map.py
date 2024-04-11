@@ -46,7 +46,7 @@ def generate_graph(loc_project_root):
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
                 # module_name = os.path.relpath(file_path,
-                #               start=loc_project_root).replace(os.sep, '.').rstrip('.py')
+                #               start=loc_project_root).replace(os.sep, '.').rstrip('.py')  ?!?
                 module_name = file.rstrip('.py')
                 # Add nodes I.:
                 if module_name not in added_nodes:
@@ -65,13 +65,14 @@ def generate_graph(loc_project_root):
                         graph.edge(module_name, imp) # , fontname= "Arial"
 
     graph.edge("dg_main", "dg_link", style= "dashed")
-    # Tricks to align vertically the three disjoint parts and draw a different way:
-    graph.edge("generate_random_dg_problem", "dg_gui_main", style= "invisible", arrowhead="none")
+    # # Tricks to align vertically the three disjoint parts and draw a different way:
+    # # graph.edge("generate_random_dg_problem", "dg_gui_main", style= "invisible", arrowhead="none")
 
-    graph.edge("dg_gui_own_event_stack", "dg_task_manager", style= "invisible", arrowhead="none")
+    # graph.edge("dg_gui_own_event_stack", "dg_task_manager", style= "invisible", arrowhead="none")
 
-    # graph.edge("dg_gui_own_event_stack", "dg_main", style= "invisible", arrowhead="none")
-    graph.edge("dg_gui_finite_state_machine", "dg_main", style= "invisible", arrowhead="none")
+    # # graph.edge("dg_gui_own_event_stack", "dg_main", style= "invisible", arrowhead="none")
+    # graph.edge("dg_gui_finite_state_machine", "dg_main", style= "invisible", arrowhead="none")
+    graph.edge("dg_gui_prepare_window", "dg_main", style= "invisible", arrowhead="none")
     return graph
 
 PROJECT_ROOT = 'src'

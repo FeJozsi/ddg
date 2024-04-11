@@ -26,6 +26,8 @@ import sys
 import asyncio
 
 import os
+from collections.abc import Callable
+from typing import Union
 
 from PyQt6.QtWidgets import ( QMainWindow, QFrame, QVBoxLayout, QHBoxLayout, QApplication,
                               QPushButton, QWidget, QLabel, QFileDialog,
@@ -42,7 +44,7 @@ from typing_extensions import deprecated
 from dg_gui_finite_state_machine import DgState, InfluEventSet, NewsType, gui_control_dict, MyButton
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_prepare_window import (ReadOnlyAbleCheckBox, QTextEditOutputStream,
-      BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
+                                   BaseForm, BaseFrame, is_valid_write_path) # , IntegerLineEdit
 
 # The slot will be "finished" in dg_gui_main because of module import issues
 # i m port dg_gui_draw_on_state
@@ -123,7 +125,7 @@ class GenForm(BaseForm):
 
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """
         Finishing initializing the Form
         """
@@ -150,20 +152,54 @@ class GenForm(BaseForm):
         for inp in self.inputs:
             inp.textChanged.connect(self.start_debounce_timer)
 
-    def browse_file(self):
+    def browse_file(self) -> None:
         """
-        Explore the local computer path+file names to choose one for the new generated input
+        Explore the local computer path or path+file names to choose one for the new generated input
         """
-        file_name = self.file_input.text()
+        file_name: str = self.file_input.text()
+        path_abs: str = os.path.abspath(file_name)
+        init_path: str = ""
+        dir_name: str
         # Option Enum: pl. QFileDialog.Option.DontUseNativeDialog | QFileDialog.Option.ShowDirsOnly
-        options = QFileDialog.Option.ShowDirsOnly
-        file_name, _ = QFileDialog.getSaveFileName(self,
-                                                   "Save generated file as...",    # Dialog Title
-                                                   file_name,            # Initial Directory/Path
-                                                   "All Files (*);;Text Files (*.txt)", # Filters
-                                                   options= options)
+        # file_dialog = QFileDialog(self)
+        # options = file_dialog.options() # | QFileDialog.Option.ShowDirsOnly
+        # # options = QFileDialog.Option.ShowDirsOnly
+        # file_name, _ = QFileDialog.getSaveFileName(self,
+        #                                            "Save generated file as...",    # Dialog Title
+        #                                            file_name,            # Initial Directory/Path
+        #                                            "All Files (*);;Text Files (*.txt)", # Filters
+        #                                            options= options)
+        browser_folder: bool = ( not bool(file_name) or os.path.isdir(path_abs) or
+                                 not os.path.isdir(os.path.dirname(path_abs)) or
+                                 not bool(os.path.basename(file_name)) )
+        return_absolute: bool = (not bool(file_name) or os.path.isabs(file_name))
+        if browser_folder:
+            if bool(file_name) and os.path.isdir(path_abs):
+                init_path = file_name
+            elif bool(file_name):
+                dir_name = os.path.dirname(path_abs)
+                while bool(dir_name):
+                    if os.path.isdir(dir_name):
+                        init_path = dir_name
+                        break
+                    dir_name = os.path.dirname(dir_name)
+            if init_path:
+                file_name = QFileDialog.getExistingDirectory(self,
+                                                        "Save generated file in... (initialized)",
+                                                        init_path)          # Initial Directory/Path
+            else:
+                file_name = QFileDialog.getExistingDirectory(self,
+                                                        "Save generated file in...")  # Dialog Title
+        else:
+            file_name, _ = QFileDialog.getSaveFileName(self,
+                                                    "Save generated file as...",    # Dialog Title
+                                                    file_name,            # Initial Directory/Path
+                                                    "All Files (*);;Text Files (*.txt)") # Filters
         if file_name:
-            self.file_input.setText(file_name)
+            if return_absolute:
+                self.file_input.setText(file_name)
+            else:
+                self.file_input.setText(os.path.relpath(file_name))
 
     def check_form_completion(self) -> None: # debounce_timer.timeout
         """
@@ -524,8 +560,29 @@ class ButtonsFrame(BaseFrame):
         This method propagates the button clicks through the high level event stack
         """
         loc_event_text: str = button.text()
+        if my_button == MyButton.NEXT and loc_event_text == "Generate":
+            # if not confirmation_overwrite(mw= get_main_window_instance()):
+            pw = self.parentWidget() #.parentWidget()
+            assert pw
+            pw = pw.parentWidget()
+            assert isinstance(pw, MainWindow)
+            lct = pw.loc_callable_tuple
+            if bool(lct):
+                assert isinstance(lct, tuple)
+                if len(lct) >= 3:
+                    lct[2]() # confirmation_overwrite(). See loc_initiate_generation_new_ddg() also
+            return
         loc_by_buttons: list[str] = ["", "", ""]
         loc_by_buttons[my_button.value] = loc_event_text
+        my_event_stack.post_event(InfluEventSet(by_buttons= loc_by_buttons))
+
+    def loc_initiate_generation_new_ddg(self) -> None:
+        """
+        After confirmation, this method sends the appropriate high level event
+        for generation new DDG description file
+        """
+        loc_by_buttons: list[str] = ["", "", ""]
+        loc_by_buttons[MyButton.NEXT.value] = "Generate"
         my_event_stack.post_event(InfluEventSet(by_buttons= loc_by_buttons))
 
     @deprecated("Just for an early demonstration.")
@@ -651,11 +708,12 @@ class MainWindow(QMainWindow):
     """
     This class represents the GUI interface's view
     """
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.redraw_my_app_window_on_state_callable = None
-        self.message_on_gui_callable = None
+        # self.redraw_my_app_window_on_state_callable = None  It will be loc_callable_tuple[0]
+        # self.message_on_gui_callable = None                 It will be loc_callable_tuple[1]
+        self.loc_callable_tuple: Union[tuple[Callable, Callable, Callable], None] = None
 
         self.setWindowTitle("ddg Project")
         self.setGeometry(100, 100, 800, 600)
@@ -692,6 +750,7 @@ class MainWindow(QMainWindow):
         my_event_stack.redraw_my_app_window_on_state.connect(self.loc_redraw_my_app_window_on_state)
         my_event_stack.message_on_gui.connect(self.loc_message_on_gui)
         my_event_stack.my_application_quit.connect(self.loc_my_application_quit)
+        my_event_stack.initiate_generation_new_ddg.connect(self.loc_initiate_generation_new_ddg)
 
     def __repr__(self) -> str:
         return "Main window of the Application"
@@ -788,47 +847,66 @@ class MainWindow(QMainWindow):
                 return
         event.ignore()  # Ignore the close event, preventing the window from closing (yet)
 
-    def set_redraw_my_app_window_on_state(self, update_callable) -> None:
+    def set_loc_callable_tuple(self, callable_tuple: tuple[Callable, Callable, Callable]) -> None:
         """
-        This method "fills" the functionality used for handle of
-        redraw_my_app_window_on_state signal
+        This method "fills" the functionality used for
+         - handle of redraw_my_app_window_on_state signal
+         - handel of message_on_gui signal
+         - confirm overwrite file when generate DDG
         """
-        # Assign the passed callable to be used for UI updates
-        self.redraw_my_app_window_on_state_callable = update_callable
+        self.loc_callable_tuple = callable_tuple
+
+    # def set_redraw_my_app_window_on_state(self, update_callable) -> None:
+    #     """
+    #     This method "fills" the functionality used for handle of
+    #     redraw_my_app_window_on_state signal
+    #     """
+    #     # Assign the passed callable to be used for UI updates
+    #     self.redraw_my_app_window_on_state_callable = update_callable
 
     def loc_redraw_my_app_window_on_state(self) -> None:
         """
         This method call the redrawing of the main window.
-        The slot will be "filled" using self.set_redraw_my_app_window_on_state()
+        The slot will be "filled" using self.set_loc_callable_tuple
+        [[[instead of self.set_redraw_my_app_window_on_state()]]]
         in dg_gui_main because of module import issues:
         """
         # dg_gui_draw_on_state.r e draw_my_app_window_on_state()
         # r e draw_my_app_window_on_state()
 
         # If an update callable is set, use it; otherwise, use default logic
-        if self.redraw_my_app_window_on_state_callable:
-            self.redraw_my_app_window_on_state_callable()
+        # if self.redraw_my_app_window_on_state_callable:
+            # self.redraw_my_app_window_on_state_callable()
+        if bool(self.loc_callable_tuple):
+            assert isinstance(self.loc_callable_tuple, tuple)
+            if len(self.loc_callable_tuple) >= 1:
+                self.loc_callable_tuple[0]()
         else:
             # Default logic to update or redraw the main window
             pass
 
-    def set_message_on_gui(self, update_callable) -> None:
-        """
-        This method "fills" the functionality used for handle of
-        message_on_gui signal
-        """
-        # Assign the passed callable to be used for messages
-        self.message_on_gui_callable = update_callable
+    # def set_message_on_gui(self, update_callable) -> None:
+    #     """
+    #     This method "fills" the functionality used for handle of
+    #     message_on_gui signal
+    #     """
+    #     # Assign the passed callable to be used for messages
+    #     self.message_on_gui_callable = update_callable
 
     def loc_message_on_gui(self, m_code: str, m_type: NewsType, m_control: int, m_text: str) ->None:
         """
         This method call the message manager on the main window.
-        The slot will be "filled" using self.set_message_on_gui()
+        The slot will be "filled" using self.set_loc_callable_tuple
+        [[[ instead of self.set_message_on_gui() ]]]
         in dg_gui_main because of module import issues:
         """
         # If a message callable is set, use it; otherwise, use default logic
-        if self.message_on_gui_callable:
-            self.message_on_gui_callable(m_code, m_type, m_control, m_text)
+        # if self.message_on_gui_callable:
+        #     self.message_on_gui_callable(m_code, m_type, m_control, m_text)
+        if bool(self.loc_callable_tuple):
+            assert isinstance(self.loc_callable_tuple, tuple)
+            if len(self.loc_callable_tuple) >= 2:
+                self.loc_callable_tuple[1](m_code, m_type, m_control, m_text)
         else:
             # Default logic to update or redraw the main window
             pass
@@ -840,6 +918,13 @@ class MainWindow(QMainWindow):
         i = QApplication.instance()
         assert i # This informs MyPy about the type of i of "QCoreApplication | None"
         i.quit()
+
+    def loc_initiate_generation_new_ddg(self) -> None:
+        """
+        This method connect listening of the initiate_generation_new_ddg signal
+        and implementing it
+        """
+        self.buttons_frame.loc_initiate_generation_new_ddg()
 
 # # Create a module-level instance that will be shared
 # mw: MainWindow = MainWindow() # main_window

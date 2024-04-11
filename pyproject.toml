@@ -1,2 +1,2 @@
 [tool.mypy]
-mypy_path = ["src\\main", "src\\gui"]
+mypy_path = ["src\\main", "src\\gui", "src\\generate_input"]

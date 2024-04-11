@@ -26,6 +26,9 @@ class MyEventStack(QObject):
     my_application_quit = pyqtSignal()
     # Message add-ons data: unique code str, type NewsType, control int, message text str:
     message_on_gui = pyqtSignal(str, NewsType, int, str)
+    # Message to initiate the generation of new DDG description file
+    #   overwriting after confirm, if it was necessary
+    initiate_generation_new_ddg = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__() # It is very important. This is also connected with using QObject.
@@ -102,6 +105,11 @@ class MyEventStack(QObject):
         Emit a signal to quit the application
         """
         self.message_on_gui.emit(m_code, m_type, m_control, m_text) # Emit a signal to message
+    def emit_initiate_generation_new_ddg(self) -> None:
+        """
+        Emit a signal to generate
+        """
+        self.initiate_generation_new_ddg.emit() # Emit a signal to generate
 
 # Create a module-level instance that will be shared
 my_event_stack = MyEventStack()

@@ -2,13 +2,14 @@
 This modul contains functions that draw the elements of the main window according to the state.
 """
 # import sys
+import os
 
 from PyQt6.QtWidgets import QLineEdit, QMessageBox #, QErrorMessage
 
 from dg_gui_finite_state_machine import DgState, MyButton, NewsType, gui_control_dict, DimInpT
 from dg_gui_window import MainWindow, get_main_window_instance  # These occured circular import
 from dg_gui_prepare_window import ReadOnlyAbleCheckBox
-# from dg_gui_own_event_stack import my_event_stack
+from dg_gui_own_event_stack import my_event_stack
 
 def loc_checkbox_set_checked(rb: ReadOnlyAbleCheckBox, c: bool) -> None:
     """
@@ -291,6 +292,9 @@ def fill(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> 
         mw.form_frame.text_form.inputs[3].setText(m_text)
     elif m_type == NewsType.FILL_LOG_DETAIL:
         mw.form_frame.text_form.inputs[4].setText(m_text)
+    elif m_type == NewsType.FILL_GEN_FILE:
+        # print(m_text)
+        mw.form_frame.gen_form.file_input.setText(m_text)
 
 def win(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> None:
     """ Manage open modal window for messages on GUI """
@@ -328,3 +332,42 @@ def win(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> N
         #   to wait for the dialog to close. It blocks the asyncio-driven PyQt loop mechanism.
         error_dialog.setModal(True)  # Make the dialog modal if needed
         error_dialog.show()
+
+def confirmation_overwrite() -> None:
+    """
+        Confirmation of overwrite a file, if it is necessary,
+        then emit signal to create the appropriate high level event.
+        It runs under QMainWindow!
+    """
+    mw: MainWindow = get_main_window_instance()
+    path: str = mw.form_frame.gen_form.file_input.text()
+    path_abs = os.path.abspath(path)
+    if os.path.isfile(path_abs):
+        warning_dialog = QMessageBox(mw)
+        warning_dialog.setWindowTitle("ddg Project - WARNING")
+        warning_dialog.setIcon(QMessageBox.Icon.Warning)
+        loc_message: str = "Please, confirm overwriting the file: \n" + path
+        if not os.path.isabs(path):
+            loc_message += "\n\n( Full path: \n" + path_abs + ")"
+        warning_dialog.setText( loc_message )
+        warning_dialog.setStandardButtons(QMessageBox.StandardButton.Ok |
+                                          QMessageBox.StandardButton.Cancel)
+        warning_dialog.setDefaultButton(QMessageBox.StandardButton.Cancel)
+        # warning_dialog.exec() # Avoid(!) using exec() in asyncio applications because it's
+        #                         a blocking call that can interfere with the asyncio event loop!
+        # The conflict arises because exec() is a blocking call that starts a local event loop
+        #   to wait for the dialog to close. It blocks the asyncio-driven PyQt loop mechanism.
+        warning_dialog.setModal(True)  # Make the dialog modal if needed
+        # warning_dialog.show()
+        def button_clicked() -> None:
+        # def button_clicked(button) -> None:
+            wdc = warning_dialog.clickedButton()
+            assert wdc
+            if wdc.text().upper() == "OK":  # It worked fine...
+            # if button.text().upper() == "OK":                It does not work in PyQt6
+                my_event_stack.emit_initiate_generation_new_ddg()
+            # else:
+            #     print("Cancel clicked")
+        warning_dialog.open(button_clicked)
+    else:
+        my_event_stack.emit_initiate_generation_new_ddg()

@@ -23,6 +23,7 @@ class NewsType(Enum):
         FILL_MAX_DEPTH:  Fill Max. Depth
         FILL_TIMEOUT:    Fill Timeout
         FILL_LOG_DETAIL: Fill if ask Log Detail
+        FILL_GEN_FILE:   Fill 'Save as path & name'
     """
     ERROR_WIN       = auto()
     WARNING_WIN     = auto()
@@ -31,6 +32,7 @@ class NewsType(Enum):
     FILL_MAX_DEPTH  = auto()
     FILL_TIMEOUT    = auto()
     FILL_LOG_DETAIL = auto()
+    FILL_GEN_FILE   = auto()
 
 class MyButton(Enum):
     """

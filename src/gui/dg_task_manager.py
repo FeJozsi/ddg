@@ -12,6 +12,8 @@ import asyncio
 import inspect
 import random
 
+from datetime import datetime
+
 from typing import Type
 import traceback
 
@@ -23,10 +25,13 @@ from dg_gui_finite_state_machine import (DgState, InfluEventSet, NewsType,
 
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_window import MainWindow, get_main_window_instance
-from dg_exceptions import (EmptyInputError, EarlyInputEOF, InputSyntaxError, UnexpectedValueType,
+from dg_exceptions import (EmptyInputError, EarlyInputEOF, InaccessibleOutputPath, InputSyntaxError,
+                           MissingOutputPath, UnexpectedValueType,
                            InputValueError, TooLargeDescription, UnknownEncodingError)
 from dg_main import InputTextFile
-from dg_standard_input import DgStandardInput, dg_inint, dg_inreal, my_dict_for_input # DgInpSource,
+from dg_standard_input import DgStandardInput, dg_inint, dg_inreal, my_dict_for_input
+from generate_random_dg_problem import (GrdgControl, generate_random_input,
+                                        get_grdg_instance, produce_grdg_instance)
 
 REAL_USE: bool = True # False for TEST only, running without real core tasks
 """
@@ -70,7 +75,8 @@ class CommonRealTask(MyTask):
         try:
             await self.to_run()
         except (FileNotFoundError, TooLargeDescription, UnknownEncodingError, InputValueError,
-                EmptyInputError, EarlyInputEOF, UnexpectedValueType, InputSyntaxError) as e:
+                EmptyInputError, EarlyInputEOF, UnexpectedValueType, InputSyntaxError,
+                MissingOutputPath, InaccessibleOutputPath) as e:
             # my_event_stack.emit_message_on_gui("TR11-" + self.__class__.__name__,
             #                m_text= "An exception occurred, the task was interrupted.\n\n"
             #                "Details:\n" + str(e))
@@ -403,6 +409,7 @@ class BusyInpTextRead(CommonRealTask):
                  answers: tuple[str, ...],
                  task_name: str) -> None:
         super().__init__(answers= answers, task_name= task_name)
+
     async def to_run(self) -> None:
         file_path: str = self.main_window.form_frame.text_form.file_input.text()
         loc_encoding: str
@@ -415,6 +422,86 @@ class BusyInpTextRead(CommonRealTask):
             my_dict_for_input["dg_input_object"] = DgStandardInput(itf)
 
             test_read()
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
+def prepare_file_path(mw: MainWindow) -> str:
+    """ Prepare file path and name for generate new Directed Disjunctive Graph into """
+    # directory: str = os.path.dirname(path)
+    # filename: str
+
+    path: str = mw.form_frame.gen_form.file_input.text()
+    use_absolute: bool = (not bool(path) or os.path.isabs(path))
+    path_abs: str = os.path.abspath(path)
+    if ( not bool(path) or not os.path.isdir(os.path.dirname(path_abs)) or
+         ( not bool(os.path.basename(path)) and not os.path.isdir(path) ) ):
+        raise MissingOutputPath("The output folder for the file to be generated does not exist")
+    if os.path.isfile(path_abs) or not os.path.isdir(path_abs):
+        return path_abs
+    # if not os.path.isdir(directory):
+    #     raise MissingOutputPath("The output folder for the file to be generated does not exist")
+    # if os.path.isfile(path):
+    #     filename = os.path.basename(path) # returns the last component of the path ...
+    #                          # ... regardless of whether the path points to a file or a directory.
+    # else:
+    #     gepszam = mw.form_frame.gen_form.inputs[0] # Nb. machines
+    #     muvszam = mw.form_frame.gen_form.inputs[1] # Nb. operations
+    #     filename = ("dg_gen_input_" +
+    #                 f"{muvszam}m_{gepszam}g_" +
+    #                 datetime.now().strftime("%Y%m%d%H%M%S") + ".txt")
+    # file_path = os.path.join(directory, filename)
+    gepszam: str = mw.form_frame.gen_form.inputs[0].text() # Nb. machines
+    muvszam: str = mw.form_frame.gen_form.inputs[1].text() # Nb. operations
+    filename: str = ("dg_gen_input_" +
+                     f"{muvszam}m_{gepszam}g_" +
+                     datetime.now().strftime("%Y%m%d%H%M%S") + ".txt")
+    file_path: str = os.path.join(path_abs, filename)
+    if not use_absolute:
+        file_path = os.path.relpath(file_path)
+    if not file_path == path:
+        my_event_stack.emit_message_on_gui("PF01",
+                                           NewsType.FILL_GEN_FILE,
+                                           m_text= file_path)
+    return file_path
+
+class BusyRandGenInput(CommonRealTask):
+    """
+    The real task for DgState.BUSY_RAND_GEN_INPUT status.
+    "Random generation of input"
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+
+    async def to_run(self) -> None:
+        file_path = prepare_file_path(mw= self.main_window)
+        try:
+            with open(file_path, "wt", encoding='utf-8'):
+                pass
+        except OSError as e:
+            raise InaccessibleOutputPath("The output file can not be opened for write") from e
+
+        with open(file_path, "wt", encoding='utf-8') as loc_file:
+            gepszam: str = self.main_window.form_frame.gen_form.inputs[0].text() # Nb. machines
+            muvszam: str = self.main_window.form_frame.gen_form.inputs[1].text() # Nb. operations
+            # grdg: GrdgControl = GrdgControl(muvszam= muvszam, gepszam= gepszam)
+            produce_grdg_instance(muvszam= int(muvszam), gepszam= int(gepszam)) # cleare old one
+            grdg: GrdgControl = get_grdg_instance(muvszam= int(muvszam), gepszam= int(gepszam))
+            grdg.f = loc_file
+            mrt: str = "300.0"  # max. run time
+            mdl: str = "15"     # max. depth (max. level of solution tree)
+            info: str = "0"     # Log Detail
+            if self.main_window.form_frame.gen_form.inputs[2].text():
+                mdl = self.main_window.form_frame.gen_form.inputs[2].text()
+            if self.main_window.form_frame.gen_form.inputs[3].text():
+                mrt = self.main_window.form_frame.gen_form.inputs[3].text()
+            if self.main_window.form_frame.gen_form.inputs[4].text():
+                info = self.main_window.form_frame.gen_form.inputs[4].text()
+            grdg.set_further_parameters(mrt= float(mrt), mdl= int(mdl), info= int(info))
+            generate_random_input()
 
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
@@ -553,7 +640,7 @@ async def carry_out_process() -> None:
         loc_answers = (loc_answer1, loc_answer2)
     loc_factory: TaskFactory | None = None
     if   loc_rec_state == DgState.BUSY_RAND_GEN_INPUT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyRandGenInput, # type: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)

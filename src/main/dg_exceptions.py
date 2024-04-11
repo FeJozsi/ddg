@@ -43,3 +43,13 @@ class InputSyntaxError(SyntaxError):
     """
         The DDG description input file has a SyntaxError.
     """
+
+class MissingOutputPath(FileNotFoundError):
+    """
+        The output folder for the file to be generated does not exist
+    """
+
+class InaccessibleOutputPath(FileNotFoundError):
+    """
+        The output file can not be opened for write
+    """

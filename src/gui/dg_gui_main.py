@@ -28,7 +28,8 @@ from dg_gui_finite_state_machine import ( InfluEventSet, DgState, # DimInpT,
                                          )
 from dg_task_manager import carry_out_process
 
-from dg_gui_draw_on_state import redraw_my_app_window_on_state, message_on_gui
+from dg_gui_draw_on_state import (redraw_my_app_window_on_state, message_on_gui,
+                                  confirmation_overwrite)
 
 # f r om dg_gui_draw_on_state i m port d r aw_form_stack_widget
 # # The line above triggered:
@@ -178,8 +179,11 @@ def dg_gui_main() -> None:
     main_window: MainWindow = get_main_window_instance()
 
     # "push when ready" (the main window) and "propagate via push":
-    main_window.set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
-    main_window.set_message_on_gui(message_on_gui)
+    # main_window.set_redraw_my_app_window_on_state(redraw_my_app_window_on_state)
+    # main_window.set_message_on_gui(message_on_gui)
+    main_window.set_loc_callable_tuple((redraw_my_app_window_on_state,
+                                        message_on_gui,
+                                        confirmation_overwrite))
 
     main_window.show()
 

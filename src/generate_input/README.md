@@ -4,6 +4,17 @@
 Start date: 2024-02-23
 Generate text files describe random produced Directed Disjunctive Graphs
 
+## 2024-04-11 20:26:52 Enhancements and Integrations in DDG Generation
+
+`Completed` integration of the second core function, i.e. `integration of this module`,
+enabling initiation of new DDG descriptive file generation with filled-in properties from the
+application's GUI. Provided by the Task Manager's BusyRandGenInput class.
+
+Significant changes occurred in the instantiation of the GrdgControl instance.
+A more parameterizable version has been derived from its original form.
+
+For more details, see src\gui\README.md.
+
 ## 2024-03-27 11:40:34 Refactor: Resolve MyPy type checking issues across 19 Python files in src
 
 This folder is also affected by the scan. See the ReadMe.md file in the root folder for more details.
