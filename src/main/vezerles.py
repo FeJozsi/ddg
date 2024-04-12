@@ -61,8 +61,8 @@ class Vezerles(Megoldasfa):                                         # 960. origi
         if dg_inint() > 0:
             self.info = True
         self.keresesi_stadiumban_tartunk = True
-        print("** Futás maximális ideje (sec), maximális mélységszint, lépésenkénti információ kérése **")
-        print((f"[{self.futas_maximalis_ideje}, {self.maximalis_melysegszint}, {self.info}]"))
+        # print("** Futás maximális ideje (sec), maximális mélységszint, lépésenkénti információ kérése **")
+        # print((f"[{self.futas_maximalis_ideje}, {self.maximalis_melysegszint}, {self.info}]"))
     def vezerles_aktualizalasa(self) -> None:
         # if (datetime.datetime.now() - self.kezdesi_ido).total_seconds() > self.futas_maximalis_ideje and self.futas_maximalis_ideje > 0: # 2. tag: 2024.02.
         if  self.duration_in_seconds() > self.futas_maximalis_ideje and self.futas_maximalis_ideje > 0:

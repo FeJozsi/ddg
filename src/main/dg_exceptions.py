@@ -53,3 +53,8 @@ class InaccessibleOutputPath(FileNotFoundError):
     """
         The output file can not be opened for write
     """
+
+class CyclicityInInput(ValueError):
+    """
+        There is a cycle among the operations in the input
+    """

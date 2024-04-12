@@ -4,6 +4,12 @@
 Start date: 2024-02-26  
 The `src\main` directory houses the essential components of the project.
 
+## 2024-04-12 19:59:28 Completed integration of the third core function
+
+Completed integration of the third core function, enabling the presentation of data from
+the input DDG descriptive file and the results of initial analyses. To achieve this,
+created several functions in the src\main\dg_main.py module to support English communication.
+
 ## 2024-04-09 16:44:37 Enhancements in Event Management
 
 - Enhanced exception handling for improved reliability

@@ -184,7 +184,7 @@ def elso_iteracio() -> None:
     else:
         assert dg_o.nyelo
         print("* A kezdetként felállított sorrend kritikus úthossza: "
-              f"{dg_o.nyelo.forrastol1:8.2f} *")
+              f"{dg_o.nyelo.forrastol1:8.2f} *\n")
 
 # These functions below forming a pseudo class or pseudo black box implement
 #   the original SIMULA program's class "CLASS VEZERLESI HELYEK".

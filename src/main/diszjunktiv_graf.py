@@ -250,7 +250,7 @@ class Diszjunktiv_graf:
         for k in range(0, self.muveletszam):
             self.muvkod[dg_inint() - 1] = k # a belső 0:muveletszam-1 tartományba képzése a külső 1:muveletszam művelet azonosító tartománynak. VIGYÁZAT! self.muvkod[k] = (dg_inint())  HELYETT fordítva van, és a tartomány is el van tolva eggyel!!!
         # print("** Az input adatok **")
-        print("** Azon.  Gépje   Időtart.  Megelőzők         **")
+        # print("** Azon.  Gépje   Időtart.  Megelőzők         **")
         muv: Muveletcsucs
         for k in range(0, self.muveletszam):                        # 284. origin sor
             m = dg_inint() - 1
@@ -266,7 +266,7 @@ class Diszjunktiv_graf:
                 muv.megelozok.append(Csatlakozas(self.muvelet[m]))
                 self.muvelet[m].rakovetkezok.append(Csatlakozas(muv))
                 m = dg_inint() - 1      # technológiailag előzmény műveletek külső azonosítóinak folytatólagos olvasása a 0-val kezdődő tartományba konvertáltan
-            print((f"[{muv.azonosito:6}, {muv.gepje:6}, {muv.idotartam:8.2f},   {str(l)} {' ' * (17-len(str(l)))}]")) # l szerepel (a külső művelet-azonosító int értékekkel) itt a muv.megelozok helyett, ami egy komplexebb lista
+            # print((f"[{muv.azonosito:6}, {muv.gepje:6}, {muv.idotartam:8.2f},   {str(l)} {' ' * (17-len(str(l)))}]")) # l szerepel (a külső művelet-azonosító int értékekkel) itt a muv.megelozok helyett, ami egy komplexebb lista
         # dg_close_input()
         for k in range(0, self.muveletszam):                        # 306. origin sor
             muv = self.muvelet[k]    # muv az a művelet, amelyet szükség esetén a forráshoz és/vagy a nyelőhöz hozzákötjük

@@ -777,7 +777,7 @@ class MainWindow(QMainWindow):
         Redirect print statements to QTextEdit
         Please, consider  max_char == 1300
         """
-        sys.stdout = QTextEditOutputStream(self.central_frame.text_edit, 1300) # type: ignore
+        sys.stdout = QTextEditOutputStream(self.central_frame.text_edit, 1572864) # type: ignore
         # sys.stderr = QTextEditOutputStream(self.text_edit)
 
     def print_status(self, message: str = "", alaign_nb: int = 0) -> None:

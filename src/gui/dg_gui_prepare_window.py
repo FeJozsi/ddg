@@ -14,7 +14,7 @@ import errno
 
 from PyQt6.QtWidgets import (QCheckBox, QWidget, QTextEdit, QFrame, QLineEdit,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout)
-from PyQt6.QtGui import QTextCursor, QValidator
+from PyQt6.QtGui import QTextCursor, QValidator, QFont, QFontDatabase
 from PyQt6.QtCore import Qt, QTimer
 
 class ReadOnlyAbleCheckBox(QCheckBox):
@@ -62,6 +62,10 @@ class QTextEditOutputStream:
         self.text_edit: QTextEdit = text_edit
         self.text_edit.setStyleSheet("background-color: rgba(255, 255, 255, 200);")
         self.max_char: int = max_char # 160  # Maximum character limit
+
+        # Use QFontDatabase to set a monospace font
+        monospace_font = QFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        text_edit.setFont(monospace_font)
 
     def write(self, message: str):
         """

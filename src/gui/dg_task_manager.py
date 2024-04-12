@@ -21,17 +21,20 @@ from typing_extensions import deprecated
 
 from dg_gui_finite_state_machine import (DgState, InfluEventSet, NewsType,
                                          state_change_due_to_event,
-                                         gui_control_dict)
+                                         gui_control_dict, DimInpT)
 
 from dg_gui_own_event_stack import my_event_stack
 from dg_gui_window import MainWindow, get_main_window_instance
 from dg_exceptions import (EmptyInputError, EarlyInputEOF, InaccessibleOutputPath, InputSyntaxError,
-                           MissingOutputPath, UnexpectedValueType,
+                           MissingOutputPath, UnexpectedValueType, CyclicityInInput,
                            InputValueError, TooLargeDescription, UnknownEncodingError)
-from dg_main import InputTextFile
+from dg_main import (InputTextFile, aktualis_optimalis_megoldas_nyomtatasa_english,
+                     print_input_data_english)
 from dg_standard_input import DgStandardInput, dg_inint, dg_inreal, my_dict_for_input
 from generate_random_dg_problem import (GrdgControl, generate_random_input,
                                         get_grdg_instance, produce_grdg_instance)
+from vezerles import Vezerles
+from dg_high_level_pseudo_black_boxes import my_control_dict #, adatelokeszites, iteraciok, eredmeny
 
 REAL_USE: bool = True # False for TEST only, running without real core tasks
 """
@@ -76,7 +79,7 @@ class CommonRealTask(MyTask):
             await self.to_run()
         except (FileNotFoundError, TooLargeDescription, UnknownEncodingError, InputValueError,
                 EmptyInputError, EarlyInputEOF, UnexpectedValueType, InputSyntaxError,
-                MissingOutputPath, InaccessibleOutputPath) as e:
+                MissingOutputPath, InaccessibleOutputPath, CyclicityInInput) as e:
             # my_event_stack.emit_message_on_gui("TR11-" + self.__class__.__name__,
             #                m_text= "An exception occurred, the task was interrupted.\n\n"
             #                "Details:\n" + str(e))
@@ -112,6 +115,42 @@ class CommonRealTask(MyTask):
                                                m_text= try_exception_str)
             return 0
         return 2 if self.my_success else 1
+
+    async def prepared_run(self) -> None:
+        """
+        This is an alternative content for execute() instead of to_run().
+        Can be run inside of to_run() only.
+        It is a common starter seed for some real tasks.
+        Special activities are performed by to_run_after_prepare().
+        """
+        loc_rec_inp_type: DimInpT = gui_control_dict["rec_inp_type"]
+        file_path: str
+        if loc_rec_inp_type == DimInpT.TEXT_INPUT:
+            file_path = self.main_window.form_frame.text_form.file_input.text()
+        elif loc_rec_inp_type == DimInpT.RANDOM_GEN:
+            file_path = self.main_window.form_frame.gen_form.file_input.text()
+        assert file_path
+
+        await asyncio.sleep(0.1)  # Prevents OS file lock-readiness-access issues
+
+        loc_encoding: str
+        loc_encoding = await check_encoding(file_path)
+
+        # read via text mode
+        with open(file_path, "rt", encoding= loc_encoding) as loc_file:
+            itf: InputTextFile = InputTextFile(file_path)
+            itf.f = loc_file
+            # Propagate a new DgStandardInput to the dg_standard_input module
+            my_dict_for_input["dg_input_object"] = DgStandardInput(itf)
+
+            if hasattr(self, 'to_run_after_prepare'):
+                dg_o = Vezerles(dg_inint(), dg_inint()) # muveletszam: int, gepszam: int
+                my_control_dict["dg_o"] = dg_o          # propagate to lower levels
+                my_control_dict["step_back"] = False    # initialize
+                my_control_dict["my_continue"] = True   # initialize
+
+                await self.to_run_after_prepare()
+
     @abstractmethod
     async def to_run(self) -> None:
         """ The core of the functionality"""
@@ -128,7 +167,7 @@ class A(CommonRealTask):
         # Implementation or pass if not ready
         pass
 
-def check_encoding(file_path) -> str:
+async def check_encoding(file_path) -> str:
     """ Check the file access and detect code page"""
     fp: str = file_path
     file_size: int
@@ -149,6 +188,8 @@ def check_encoding(file_path) -> str:
     except OSError as e:
         raise FileNotFoundError(str(e) + "\n") from e
 
+    await asyncio.sleep(0.1)  # Prevents OS file lock-readiness-access issues
+
     try:
         with open(file_path, "rt", encoding='utf-8') as file:
             file.read()
@@ -157,6 +198,8 @@ def check_encoding(file_path) -> str:
         pass
     except OSError as e:
         raise FileNotFoundError(str(e) + "\n") from e
+
+    await asyncio.sleep(0.1)  # Prevents OS file lock-readiness-access issues
 
     try:
         with open(file_path, "rt") as file: # pylint: disable=W1514 # Using open without explicitly
@@ -413,7 +456,7 @@ class BusyInpTextRead(CommonRealTask):
     async def to_run(self) -> None:
         file_path: str = self.main_window.form_frame.text_form.file_input.text()
         loc_encoding: str
-        loc_encoding = check_encoding(file_path)
+        loc_encoding = await check_encoding(file_path)
         # read via text mode
         with open(file_path, "rt", encoding= loc_encoding) as loc_file:
             itf: InputTextFile = InputTextFile(file_path)
@@ -484,6 +527,8 @@ class BusyRandGenInput(CommonRealTask):
         except OSError as e:
             raise InaccessibleOutputPath("The output file can not be opened for write") from e
 
+        await asyncio.sleep(0.1)  # Prevents OS file lock-readiness-access issues
+
         with open(file_path, "wt", encoding='utf-8') as loc_file:
             gepszam: str = self.main_window.form_frame.gen_form.inputs[0].text() # Nb. machines
             muvszam: str = self.main_window.form_frame.gen_form.inputs[1].text() # Nb. operations
@@ -502,6 +547,54 @@ class BusyRandGenInput(CommonRealTask):
                 info = self.main_window.form_frame.gen_form.inputs[4].text()
             grdg.set_further_parameters(mrt= float(mrt), mdl= int(mdl), info= int(info))
             generate_random_input()
+
+        await asyncio.sleep(0.1)  # Prevents OS file lock-readiness-access issues
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
+class BusyTechnInpPresent(CommonRealTask):
+    """
+    The real task for DgState.BUSY_TECHN_INP_PRESENT status.
+    "Preliminary analysis for lower bound"
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+
+    async def to_run(self) -> None:
+
+        await self.prepared_run() # It will run the to_run_after_prepare method.
+
+    async def to_run_after_prepare(self) -> None:
+        """
+        The real function core of BusyTechnInpPresent class
+        (i.e. of the task for DgState.BUSY_TECHN_INP_PRESENT state)
+        after the DDG input has initialized.
+        """
+        assert my_control_dict["dg_o"]
+        dg_o: Vezerles = my_control_dict["dg_o"]
+        dg_o.vezerles_inicializalasa()
+        dg_o.graf_beolvasasa()
+        print_input_data_english(dg_o)
+        if dg_o.megelozo_elemzes_mast_nem_mond():
+            dg_o.kezdeti_sorrend_felallitasa()
+            # iteraciok()
+            dg_o.gyokeret_megoldasfaba()
+            dg_o.kiertekeles()
+            dg_o.kiertekelesek_szama += 1
+            # if dg_o.info:
+            print("** The initial order **")
+            aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o)
+            # else:
+            assert dg_o.nyelo
+            print("* Critical path length alongside the initially established order: "
+                f"{dg_o.nyelo.forrastol1:8.2f} *\n")
+            print(f"* Initial lower bound of the task: {dg_o.feladat_also_korlatja:.2f}\n\n\n")
+        else:
+            raise CyclicityInInput("There is a cycle among the operations in the input")
 
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
@@ -640,17 +733,17 @@ async def carry_out_process() -> None:
         loc_answers = (loc_answer1, loc_answer2)
     loc_factory: TaskFactory | None = None
     if   loc_rec_state == DgState.BUSY_RAND_GEN_INPUT:
-        loc_factory = TaskFactory(real_task_class=BusyRandGenInput, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyRandGenInput, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_INP_TEXT_READ:
-        loc_factory = TaskFactory(real_task_class=BusyInpTextRead, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyInpTextRead, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_TECHN_INP_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyTechnInpPresent, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)

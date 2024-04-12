@@ -10,13 +10,15 @@ order of operations on the machines.
 Result:
     It writes the data from input and the results to the TERMINAL/Command screen.  
 """
-from typing import List
+from typing import List, cast
 
 import sys
 from traceback import print_tb
 from io import TextIOWrapper
 from os import path
 
+from dg_link import dg_first
+from diszjunktiv_graf import Csatlakozas, Muveletcsucs
 from vezerles  import Vezerles
 from dg_high_level_pseudo_black_boxes import my_control_dict, adatelokeszites, iteraciok, eredmeny
 from dg_standard_input import DgInpSource, DgStandardInput, my_dict_for_input
@@ -103,6 +105,102 @@ class InputTextFile(DgInpSource):
             self.f.close()
             self.state = "closed"
 
+def print_input_data_hungarian(l_dg: Vezerles) -> None:
+    """
+    Prints the input data to the STDOUT in Hungarian.
+    """
+    print("\n\n\n** Az input adatok **")
+    print("** Műveletszám, gépszám **")
+    print((f"[{l_dg.muveletszam}, {l_dg.gepszam}]"))
+    print("** Futás maximális ideje (sec), "
+          "maximális mélységszint, "
+          "lépésenkénti információ kérése **")
+    print((f"[{l_dg.futas_maximalis_ideje}, {l_dg.maximalis_melysegszint}, {l_dg.info}]"))
+
+    print("** Azon.  Gépje   Időtart.  Megelőzők         **")
+    muv: Muveletcsucs
+    for k in range(l_dg.muveletszam): # range(0, l_dg.muveletszam) is the same
+        muv = l_dg.muvelet[l_dg.muvkod[k]]
+        l: List = []                # egyelőre üres a techn. előzmény műveletek listája
+        megelozo: Csatlakozas | None = cast(Csatlakozas, dg_first(muv.megelozok))   # FIRST
+        while megelozo:
+            if megelozo.szomszed.azonosito > 0: # a forrást és nyelőt ki kell hagyni
+                l.append(megelozo.szomszed.azonosito)
+            megelozo = cast(Csatlakozas, megelozo.suc)
+        print((f"[{muv.azonosito:6}, {muv.gepje:6}, {muv.idotartam:8.2f},   "
+               f"{str(l)} {' ' * (17-len(str(l)))}]"))
+    print("** Gépeken végrehajtandó műveletek darabszáma a gépek sorrendjében **")
+    # l = [l_dg.gep_muveletszama[k] for k in range(l_dg.gepszam)]
+    # print(l)   These two lines are the same as the one below:
+    print(l_dg.gep_muveletszama)
+    print("** Művelet azonosítók a gépek sorrendjében, "
+          "azaz elöl az első gépen végrehajtandók és így továb **")
+    # l = [l_dg.muvelet[k].azonosito for k in range(l_dg.muveletszam)]
+    l = [muv.azonosito for muv in l_dg.muvelet] #  This is the same as the one above in comment
+    print(l)
+    print("\n")
+
+def print_input_data_english(l_dg: Vezerles) -> None:
+    """
+    Prints the input data to the STDOUT in English.
+    """
+    print("\n\n\n** The input data **")
+    print("** Number of operations, number of machines **")
+    print((f"[{l_dg.muveletszam}, {l_dg.gepszam}]"))
+    print("** Maximum runtime (sec), "
+          "maximum depth level, "
+          "request for information per step **")
+    print((f"[{l_dg.futas_maximalis_ideje}, {l_dg.maximalis_melysegszint}, {l_dg.info}]"))
+
+    print("** Identif. Machine Duration  Predecessors       **")
+    muv: Muveletcsucs
+    for k in range(l_dg.muveletszam): # range(0, l_dg.muveletszam) is the same
+        muv = l_dg.muvelet[l_dg.muvkod[k]]
+        l: List = []                # initially empty list of technical precursor operations
+        megelozo: Csatlakozas | None = cast(Csatlakozas, dg_first(muv.megelozok))   # FIRST
+        while megelozo:
+            if megelozo.szomszed.azonosito > 0: # sources and sinks must be omitted
+                l.append(megelozo.szomszed.azonosito)
+            megelozo = cast(Csatlakozas, megelozo.suc)
+        print((f"[{muv.azonosito:6}, {muv.gepje:6}, {muv.idotartam:10.2f},  "
+               f"{str(l)} {' ' * (17-len(str(l)))}]"))
+    print("** Number of operations to be carried out on machines in order of machines **")
+    # l = [l_dg.gep_muveletszama[k] for k in range(l_dg.gepszam)]
+    # print(l)   These two lines are the same as the one below:
+    print(l_dg.gep_muveletszama)
+    print("** Operation identifiers in order of machines, "
+          "i.e., starting with those to be executed on the first machine and so forth **")
+    # l = [l_dg.muvelet[k].azonosito for k in range(l_dg.muveletszam)]
+    l = [muv.azonosito for muv in l_dg.muvelet] # This is the same as the one above in comment
+    print(l)
+    print("\n")
+
+def aktualis_optimalis_megoldas_nyomtatasa_english(l_dg: Vezerles) -> None:
+    """
+    Print recent optimal solution
+    """
+    smuv: Muveletcsucs | None = None
+    l_dg.megmaradt_fixalt_elek_eltavolitasa()
+    l_dg.aktualis_optimalis_sorrend_visszaallitas()
+    l_dg.kritikus_ut_odafele()
+    l_dg.kritikus_uthosszak_visszafele()
+    for k in range(l_dg.gepszam):
+        smuv = l_dg.muvelet[l_dg.gep_elso_muvelete[k]]
+        while smuv.gepen_elozo is not None:
+            smuv = smuv.gepen_elozo
+        print(f"* Order of operations on machine {k+1} *")
+        print("** ID.   Source Duration     Sink **")
+        while smuv is not None:
+            print(f"{smuv.azonosito:6} {smuv.forrastol1:8.2f} "
+                  f"{smuv.idotartam:8.2f} {smuv.nyeloig2:8.2f}")
+            smuv = cast(Muveletcsucs, smuv.gepen_koveto)
+    # print("* Throughput time: {:8.2f}, final lower bound (baseline): {:8.2f} *".format(
+    #                           l_dg.nyelo.forrastol1,
+    #                           l_dg.viszonyitasi_alap))
+    # assert l_dg.nyelo
+    # print(f"* Throughput time: {l_dg.nyelo.forrastol1:8.2f} *")
+
+
 class MyResourceManager:
     """
     This is a ResourceManager for open and close the INPUT file
@@ -160,19 +258,20 @@ if __name__ == '__main__':
             dg_class_name_list.reverse()
             print(dg_class_name_list[1:])
 
-            print("** Az input adatok **")
-            print("** Műveletszám, gépszám **")
-            print((f"[{dg_o.muveletszam}, {dg_o.gepszam}]"))
+            # print("** Az input adatok **")
+            # print("** Műveletszám, gépszám **")
+            # print((f"[{dg_o.muveletszam}, {dg_o.gepszam}]"))
 
             # Megelőző elemzést végez
             adatelokeszites()
-            print("** Gépeken végrehajtandó műveletek darabszáma a gépek sorrendjében **")
-            l: List = [dg_o.gep_muveletszama[k] for k in range(dg_o.gepszam)]
-            print(l)
-            print("** Művelet azonosítók a gépek sorrendjében, "
-                "azaz elöl az első gépen végrehajtandók és így továb **")
-            l = [dg_o.muvelet[k].azonosito for k in range(dg_o.muveletszam)]
-            print(l)
+            # print("** Gépeken végrehajtandó műveletek darabszáma a gépek sorrendjében **")
+            # l: List = [dg_o.gep_muveletszama[k] for k in range(dg_o.gepszam)]
+            # print(l)
+            # print("** Művelet azonosítók a gépek sorrendjében, "
+            #     "azaz elöl az első gépen végrehajtandók és így továb **")
+            # l = [dg_o.muvelet[k].azonosito for k in range(dg_o.muveletszam)]
+            # print(l)
+            print_input_data_hungarian(dg_o)
 
             if dg_o.megelozo_elemzes_mast_nem_mond():
                 dg_o.kezdeti_sorrend_felallitasa()

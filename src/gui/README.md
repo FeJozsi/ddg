@@ -4,6 +4,12 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-12 19:59:28 Completed integration of the third core function
+
+Completed integration of the third core function, enabling the presentation of data from the
+input DDG descriptive file and the results of initial analyses. Provided by the Task Manager's
+BusyTechnInpPresent class.
+
 ## 2024-04-11 20:26:52 Enhancements and Integrations in DDG Generation
 
 - Completed integration of the second core function, enabling initiation of new DDG descriptive
@@ -27,7 +33,8 @@ Development continues with further enhancements to core functionalities.
 
 - Refactored module: dg_gui_read_only_able_checkbox.py renamed to dg_gui_prepare_window.py
 - Began implementing handling for message_on_gui PyQT signal in src\gui\dg_gui_draw_on_state.py
-- Improved robustness of high-level event management by utilizing MyEventStack.set_busy_start() and MyEventStack.set_ready_dtn() methods
+- Improved robustness of high-level event management by utilizing MyEventStack.set_busy_start()
+and MyEventStack.set_ready_dtn() methods
 - Introduced new abstraction layer for Real Tasks in Task Manager to handle exceptions more effectively
 - Enhanced exception handling for improved reliability
 - Extended high-level event management to include core event processing
