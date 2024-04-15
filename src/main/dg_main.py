@@ -172,8 +172,7 @@ def print_input_data_english(l_dg: Vezerles) -> None:
           "i.e., starting with those to be executed on the first machine and so forth **")
     # l = [l_dg.muvelet[k].azonosito for k in range(l_dg.muveletszam)]
     l = [muv.azonosito for muv in l_dg.muvelet] # This is the same as the one above in comment
-    print(l)
-    print("\n")
+    print(str(l) + "\n")
 
 def aktualis_optimalis_megoldas_nyomtatasa_english(l_dg: Vezerles) -> None:
     """

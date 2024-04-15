@@ -4,6 +4,11 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-15 19:45:01 Integrated the 4th core function
+
+Integrated the 4th core function, enabling the presentation of the initial established order of
+DDG operations on the machines. Implemented by the Task Manager's BusyFirstOrderCreate class.
+
 ## 2024-04-12 19:59:28 Completed integration of the third core function
 
 Completed integration of the third core function, enabling the presentation of data from the

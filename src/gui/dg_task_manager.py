@@ -572,29 +572,61 @@ class BusyTechnInpPresent(CommonRealTask):
         """
         The real function core of BusyTechnInpPresent class
         (i.e. of the task for DgState.BUSY_TECHN_INP_PRESENT state)
-        after the DDG input has initialized.
+        after the DDG input has been initialized.
         """
         assert my_control_dict["dg_o"]
         dg_o: Vezerles = my_control_dict["dg_o"]
         dg_o.vezerles_inicializalasa()
         dg_o.graf_beolvasasa()
-        print_input_data_english(dg_o)
+        if not gui_control_dict["quick_flow"]:
+            print_input_data_english(dg_o)
         if dg_o.megelozo_elemzes_mast_nem_mond():
-            dg_o.kezdeti_sorrend_felallitasa()
-            # iteraciok()
-            dg_o.gyokeret_megoldasfaba()
-            dg_o.kiertekeles()
-            dg_o.kiertekelesek_szama += 1
-            # if dg_o.info:
-            print("** The initial order **")
-            aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o)
-            # else:
-            assert dg_o.nyelo
-            print("* Critical path length alongside the initially established order: "
-                f"{dg_o.nyelo.forrastol1:8.2f} *\n")
-            print(f"* Initial lower bound of the task: {dg_o.feladat_also_korlatja:.2f}\n\n\n")
+            print(f"\n* Initial lower bound of the task: {dg_o.feladat_also_korlatja:.2f}\n\n\n")
         else:
             raise CyclicityInInput("There is a cycle among the operations in the input")
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
+class BusyFirstOrderCreate(CommonRealTask):
+    """
+    The real task for DgState.BUSY_FIRST_ORDER_CREATE status.
+    "Create first order"
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+
+    async def to_run(self) -> None:
+
+        await self.prepared_run() # It will run the to_run_after_prepare method.
+
+    async def to_run_after_prepare(self) -> None:
+        """
+        The real function core of BusyFirstOrderCreate class
+        (i.e. of the task for DgState.BUSY_FIRST_ORDER_CREATE state)
+        after the DDG input has been read.
+        """
+        assert my_control_dict["dg_o"]
+        dg_o: Vezerles = my_control_dict["dg_o"]
+        dg_o.vezerles_inicializalasa()  # It already has been done, but, prepared_run cleared it
+        dg_o.graf_beolvasasa()
+        dg_o.megelozo_elemzes_mast_nem_mond()
+        dg_o.kezdeti_sorrend_felallitasa()
+        dg_o.gyokeret_megoldasfaba()
+        dg_o.kiertekeles()
+        dg_o.kiertekelesek_szama += 1
+        if not gui_control_dict["quick_flow"]:
+            print("\n\n** The initial order **")
+            aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o)
+        assert dg_o.nyelo
+        print("\n* Critical path length alongside the initially established order: "
+            f"{dg_o.nyelo.forrastol1:8.2f} *\n\n\n")
+        dg_o.vezerles_aktualizalasa()
+        if dg_o.also_felso_korlat_megegyezik:
+            self.my_success = True
 
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
@@ -748,7 +780,7 @@ async def carry_out_process() -> None:
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_FIRST_ORDER_CREATE:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyFirstOrderCreate, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
