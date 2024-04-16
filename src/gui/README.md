@@ -4,6 +4,11 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-16 20:58:23 Updated the application's background
+
+Updated the application's background to a new, more relevant design.
+Implemented aspect ratio preservation for the background image upon window resize.
+
 ## 2024-04-15 19:45:01 Integrated the 4th core function
 
 Integrated the 4th core function, enabling the presentation of the initial established order of

@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import ( QMainWindow, QFrame, QVBoxLayout, QHBoxLayout, QAp
                               QStackedWidget, QTextEdit, QGraphicsView, QGraphicsScene, QStatusBar,
                               QSpacerItem, QSizePolicy, QMessageBox, QCheckBox)
                               # QErrorMessage, QLineEdit, QGridLayout
-from PyQt6.QtCore import Qt #, QTimer
+from PyQt6.QtCore import Qt, QRect #, QTimer
 from PyQt6.QtGui import QPixmap, QPainter # QTextCursor,
 
 # import qasync
@@ -722,6 +722,7 @@ class MainWindow(QMainWindow):
 
         cent_widget = QWidget(self) # stands for l_cent... = QWidget(); self.setLayout(l_cent...)
         self.setCentralWidget(cent_widget)
+        # Set the background to be transparent to see the image behind the widgets
         cent_widget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # self.centralWidget
 
         main_layout = QVBoxLayout()
@@ -744,7 +745,8 @@ class MainWindow(QMainWindow):
         cent_widget.setLayout(main_layout)
 
         # pixmap = QPixmap('src\\gui\\sandbox\\DALL·E 2024-03-11 16.28.47 -  3D __small.webp')
-        self.pixmap = QPixmap('src\\gui\\DALL·E 2024-03-11 16.40.08 halvany__small.webp')
+        # self.pixmap = QPixmap('src\\gui\\DALL·E 2024-03-11 16.40.08 halvany__small.webp')
+        self.pixmap = QPixmap('src\\gui\\9d2efce3__small_halvany_nyilas.webp')
         self.redirect_print()
 
         my_event_stack.redraw_my_app_window_on_state.connect(self.loc_redraw_my_app_window_on_state)
@@ -760,15 +762,34 @@ class MainWindow(QMainWindow):
         This method draws the backgroud picture
         This method over-writes the QMainWindow's one.
         """
+        # painter = QPainter(self)
+        # painter.drawPixmap(self.rect(), self.pixmap)
+        # # Apply semi-transparent overlay
+        # # painter.setOpacity(self.opacity)  # Apply the opacity level
+        # # painter.setBrush(QColor(0, 0, 0, 127)) # A semi-transparent overlay: 27 light, 227 dark
+        # # painter.setPen(Qt.PenStyle.NoPen)  # No border
+        # painter.drawRect(self.rect())  # Draw the overlay
+
+        # Keep aspect ratio:
         painter = QPainter(self)
+        # Scale pixmap to the size of the widget while maintaining the aspect ratio
+        scaled_pixmap = self.pixmap.scaled(self.size(),
+                                           Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                           Qt.TransformationMode.SmoothTransformation)
+        # # Calculate the top left position to draw the pixmap in the center
+        # point = self.rect().topLeft() if scaled_pixmap.width() == self.width() else self.rect().topRight()
+        # # Draw the pixmap onto the widget
+        # painter.drawPixmap(point, scaled_pixmap)
 
-        painter.drawPixmap(self.rect(), self.pixmap)
-
-        # Apply semi-transparent overlay
-        # painter.setOpacity(self.opacity)  # Apply the opacity level
-        # painter.setBrush(QColor(0, 0, 0, 127)) # A semi-transparent overlay: 27 light, 227 dark
-        # painter.setPen(Qt.PenStyle.NoPen)  # No border
-        painter.drawRect(self.rect())  # Draw the overlay
+        # Calculate the point to start drawing the pixmap to keep it centered
+        x_offset = (round( (scaled_pixmap.width() - self.width()) / 2 )
+                    if scaled_pixmap.width() > self.width() else 0)
+        y_offset = (round( (scaled_pixmap.height() - self.height()) / 2)
+                    if scaled_pixmap.height() > self.height() else 0)
+        
+        # Adjust the source rectangle in the pixmap to the area we want to draw
+        source_rect = QRect(int(x_offset), int(y_offset), self.width(), self.height())
+        painter.drawPixmap(self.rect(), scaled_pixmap, source_rect)
 
         painter.end()  # Properly end the painting session
 
