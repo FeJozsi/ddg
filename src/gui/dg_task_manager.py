@@ -34,7 +34,8 @@ from dg_standard_input import DgStandardInput, dg_inint, dg_inreal, my_dict_for_
 from generate_random_dg_problem import (GrdgControl, generate_random_input,
                                         get_grdg_instance, produce_grdg_instance)
 from vezerles import Vezerles
-from dg_high_level_pseudo_black_boxes import my_control_dict #, adatelokeszites, iteraciok, eredmeny
+from dg_high_level_pseudo_black_boxes import iteracio, kell_a_tovabbi_kutatas, my_control_dict
+#                                            , adatelokeszites, iteraciok, eredmeny
 
 REAL_USE: bool = True # False for TEST only, running without real core tasks
 """
@@ -64,6 +65,9 @@ class CommonRealTask(MyTask):
     This is a common "real" task for tasks whose implementation has not yet been begun.
     This will be the ancestor of real tasks.
     """
+    iter: int = 1      # These are class-attributes of CommonRealTask and its all child instances
+    log_stop_flag: bool = True
+
     def __init__(self,
                  answers: tuple[str, ...],
                  task_name: str) -> None:
@@ -609,6 +613,8 @@ class BusyFirstOrderCreate(CommonRealTask):
         (i.e. of the task for DgState.BUSY_FIRST_ORDER_CREATE state)
         after the DDG input has been read.
         """
+        CommonRealTask.iter = 1         # See these attributes as class attributes of CommonRealTask
+        CommonRealTask.log_stop_flag = True
         assert my_control_dict["dg_o"]
         dg_o: Vezerles = my_control_dict["dg_o"]
         dg_o.vezerles_inicializalasa()  # It already has been done, but, prepared_run cleared it
@@ -627,6 +633,70 @@ class BusyFirstOrderCreate(CommonRealTask):
         dg_o.vezerles_aktualizalasa()
         if dg_o.also_felso_korlat_megegyezik:
             self.my_success = True
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
+class BusySearchOptimExec(CommonRealTask):
+    """
+    The real task for DgState.BUSY_SEARCH_OPTIM_EXEC status.
+    "Searching optimum" after the first order has been created
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+        # CommonRealTask.iter = 1       BusyFirstOrderCreate has initialized these class attributes.
+        # CommonRealTask.log_stop_flag = True   During the iterations, we may have to use many
+        #                                         BusySearchOptimExec instances.
+
+    def need_log_writing(self) -> bool:
+        """
+        Deciding about log writing
+        """
+        return (True if self.iter <= 1000 else
+                True if self.iter < 10000 and self.iter % 100 == 0 else
+                True if self.iter < 100000 and self.iter % 1000 == 0 else
+                True if self.iter < 1000000 and self.iter % 10000 == 0 else
+                not bool( self.iter % 100000 )
+               )
+
+    async def to_run(self) -> None:
+        """
+        The real function core of BusySearchOptimExec class
+        (i.e. of the task for DgState.BUSY_SEARCH_OPTIM_EXEC state)
+         after the first order has been created.
+        """
+        assert my_control_dict["dg_o"]
+        dg_o: Vezerles = my_control_dict["dg_o"]
+        # dg_o.vezerles_inicializalasa() # These all have been already done by BusyFirstOrderCreate.
+        # dg_o.graf_beolvasasa() # dg_o.megelozo_elemzes_mast_nem_mond()
+        # dg_o.kezdeti_sorrend_felallitasa() # dg_o.gyokeret_megoldasfaba()
+        # dg_o.kiertekeles() # dg_o.kiertekelesek_szama += 1 ...
+        # ... dg_o.vezerles_aktualizalasa()
+
+        while kell_a_tovabbi_kutatas():
+            if dg_o.info:
+                if self.need_log_writing():
+                    if self.log_stop_flag:
+                        print("***************")
+                    print((f"{self.iter}. iteration, Length of solution tree: {len(dg_o.ag)}, "
+                            "ID of max. last ten solutions:"
+                          ),
+                          ",".join(str(x.sorszam) for x in dg_o.ag[-10:]))
+                    if self.iter >= 1000 and self.log_stop_flag:
+                        CommonRealTask.log_stop_flag = False
+                        print("*" * 75)
+                        print("Writing detailed LOG has been stopped "
+                            "because of the amount of iterations.")
+                        print("*" * 75)  # 2024-02-27
+            CommonRealTask.iter += 1
+            iteracio()
+            dg_o.vezerles_aktualizalasa()
+            if self.main_window.buttons_frame.checkbox2.isChecked() and kell_a_tovabbi_kutatas():
+                return
+        self.my_success = True
 
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
@@ -785,7 +855,7 @@ async def carry_out_process() -> None:
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_SEARCH_OPTIM_EXEC:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusySearchOptimExec, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)

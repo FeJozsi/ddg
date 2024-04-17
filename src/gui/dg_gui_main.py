@@ -76,7 +76,7 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
 
             # Simulate async work with sleep
             await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
-        print("The process_event_stack() was broken.",
+        print("The process_event_stack() was stopped.",
                 file= sys.stderr)
     except (MemoryError, SystemError, OverflowError, RecursionError, SyntaxError) as e:
         # raise e

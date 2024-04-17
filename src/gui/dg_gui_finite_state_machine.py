@@ -24,6 +24,7 @@ class NewsType(Enum):
         FILL_TIMEOUT:    Fill Timeout
         FILL_LOG_DETAIL: Fill if ask Log Detail
         FILL_GEN_FILE:   Fill 'Save as path & name'
+        FILL_STEPBYSTEP: Fill 'Step by step process'
     """
     ERROR_WIN       = auto()
     WARNING_WIN     = auto()
@@ -33,6 +34,7 @@ class NewsType(Enum):
     FILL_TIMEOUT    = auto()
     FILL_LOG_DETAIL = auto()
     FILL_GEN_FILE   = auto()
+    FILL_STEPBYSTEP = auto()
 
 class MyButton(Enum):
     """
@@ -269,23 +271,23 @@ class DgState(Enum):
         8	IDLE_INP_TEXT_SATISFIED	Form for inp. text file filled
         9	BUSY_INP_TEXT_READ	    Read of input text
         10	IDLE_INP_TEXT_ERROR	    Error of Reading input text
-        11	IDLE_HAVE_TECHN_INPUT	Deciding about present preliminary analysis
+        11	IDLE_HAVE_TECHN_INPUT	Deciding about presenting preliminary analysis
         12	BUSY_TECHN_INP_PRESENT 	Preliminary analysis for lower bound
         13	IDLE_TECHN_INP_ERROR	Error of preliminary analysis
         14	IDLE_TECHN_INP_PRESENT	View of preliminary analysis
-        15	IDLE_HAVE_LOWER_BOUND	Deciding about present first order
+        15	IDLE_HAVE_LOWER_BOUND	Deciding about presenting first order
         16	BUSY_FIRST_ORDER_CREATE	Create first order
         17	IDLE_FIRST_ORD_ERROR	Error of first order
         18	IDLE_FIRST_ORD_PRESENT 	View of first order
-        19	IDLE_HAVE_ROOT_INPUT	Deciding about search steps (step by step or continuous)
+        19	IDLE_HAVE_ROOT_INPUT	Deciding about search flow (step by step or continuous)
         20	BUSY_SEARCH_OPTIM_EXEC	Searching optimum
         21	IDLE_SEARCH_OPT_ERROR	Error of searching optimum
-        22	IDLE_SEARCH_OPT_PAUSE	Deciding about present recent
-        23	BUSY_RECENT_OPT_PRESENT	Prepare recent for present
+        22	IDLE_SEARCH_OPT_PAUSE	Deciding about presenting recent
+        23	BUSY_RECENT_OPT_PRESENT	Prepare recent for presenting
         24	IDLE_RECENT_OPT_ERROR	Error of prepare recent
         25	IDLE_RECENT_OPT_PRESENT	View of recent
-        26	IDLE_SEARCH_DONE	    Deciding about present last result
-        27	BUSY_RESULTS_PRESENT	Prepare last result for present
+        26	IDLE_SEARCH_DONE	    Deciding about presenting last result
+        27	BUSY_RESULTS_PRESENT	Prepare last result for presenting
         28	IDLE_RESULTS_ERROR	    Error of prepare last result
         29	IDLE_RESULTS_PRESENT	View of last result
         30	STOP	                Stop Program
@@ -300,23 +302,23 @@ class DgState(Enum):
     IDLE_INP_TEXT_SATISFIED =(auto(), "Form for inp. text file filled")
     BUSY_INP_TEXT_READ      =(auto(), "Read of input text")
     IDLE_INP_TEXT_ERROR     =(auto(), "Error of Reading input text")
-    IDLE_HAVE_TECHN_INPUT   =(auto(), "Deciding about present preliminary analysis")
+    IDLE_HAVE_TECHN_INPUT   =(auto(), "Deciding about presenting preliminary analysis")
     BUSY_TECHN_INP_PRESENT  =(auto(), "Preliminary analysis for lower bound")
     IDLE_TECHN_INP_ERROR    =(auto(), "Error of preliminary analysis")
     IDLE_TECHN_INP_PRESENT  =(auto(), "View of preliminary analysis")
-    IDLE_HAVE_LOWER_BOUND   =(auto(), "Deciding about present first order")
+    IDLE_HAVE_LOWER_BOUND   =(auto(), "Deciding about presenting first order")
     BUSY_FIRST_ORDER_CREATE =(auto(), "Create first order")
     IDLE_FIRST_ORD_ERROR    =(auto(), "Error of first order")
     IDLE_FIRST_ORD_PRESENT  =(auto(), "View of first order")
-    IDLE_HAVE_ROOT_INPUT    =(auto(), "Deciding about search steps (step by step or continuous)")
+    IDLE_HAVE_ROOT_INPUT    =(auto(), "Deciding about search flow (step by step or continuous)")
     BUSY_SEARCH_OPTIM_EXEC  =(auto(), "Searching optimum")
     IDLE_SEARCH_OPT_ERROR   =(auto(), "Error of searching optimum")
-    IDLE_SEARCH_OPT_PAUSE   =(auto(), "Deciding about present recent")
-    BUSY_RECENT_OPT_PRESENT =(auto(), "Prepare recent for present")
+    IDLE_SEARCH_OPT_PAUSE   =(auto(), "Deciding about presenting recent")
+    BUSY_RECENT_OPT_PRESENT =(auto(), "Prepare recent for presenting")
     IDLE_RECENT_OPT_ERROR   =(auto(), "Error of prepare recent")
     IDLE_RECENT_OPT_PRESENT =(auto(), "View of recent")
-    IDLE_SEARCH_DONE        =(auto(), "Deciding about present last result")
-    BUSY_RESULTS_PRESENT    =(auto(), "Prepare last result for present")
+    IDLE_SEARCH_DONE        =(auto(), "Deciding about presenting last result")
+    BUSY_RESULTS_PRESENT    =(auto(), "Prepare last result for presenting")
     IDLE_RESULTS_ERROR      =(auto(), "Error of prepare last result")
     IDLE_RESULTS_PRESENT    =(auto(), "View of last result")
     STOP                    =(auto(), "Stop Program")
@@ -533,9 +535,9 @@ class DgTransition:
 
         # success (and/or done) flag management
         #      BUSY_FIRST_ORDER_CREATE:  "FirstOrd Success"
-        #      BUSY_SEARCH_OPTIM_EXEC  // IDLE_SEARCH_OPT_PAUSE:    "SearchOpt Done"
+        #      BUSY_SEARCH_OPTIM_EXEC  // IDLE_SEARCH_OPT_PAUSE:    "SearchOpt Success"
         if ( influ_event.by_process and
-             influ_event.by_process[0] in ["FirstOrd Success", "SearchOpt Done"]):
+             influ_event.by_process[0] in ["FirstOrd Success", "SearchOpt Success"]):
             loc_success = True
 
         # # Starting state: BUSY_FIRST_ORDER_CREATE
@@ -561,15 +563,15 @@ class DgTransition:
                 loc_quick_flow = False #  Intentionally not left out!
             loc_new_alter_state = None
 
-        # # Starting state: IDLE_FIRST_ORD_PRESENT
-        # # alternate pair:
-        # # loc_new_state = DgState.IDLE_HAVE_ROOT_INPUT  # < new_state
-        # # loc_new_st_alt = DgState.IDLE_SEARCH_DONE     # < new_alter_state
-        # Intersection according to "success" flag:
-        if ( loc_new_state == DgState.IDLE_HAVE_ROOT_INPUT and
-             loc_new_alter_state == DgState.IDLE_SEARCH_DONE ):
-            loc_new_state = loc_new_alter_state if loc_success else loc_new_state
-            loc_new_alter_state = None
+        # # # Starting state: IDLE_FIRST_ORD_PRESENT
+        # # # alternate pair:
+        # # # loc_new_state = DgState.IDLE_HAVE_ROOT_INPUT  # < new_state
+        # # # loc_new_st_alt = DgState.IDLE_SEARCH_DONE     # < new_alter_state
+        # # Intersection according to "success" flag:
+        # if ( loc_new_state == DgState.IDLE_HAVE_ROOT_INPUT and
+        #      loc_new_alter_state == DgState.IDLE_SEARCH_DONE ):
+        #     loc_new_state = loc_new_alter_state if loc_success else loc_new_state
+        #     loc_new_alter_state = None
 
         if loc_new_alter_state:
             raise RuntimeError("Alert put_accross! "
@@ -727,7 +729,7 @@ def connect_transitions_c() -> None:
     for loc_dgst in loc_incl:
         loc_dgst.add_transition(loc_tran)
 
-    #  11	IDLE_HAVE_TECHN_INPUT	Deciding about present preliminary analysis
+    #  11	IDLE_HAVE_TECHN_INPUT	Deciding about presenting preliminary analysis
     loc_influ = InfluEventSet(by_buttons=["","Investigate","Continue"]) # Back, Action, Next
     loc_new_state = DgState.BUSY_TECHN_INP_PRESENT
     DgState.IDLE_HAVE_TECHN_INPUT   .add_transition( DgTransition(loc_influ, loc_new_state) )
@@ -753,7 +755,7 @@ def connect_transitions_c() -> None:
     loc_new_state = DgState.IDLE_HAVE_LOWER_BOUND
     DgState.IDLE_TECHN_INP_PRESENT  .add_transition( DgTransition(loc_influ, loc_new_state) )
 
-    # 15	IDLE_HAVE_LOWER_BOUND	Deciding about present first order
+    # 15	IDLE_HAVE_LOWER_BOUND	Deciding about presenting first order
     loc_influ = InfluEventSet(by_buttons=["","Investigate","Continue"]) # Back, Action, Next
     loc_new_state = DgState.BUSY_FIRST_ORDER_CREATE
     DgState.IDLE_HAVE_LOWER_BOUND   .add_transition( DgTransition(loc_influ, loc_new_state) )
@@ -787,7 +789,7 @@ def connect_transitions_c() -> None:
                                                                 loc_new_state,
                                                                 loc_new_st_alt) )
 
-    # 19	IDLE_HAVE_ROOT_INPUT	Deciding about search steps (step by step or continuous)
+    # 19	IDLE_HAVE_ROOT_INPUT	Deciding about search flow (step by step or continuous)
     loc_influ = InfluEventSet(by_buttons=["","","Continue"]) # Back, Action, Next
     loc_new_state = DgState.BUSY_SEARCH_OPTIM_EXEC
     DgState.IDLE_HAVE_ROOT_INPUT    .add_transition( DgTransition(loc_influ, loc_new_state) )
@@ -803,28 +805,33 @@ def connect_transitions_d() -> None:
     loc_new_state = DgState.IDLE_SEARCH_OPT_ERROR
     DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
     loc_influ = InfluEventSet(by_process="SearchOpt Done")
-    loc_new_state = DgState.IDLE_SEARCH_DONE
-    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
-    loc_influ = InfluEventSet(by_buttons=["","PAUSE",""]) # Back, Action, Next
+    # loc_new_state = DgState.IDLE_SEARCH_DONE
+    # DgState.B U SY_SEARCH_OPTIM_EXEC  .a d d_transition( DgTransition(loc_influ, loc_new_state) )
+    # loc_influ = InfluEventSet(by_buttons=["","PAUSE",""]) # Back, Action, Next
+    # loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE
+    # DgState.B U SY_SEARCH_OPTIM_EXEC  .a d d_transition( DgTransition(loc_influ, loc_new_state) )
     loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
+    loc_influ = InfluEventSet(by_process="SearchOpt Success")
+    loc_new_state = DgState.IDLE_SEARCH_DONE
     DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
 
     # 21	IDLE_SEARCH_OPT_ERROR	Error of searching optimum
     # It is ready yet. See the two cycles above preparing "Confirmed Close Win" and "Cancel".
     #DgState.IDLE_SEARCH_OPT_ERROR   .add_transition( DgTransition(loc_influ, loc_new_state) )
 
-    # 22	IDLE_SEARCH_OPT_PAUSE	Deciding about present recent
+    # 22	IDLE_SEARCH_OPT_PAUSE	Deciding about presenting recent
     loc_influ = InfluEventSet(by_buttons=["","","Continue"]) # Back, Action, Next
     loc_new_state = DgState.BUSY_SEARCH_OPTIM_EXEC
     DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
     loc_influ = InfluEventSet(by_buttons=["","Investigate",""]) # Back, Action, Next
     loc_new_state = DgState.BUSY_RECENT_OPT_PRESENT
     DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
-    loc_influ = InfluEventSet(by_process="SearchOpt Done")
-    loc_new_state = DgState.IDLE_SEARCH_DONE
-    DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
+    # loc_influ = InfluEventSet(by_process="SearchOpt Done")
+    # loc_new_state = DgState.IDLE_SEARCH_DONE
+    # DgState.IDLE_SEARCH_OPT_PAUSE   .add_transition( DgTransition(loc_influ, loc_new_state) )
 
-    # 23	BUSY_RECENT_OPT_PRESENT	Prepare recent for present
+    # 23	BUSY_RECENT_OPT_PRESENT	Prepare recent for presenting
     loc_influ = InfluEventSet(by_process="ResentPres Failed")
     loc_new_state = DgState.IDLE_RECENT_OPT_ERROR
     DgState.BUSY_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
@@ -841,7 +848,7 @@ def connect_transitions_d() -> None:
     loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE
     DgState.IDLE_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
 
-    # 26	IDLE_SEARCH_DONE	Deciding about present last result
+    # 26	IDLE_SEARCH_DONE	Deciding about presenting last result
     loc_influ = InfluEventSet(by_buttons=["","","Done"]) # Back, Action, Next
     loc_new_state = DgState.IDLE_INIT
     DgState.IDLE_SEARCH_DONE        .add_transition( DgTransition(loc_influ, loc_new_state) )
@@ -849,7 +856,7 @@ def connect_transitions_d() -> None:
     loc_new_state = DgState.BUSY_RESULTS_PRESENT
     DgState.IDLE_SEARCH_DONE        .add_transition( DgTransition(loc_influ, loc_new_state) )
 
-    # 27	BUSY_RESULTS_PRESENT	Prepare last result for present
+    # 27	BUSY_RESULTS_PRESENT	Prepare last result for presenting
     loc_influ = InfluEventSet(by_process="PresentLast Failed")
     loc_new_state = DgState.IDLE_RESULTS_ERROR
     DgState.BUSY_RESULTS_PRESENT    .add_transition( DgTransition(loc_influ, loc_new_state) )

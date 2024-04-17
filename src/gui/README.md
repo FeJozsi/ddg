@@ -4,6 +4,16 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-17 15:29:06 Integrated the 5th core functionality
+
+- Refactored the FSM (Finite State Machine) to simplify handling user-triggered
+PAUSES between iterations of searching for the optimum.
+- Integrated the 5th core functionality in the BusySearchOptimExec class for searching the optimum
+in the DDG within the Task Factory. Strong developer tests will have to be carried out.
+- Corrected various typos and addressed pylint issues.
+
+Development continues with the two remaining core functionalities.
+
 ## 2024-04-16 20:58:23 Updated the application's background
 
 Updated the application's background to a new, more relevant design.

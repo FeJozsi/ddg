@@ -218,11 +218,11 @@ def iteraciok() -> None:
                 print((f"{i}. iteration, Length of solution tree: {len(dg_o.ag)}, "
                         "ID of max. last ten solutions:"
                       ),
-                        ",".join(str(x.sorszam) for x in dg_o.ag[-10:]))
+                      ",".join(str(x.sorszam) for x in dg_o.ag[-10:]))
                 if i >= 1000 and dg_o.info:
                     dg_o.info = False
                     print("*" * 75)
-                    print("Wrinting detailed LOG has been stopped "
+                    print("Writing detailed LOG has been stopped "
                           "because of the amount of iterations.")
                     print("*" * 75)  # 2024-02-27
         i += 1

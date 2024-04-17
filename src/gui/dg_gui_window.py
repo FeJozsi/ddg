@@ -777,7 +777,8 @@ class MainWindow(QMainWindow):
                                            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
                                            Qt.TransformationMode.SmoothTransformation)
         # # Calculate the top left position to draw the pixmap in the center
-        # point = self.rect().topLeft() if scaled_pixmap.width() == self.width() else self.rect().topRight()
+        # point = (self.rect().topLeft() if scaled_pixmap.width() == self.width()
+        #                                else self.rect().topRight())
         # # Draw the pixmap onto the widget
         # painter.drawPixmap(point, scaled_pixmap)
 
@@ -786,7 +787,7 @@ class MainWindow(QMainWindow):
                     if scaled_pixmap.width() > self.width() else 0)
         y_offset = (round( (scaled_pixmap.height() - self.height()) / 2)
                     if scaled_pixmap.height() > self.height() else 0)
-        
+
         # Adjust the source rectangle in the pixmap to the area we want to draw
         source_rect = QRect(int(x_offset), int(y_offset), self.width(), self.height())
         painter.drawPixmap(self.rect(), scaled_pixmap, source_rect)

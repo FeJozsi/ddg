@@ -42,7 +42,8 @@ class MyEventStack(QObject):
         Event Posting, but Enqueuing only if all conditions are satisfied.
         """
         if (e.is_not_interested(InfluEventSet(by_process="Close Win")) and
-            e.is_not_interested(InfluEventSet(by_process="Confirmed Close Win"))):
+            e.is_not_interested(InfluEventSet(by_process="Confirmed Close Win")) and
+            e.is_not_interested(InfluEventSet(by_buttons=["","PAUSE",""]))):
             if ((not bool(self.busy_start) and
                  bool(e.by_process)) or
                 ((not self.ready_dtn or e.triggered_dtn < self.ready_dtn) and
@@ -58,6 +59,8 @@ class MyEventStack(QObject):
             e.is_watching(InfluEventSet(by_process="Confirmed Close Win"))):
             # self.my_stack.insert(0, e)
             self.my_stack.appendleft(e) # it is exceptionally handled as LIFO (Last In, First Out)
+        elif e.is_watching(InfluEventSet(by_buttons=["","PAUSE",""])):
+            self.emit_message_on_gui(m_code= "PE-01", m_type= NewsType.FILL_STEPBYSTEP, m_text= "")
         else:
             self.my_stack.append(e) # for normal FIFO handling
     def set_busy_start(self) -> None:

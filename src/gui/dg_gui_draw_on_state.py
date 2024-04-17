@@ -199,8 +199,8 @@ def draw_checkbox2(mw: MainWindow, lrs: DgState) -> None:
     loc_bframe = mw.buttons_frame
     loc_checkb = loc_bframe.checkbox2
     if not lrs in (DgState.INIT, DgState.STOP):
-        if lrs in (DgState.IDLE_HAVE_ROOT_INPUT, DgState.BUSY_SEARCH_OPTIM_EXEC,
-                   DgState.IDLE_SEARCH_OPT_PAUSE, DgState.BUSY_RECENT_OPT_PRESENT,
+        if lrs in (DgState.IDLE_HAVE_ROOT_INPUT, # DgState.BUSY_SEARCH_OPTIM_EXEC,
+                   DgState.IDLE_SEARCH_OPT_PAUSE, # DgState.BUSY_RECENT_OPT_PRESENT,
                    DgState.IDLE_RECENT_OPT_PRESENT):
             loc_checkb.setEnabled(True)
         else:
@@ -300,6 +300,9 @@ def fill(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> 
     elif m_type == NewsType.FILL_GEN_FILE:
         # print(m_text)
         mw.form_frame.gen_form.file_input.setText(m_text)
+    elif m_type == NewsType.FILL_STEPBYSTEP:
+        if not mw.buttons_frame.checkbox2.isChecked():
+            mw.buttons_frame.checkbox2.setChecked(True)
 
 def win(mw: MainWindow, m_code: str, m_type: NewsType, _: int, m_text: str) -> None:
     """ Manage open modal window for messages on GUI """
