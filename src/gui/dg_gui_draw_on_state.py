@@ -6,7 +6,8 @@ import os
 
 from PyQt6.QtWidgets import QLineEdit, QMessageBox #, QErrorMessage
 
-from dg_gui_finite_state_machine import DgState, MyButton, NewsType, gui_control_dict, DimInpT
+from dg_gui_finite_state_machine import (DgState, DimProp, MyButton, NewsType, gui_control_dict,
+                                         DimInpT)
 from dg_gui_window import MainWindow, get_main_window_instance  # These occured circular import
 from dg_gui_prepare_window import ReadOnlyAbleCheckBox
 from dg_gui_own_event_stack import my_event_stack
@@ -136,9 +137,14 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
         loc_text_form.browse_button.setDisabled(True)
         loc_line_edit_set_read_only(loc_text_form.inputs[0], True)  # Nb. Machines
         loc_line_edit_set_read_only(loc_text_form.inputs[1], True)  # Nb. Operations
-        loc_line_edit_set_read_only(loc_text_form.inputs[2], False) # Max. Depth
-        loc_line_edit_set_read_only(loc_text_form.inputs[3], False) # Timeout
-        loc_line_edit_set_read_only(loc_text_form.inputs[4], False) # Log Detail
+        if lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT):
+            loc_line_edit_set_read_only(loc_text_form.inputs[2], True) # Max. Depth
+            loc_line_edit_set_read_only(loc_text_form.inputs[3], True) # Timeout
+            loc_line_edit_set_read_only(loc_text_form.inputs[4], True) # Log Detail
+        else:
+            loc_line_edit_set_read_only(loc_text_form.inputs[2], False) # Max. Depth
+            loc_line_edit_set_read_only(loc_text_form.inputs[3], False) # Timeout
+            loc_line_edit_set_read_only(loc_text_form.inputs[4], False) # Log Detail
 
 def draw_gen_form(mw: MainWindow, lrs: DgState) -> None:
     """
@@ -172,9 +178,14 @@ def draw_gen_form(mw: MainWindow, lrs: DgState) -> None:
         loc_gen_form.browse_button.setDisabled(True)
         loc_line_edit_set_read_only(loc_gen_form.inputs[0], True)  # Nb. Machines
         loc_line_edit_set_read_only(loc_gen_form.inputs[1], True)  # Nb. Operations
-        loc_line_edit_set_read_only(loc_gen_form.inputs[2], False) # Max. Depth
-        loc_line_edit_set_read_only(loc_gen_form.inputs[3], False) # Timeout
-        loc_line_edit_set_read_only(loc_gen_form.inputs[4], False) # Log Detail
+        if lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT):
+            loc_line_edit_set_read_only(loc_gen_form.inputs[2], True) # Max. Depth
+            loc_line_edit_set_read_only(loc_gen_form.inputs[3], True) # Timeout
+            loc_line_edit_set_read_only(loc_gen_form.inputs[4], True) # Log Detail
+        else:
+            loc_line_edit_set_read_only(loc_gen_form.inputs[2], False) # Max. Depth
+            loc_line_edit_set_read_only(loc_gen_form.inputs[3], False) # Timeout
+            loc_line_edit_set_read_only(loc_gen_form.inputs[4], False) # Log Detail
 
 def draw_button1(mw: MainWindow, lrs: DgState) -> None:
     """

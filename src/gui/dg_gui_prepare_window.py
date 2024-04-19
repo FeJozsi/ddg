@@ -9,6 +9,7 @@ to dg_gui_prepare_window.py at 2024-04-09 15:02:56.
 """
 import os
 import errno
+import re
 
 # f r om abc i m port ABC, abstractmethod
 
@@ -62,6 +63,7 @@ class QTextEditOutputStream:
         self.text_edit: QTextEdit = text_edit
         self.text_edit.setStyleSheet("background-color: rgba(255, 255, 255, 200);")
         self.max_char: int = max_char # 160  # Maximum character limit
+        self.current_char: int = 0
 
         # Use QFontDatabase to set a monospace font
         monospace_font = QFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
@@ -76,20 +78,57 @@ class QTextEditOutputStream:
         # self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
         # self.text_edit.ensureCursorVisible()
 
-        # Check if the current text exceeds the maximum character limit
-        current_text = self.text_edit.toPlainText()
-        if len(current_text) > self.max_char:
-            # Find the position to cut the text
-            cut_position: int = len(current_text) - self.max_char
-            new_text: str = current_text[cut_position:]
-            if cut_position != -1:
-                cut_position = new_text.find("\n")
-                new_text = new_text[cut_position + 1:]  # len("\n") = always 1!
+        # # Check if the current text exceeds the maximum character limit
+        # current_text = self.text_edit.toPlainText()
+        # if len(current_text) > self.max_char:
+        #     # # Find the position to cut the text
+        #     # cut_position: int = len(current_text) - self.max_char
+        #     # new_text: str = current_text[cut_position:]
+        #     # if cut_position != -1:
+        #     #     cut_position = new_text.find("\n")
+        #     #     new_text = new_text[cut_position + 1:]  # len("\n") = always 1!
 
-            # Update the QTextEdit (test_edit) with the trimmed text
-            self.text_edit.setPlainText(new_text)
+        #     # Update the QTextEdit (test_edit) with the trimmed text
+        #     # self.text_edit.setPlainText(new_text)
+        #     self.text_edit.setPlainText(self.find_after_500th_newline_regex(current_text))
+
+        #     self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
+        #     self.text_edit.ensureCursorVisible()
+        self.current_char += len(message)
+        if self.current_char > self.max_char:
+            self.remove_first_500_lines()
+            self.current_char = len(self.text_edit.toPlainText())
             self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
             self.text_edit.ensureCursorVisible()
+
+    def remove_first_500_lines(self):
+        """
+        Removes 500 lines directly from the QTextEdit without
+        copying or duplicating a large amount of text
+        """
+        cursor = self.text_edit.textCursor()  # Get the text cursor from the QTextEdit
+        cursor.movePosition(QTextCursor.MoveOperation.Start)  # Move the cursor to the start of text
+        for _ in range(500):
+            cursor.movePosition(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.KeepAnchor)
+        cursor.removeSelectedText()  # Remove the first 500 lines
+
+    def find_after_500th_newline_regex(self, text: str) -> str:
+        """
+        It searches through the provided text and checks if there is a place where the pattern
+        (500 lines) occurs. If it finds such a place, it receives a match object from which
+        it can extract information like the position right after the 500th newline.
+        So, it returns the text follows the 500th line.
+        Otherwise, it returns the last 95% of the text.
+        """
+        # Create a regex pattern that matches exactly 500 newlines
+        pattern = r'(?:[^\n]*\n){499}[^\n]*\n'
+        # Search for the pattern in the text
+        match = re.search(pattern, text)
+        if match:
+            # If found, return the text after the 500th newline
+            return text[match.end():]
+        # If the pattern is not found, less than 500 newlines exist.
+        return text[(round(len(text)*0.05)):]
 
     def flush(self):
         """
@@ -220,13 +259,14 @@ class BaseForm(QWidget, AbstractFormMixin): # pylint: disable=R0903  # Too few p
                                   "an operation connected at least.")
         self.inputs[2].setPlaceholderText("default 15 levels")
         self.inputs[2].setToolTip("Maximum Depth of the solution tree using the Branch "
-                                  "and Bound method. Can be adjusted during making iterations.")
+                                  "and Bound method.")
+        #                         "and Bound method. Can be adjusted during making iterations.")
         self.inputs[3].setPlaceholderText("default 300 sec")
-        self.inputs[3].setToolTip("Maximum  time searching of the optimum in seconds. "
-                                  "Can be adjusted during making iterations.")
+        self.inputs[3].setToolTip("Maximum  time searching of the optimum in seconds.")
+        #                         "Can be adjusted during making iterations.")
         self.inputs[4].setPlaceholderText("0 / 1 (or >0)")
-        self.inputs[4].setToolTip("Log Detail. 0 = normal Log, > 0 = detailed Log. "
-                                  "Can be adjusted during making iterations.")
+        self.inputs[4].setToolTip("Log Detail. 0 = normal Log, > 0 = detailed Log.")
+        #                         "Can be adjusted during making iterations.")
         for i, label in enumerate(labels):
             loc_label = QLabel(label)
             loc_label.setFont(font)

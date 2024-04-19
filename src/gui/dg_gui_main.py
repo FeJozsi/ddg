@@ -74,7 +74,6 @@ async def process_event_stack() -> None: # (mw: M a inWindow):
                     my_event_stack.set_ready_dtn()
                 my_event_stack.emit_redraw_my_app_window_on_state()
 
-            # Simulate async work with sleep
             await asyncio.sleep(0.1)  # Prevents hogging the CPU, adjust the sleep time as needed
         print("The process_event_stack() was stopped.",
                 file= sys.stderr)

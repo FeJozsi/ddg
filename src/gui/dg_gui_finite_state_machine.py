@@ -563,15 +563,15 @@ class DgTransition:
                 loc_quick_flow = False #  Intentionally not left out!
             loc_new_alter_state = None
 
-        # # # Starting state: IDLE_FIRST_ORD_PRESENT
-        # # # alternate pair:
-        # # # loc_new_state = DgState.IDLE_HAVE_ROOT_INPUT  # < new_state
-        # # # loc_new_st_alt = DgState.IDLE_SEARCH_DONE     # < new_alter_state
-        # # Intersection according to "success" flag:
-        # if ( loc_new_state == DgState.IDLE_HAVE_ROOT_INPUT and
-        #      loc_new_alter_state == DgState.IDLE_SEARCH_DONE ):
-        #     loc_new_state = loc_new_alter_state if loc_success else loc_new_state
-        #     loc_new_alter_state = None
+        # # Starting state: IDLE_FIRST_ORD_PRESENT
+        # # alternate pair:
+        # # loc_new_state = DgState.IDLE_HAVE_ROOT_INPUT  # < new_state
+        # # loc_new_st_alt = DgState.IDLE_SEARCH_DONE     # < new_alter_state
+        # Intersection according to "success" flag:
+        if ( loc_new_state == DgState.IDLE_HAVE_ROOT_INPUT and
+             loc_new_alter_state == DgState.IDLE_SEARCH_DONE ):
+            loc_new_state = loc_new_alter_state if loc_success else loc_new_state
+            loc_new_alter_state = None
 
         if loc_new_alter_state:
             raise RuntimeError("Alert put_accross! "
@@ -814,6 +814,10 @@ def connect_transitions_d() -> None:
     DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
     loc_influ = InfluEventSet(by_process="SearchOpt Success")
     loc_new_state = DgState.IDLE_SEARCH_DONE
+    DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
+    # Trick: This event will not appear in event stack. It is only for redraw PAUSE button text.
+    loc_influ = InfluEventSet(by_buttons=["","PAUSE",""]) # Back, Action, Next
+    loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE   # See post_event() (in MyEventStack class)
     DgState.BUSY_SEARCH_OPTIM_EXEC  .add_transition( DgTransition(loc_influ, loc_new_state) )
 
     # 21	IDLE_SEARCH_OPT_ERROR	Error of searching optimum

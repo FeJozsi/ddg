@@ -881,7 +881,7 @@ class MainWindow(QMainWindow):
     # def set_redraw_my_app_window_on_state(self, update_callable) -> None:
     #     """
     #     This method "fills" the functionality used for handle of
-    #     redraw_my_app_window_on_state signal
+    #     redraw_my_app_window_on_state signal.           See set_loc_callable_tuple instead of this
     #     """
     #     # Assign the passed callable to be used for UI updates
     #     self.redraw_my_app_window_on_state_callable = update_callable
@@ -910,7 +910,7 @@ class MainWindow(QMainWindow):
     # def set_message_on_gui(self, update_callable) -> None:
     #     """
     #     This method "fills" the functionality used for handle of
-    #     message_on_gui signal
+    #     message_on_gui signal.                          See set_loc_callable_tuple instead of this
     #     """
     #     # Assign the passed callable to be used for messages
     #     self.message_on_gui_callable = update_callable

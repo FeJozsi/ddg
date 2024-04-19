@@ -100,6 +100,11 @@ I installed these packages manually in the virtual environment:
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
+### 2024-04-19 09:31:49 Completed developer testing for the BusySearchOptimExec task
+
+This core function, implemented by the `BusySearchOptimExec` task, enables the search for the
+optimum in Directed Disjunctive Graphs (DDGs). For more details, see src\gui\README.md.
+
 ### 2024-04-05 23:39:47 The first real task of the Task Factory has been created
 
 We reached a new milestone. `The first real task` of the GUI's Task Factory has been done

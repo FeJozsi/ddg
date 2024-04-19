@@ -4,6 +4,14 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-19 09:31:49 New milestone: Completed developer testing for BusySearchOptimExec task
+
+- GUI remains responsive throughout.
+- Implemented pausability for long-running processes.
+- Optimized QTextEditOutputStream to maintain text character count within normal bounds without
+impacting search speed.
+- Development continues on the remaining two core functionalities.
+
 ## 2024-04-17 15:29:06 Integrated the 5th core functionality
 
 - Refactored the FSM (Finite State Machine) to simplify handling user-triggered

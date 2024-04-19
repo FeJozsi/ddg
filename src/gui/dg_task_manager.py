@@ -24,6 +24,7 @@ from dg_gui_finite_state_machine import (DgState, InfluEventSet, NewsType,
                                          gui_control_dict, DimInpT)
 
 from dg_gui_own_event_stack import my_event_stack
+from dg_gui_prepare_window import IntegerLineEdit
 from dg_gui_window import MainWindow, get_main_window_instance
 from dg_exceptions import (EmptyInputError, EarlyInputEOF, InaccessibleOutputPath, InputSyntaxError,
                            MissingOutputPath, UnexpectedValueType, CyclicityInInput,
@@ -662,6 +663,17 @@ class BusySearchOptimExec(CommonRealTask):
                 not bool( self.iter % 100000 )
                )
 
+    def push_attributes_from_form(self, l_dg: Vezerles, loc_inputs: list[IntegerLineEdit]) -> None:
+        """
+        Write parameters for DDG optim. search process from GUI FORM
+        """
+        if loc_inputs[2].text(): # max. depth (max. level of solution tree)
+            l_dg.maximalis_melysegszint = int(loc_inputs[2].text())
+        if loc_inputs[3].text(): # max. run time
+            l_dg.futas_maximalis_ideje = float(loc_inputs[3].text())
+        if loc_inputs[4].text(): # Log Detail
+            l_dg.info = bool(int(loc_inputs[4].text()))
+
     async def to_run(self) -> None:
         """
         The real function core of BusySearchOptimExec class
@@ -675,6 +687,11 @@ class BusySearchOptimExec(CommonRealTask):
         # dg_o.kezdeti_sorrend_felallitasa() # dg_o.gyokeret_megoldasfaba()
         # dg_o.kiertekeles() # dg_o.kiertekelesek_szama += 1 ...
         # ... dg_o.vezerles_aktualizalasa()
+        current_index = self.main_window.form_frame.form_stack_widget.currentIndex()
+        if current_index == 0:
+            self.push_attributes_from_form(dg_o, self.main_window.form_frame.text_form.inputs)
+        else:
+            self.push_attributes_from_form(dg_o, self.main_window.form_frame.gen_form.inputs)
 
         while kell_a_tovabbi_kutatas():
             if dg_o.info:
@@ -696,6 +713,8 @@ class BusySearchOptimExec(CommonRealTask):
             dg_o.vezerles_aktualizalasa()
             if self.main_window.buttons_frame.checkbox2.isChecked() and kell_a_tovabbi_kutatas():
                 return
+            if kell_a_tovabbi_kutatas():
+                await asyncio.sleep(0.001) # This is important for GUI's responsiveness
         self.my_success = True
 
     # Existance of ready() method signs the Class is not ABC
