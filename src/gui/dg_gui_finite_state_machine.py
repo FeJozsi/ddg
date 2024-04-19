@@ -849,7 +849,8 @@ def connect_transitions_d() -> None:
 
     # 25	IDLE_RECENT_OPT_PRESENT	View of recent
     loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
-    loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE
+    # loc_new_state = DgState.IDLE_SEARCH_OPT_PAUSE
+    loc_new_state = DgState.BUSY_SEARCH_OPTIM_EXEC
     DgState.IDLE_RECENT_OPT_PRESENT .add_transition( DgTransition(loc_influ, loc_new_state) )
 
     # 26	IDLE_SEARCH_DONE	Deciding about presenting last result

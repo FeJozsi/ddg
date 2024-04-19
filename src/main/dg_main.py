@@ -174,13 +174,14 @@ def print_input_data_english(l_dg: Vezerles) -> None:
     l = [muv.azonosito for muv in l_dg.muvelet] # This is the same as the one above in comment
     print(str(l) + "\n")
 
-def aktualis_optimalis_megoldas_nyomtatasa_english(l_dg: Vezerles) -> None:
+def aktualis_optimalis_megoldas_nyomtatasa_english(l_dg: Vezerles, last_flag: bool = True) -> None:
     """
-    Print recent optimal solution
+    Print recent or the last (optimal) solution
     """
     smuv: Muveletcsucs | None = None
-    l_dg.megmaradt_fixalt_elek_eltavolitasa()
-    l_dg.aktualis_optimalis_sorrend_visszaallitas()
+    if last_flag:
+        l_dg.megmaradt_fixalt_elek_eltavolitasa()
+        l_dg.aktualis_optimalis_sorrend_visszaallitas()
     l_dg.kritikus_ut_odafele()
     l_dg.kritikus_uthosszak_visszafele()
     for k in range(l_dg.gepszam):

@@ -137,7 +137,8 @@ def draw_text_form(mw: MainWindow, lrs: DgState) -> None:
         loc_text_form.browse_button.setDisabled(True)
         loc_line_edit_set_read_only(loc_text_form.inputs[0], True)  # Nb. Machines
         loc_line_edit_set_read_only(loc_text_form.inputs[1], True)  # Nb. Operations
-        if lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT):
+        if (lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT) and
+            not lrs in (DgState.IDLE_SEARCH_OPT_PAUSE, DgState.IDLE_RECENT_OPT_PRESENT)):
             loc_line_edit_set_read_only(loc_text_form.inputs[2], True) # Max. Depth
             loc_line_edit_set_read_only(loc_text_form.inputs[3], True) # Timeout
             loc_line_edit_set_read_only(loc_text_form.inputs[4], True) # Log Detail
@@ -178,7 +179,8 @@ def draw_gen_form(mw: MainWindow, lrs: DgState) -> None:
         loc_gen_form.browse_button.setDisabled(True)
         loc_line_edit_set_read_only(loc_gen_form.inputs[0], True)  # Nb. Machines
         loc_line_edit_set_read_only(loc_gen_form.inputs[1], True)  # Nb. Operations
-        if lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT):
+        if (lrs.property in (DimProp.RECENT_RESULT, DimProp.LAST_RESULT) and
+            not lrs in (DgState.IDLE_SEARCH_OPT_PAUSE, DgState.IDLE_RECENT_OPT_PRESENT)):
             loc_line_edit_set_read_only(loc_gen_form.inputs[2], True) # Max. Depth
             loc_line_edit_set_read_only(loc_gen_form.inputs[3], True) # Timeout
             loc_line_edit_set_read_only(loc_gen_form.inputs[4], True) # Log Detail

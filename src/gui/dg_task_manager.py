@@ -627,7 +627,7 @@ class BusyFirstOrderCreate(CommonRealTask):
         dg_o.kiertekelesek_szama += 1
         if not gui_control_dict["quick_flow"]:
             print("\n\n** The initial order **")
-            aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o)
+            aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o, last_flag= False)
         assert dg_o.nyelo
         print("\n* Critical path length alongside the initially established order: "
             f"{dg_o.nyelo.forrastol1:8.2f} *\n\n\n")
@@ -716,6 +716,42 @@ class BusySearchOptimExec(CommonRealTask):
             if kell_a_tovabbi_kutatas():
                 await asyncio.sleep(0.001) # This is important for GUI's responsiveness
         self.my_success = True
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
+class BusyRecentOptPresent(CommonRealTask):
+    """
+    The real task for DgState.BUSY_RECENT_OPT_PRESENT status.
+    "Prepare recent for presenting" during a pause of searching for optimum order
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+
+    async def to_run(self) -> None:
+        """
+        The real function core of BusyRecentOptPresent class
+        (i.e. of the task for DgState.BUSY_RECENT_OPT_PRESENT state)
+         after the first order has been created.
+        """
+        assert my_control_dict["dg_o"]
+        dg_o: Vezerles = my_control_dict["dg_o"]
+        # dg_o.vezerles_inicializalasa() # These all have been already done by BusyFirstOrderCreate.
+        # dg_o.graf_beolvasasa() # dg_o.megelozo_elemzes_mast_nem_mond()
+        # dg_o.kezdeti_sorrend_felallitasa() # dg_o.gyokeret_megoldasfaba()
+        # dg_o.kiertekeles() # dg_o.kiertekelesek_szama += 1 ...
+        # ... dg_o.vezerles_aktualizalasa()
+
+        # push_attributes_from_form(l_dg= dg_o, mw= self.main_window) BusySearchOptimExec will do it
+
+        print(f"\n\n** The recent order after the {my_ordinal(self.iter)} iteration **")
+        aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o, last_flag= False)
+        assert dg_o.nyelo
+        print("\n* Critical path length alongside the recent order: "
+            f"{dg_o.nyelo.forrastol1:8.2f} *\n\n\n")
 
     # Existance of ready() method signs the Class is not ABC
     def ready(self) -> bool:
@@ -879,7 +915,7 @@ async def carry_out_process() -> None:
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_RECENT_OPT_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class=BusyRecentOptPresent, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)

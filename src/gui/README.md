@@ -4,6 +4,10 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-19 12:19:36 Integrated the 6th core functionality
+
+Integrated the 6th core functionality, implemented by the BusyRecentOptPresent Task class.
+
 ## 2024-04-19 09:31:49 New milestone: Completed developer testing for BusySearchOptimExec task
 
 - GUI remains responsive throughout.
