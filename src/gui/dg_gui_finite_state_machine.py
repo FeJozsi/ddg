@@ -875,7 +875,8 @@ def connect_transitions_d() -> None:
 
     # 29	IDLE_RESULTS_PRESENT	View of last result
     loc_influ = InfluEventSet(by_buttons=["","","Done Viewing"]) # Back, Action, Next
-    loc_new_state = DgState.IDLE_SEARCH_DONE
+    # loc_new_state = DgState.IDLE_SEARCH_DONE
+    loc_new_state = DgState.IDLE_INIT
     DgState.IDLE_RESULTS_PRESENT    .add_transition( DgTransition(loc_influ, loc_new_state) )
 
     # 30	STOP	Stop Program

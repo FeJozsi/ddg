@@ -184,15 +184,29 @@ def aktualis_optimalis_megoldas_nyomtatasa_english(l_dg: Vezerles, last_flag: bo
         l_dg.aktualis_optimalis_sorrend_visszaallitas()
     l_dg.kritikus_ut_odafele()
     l_dg.kritikus_uthosszak_visszafele()
+
+    assert l_dg.nyelo
+    cp_length_as_str: str = f"{l_dg.nyelo.forrastol1:8.2f}"
+    loc_sum: float
+    loc_delay: float
+
     for k in range(l_dg.gepszam):
         smuv = l_dg.muvelet[l_dg.gep_elso_muvelete[k]]
         while smuv.gepen_elozo is not None:
             smuv = smuv.gepen_elozo
         print(f"* Order of operations on machine {k+1} *")
-        print("** ID.   Source Duration     Sink **")
+        print("** ID.   Source Duration     Sink      Sum    Delay Critical **")
         while smuv is not None:
-            print(f"{smuv.azonosito:6} {smuv.forrastol1:8.2f} "
-                  f"{smuv.idotartam:8.2f} {smuv.nyeloig2:8.2f}")
+            loc_sum = smuv.forrastol1 + smuv.idotartam + smuv.nyeloig2
+            loc_delay = l_dg.nyelo.forrastol1 - loc_sum
+            if cp_length_as_str == f"{loc_sum:8.2f}":
+                print(f"{smuv.azonosito:6} {smuv.forrastol1:8.2f} "
+                    f"{smuv.idotartam:8.2f} {smuv.nyeloig2:8.2f} "
+                    f"{loc_sum:8.2f}" f"{loc_delay:8.2f}    !")
+            else:
+                print(f"{smuv.azonosito:6} {smuv.forrastol1:8.2f} "
+                    f"{smuv.idotartam:8.2f} {smuv.nyeloig2:8.2f} "
+                    f"{loc_sum:8.2f}" f"{loc_delay:8.2f}")
             smuv = cast(Muveletcsucs, smuv.gepen_koveto)
     # print("* Throughput time: {:8.2f}, final lower bound (baseline): {:8.2f} *".format(
     #                           l_dg.nyelo.forrastol1,

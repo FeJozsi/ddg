@@ -4,6 +4,58 @@
 Start date: 2024-03-01  
 This folder contains the project's **GUI modules**.
 
+## 2024-04-22 19:14:23 Important milestone achieved: Final core function integration
+
+- Completed integration of the last core function; implemented in the class BusyResultsPresent
+in Task Manager. This function is now responsible for presenting optimal search results.
+- Achieved the minimum goal of providing a GUI for the core functionality, mirroring
+the capabilities of the original DDG SIMULA'67 program.
+- Modified the FSM to enhance clarity and fluidity in user interactions, aiming
+for a more intuitive user experience.
+
+Next steps:
+
+- Develop graphical presentations of result graphs.
+- Clarify and refine the log system.
+- Translate all originally Hungarian texts and messages into English.
+- Rewrite the SIMULA'67 program's Python mirror code in src\main folder into more elegant Python.
+(The code is already in Python, but it lacks elegance.)
+
+Immediate priority:
+
+- Perform a comprehensive revision to ensure the application is environment-independent
+and ready for download.
+
+You will probably try this command if you have the required Python tools installed:
+
+- `python src\gui\dg_gui_main.py`
+- mypy src --ignore-missing-imports
+- pylint src\generate_input\generate_random_dg_problem.py
+- pylint src/gui/dg_*.py
+- pylint src/main/dg_*.py
+- pylint src/test/dg_*.py
+
+`The first command` listed above `starts the DDG project's application` with its most recent functionality.  
+Please use Git Bash or an equivalent environment for the last three commands."
+
+Note: Ensure that your PYTHONPATH contains src/main;src/gui;src/generate_input.  
+(You can check this using $env:PYTHONPATH in a PowerShell Terminal.  
+You can set it using $env:PYTHONPATH = "src/main;src/gui;src/generate_input" if it was empty.)  
+You also may consider to apply the .vscode\settings.json file with the new sets below for VSC:
+
+    { ...
+        "python.autoComplete.extraPaths": [
+            "src/main/",
+            "src/gui",
+            "src/generate_input"
+        ],
+        "python.analysis.extraPaths": [
+            "src/main",
+            "src/gui",
+            "src/generate_input"
+        ]
+    ... }
+
 ## 2024-04-19 12:19:36 Integrated the 6th core functionality
 
 Integrated the 6th core functionality, implemented by the BusyRecentOptPresent Task class.

@@ -757,6 +757,39 @@ class BusyRecentOptPresent(CommonRealTask):
     def ready(self) -> bool:
         return True
 
+class BusyResultsPresent(CommonRealTask):
+    """
+    The real task for DgState.BUSY_RESULTS_PRESENT status.
+    "Prepare last result for presenting" after the search for optimal order is completed
+    """
+    def __init__(self,
+                 answers: tuple[str, ...],
+                 task_name: str) -> None:
+        super().__init__(answers= answers, task_name= task_name)
+
+    async def to_run(self) -> None:
+        """
+        The real function core of BusyResultsPresent class
+        (i.e. of the task for DgState.BUSY_RESULTS_PRESENT state)
+         after the search for optimal order is completed.
+        """
+        assert my_control_dict["dg_o"]
+        dg_o: Vezerles = my_control_dict["dg_o"]
+
+        dg_o.informaciok_nyomtatasa()
+        print(f"\n\n** The best solution found after the {my_ordinal(self.iter)} iteration **")
+        aktualis_optimalis_megoldas_nyomtatasa_english(l_dg= dg_o, last_flag= True)
+        dg_o.print_cp()
+        assert dg_o.nyelo
+        print("\n* Critical path length alongside the best order found: "
+            f"{dg_o.nyelo.forrastol1:8.2f} *\n\n\n")
+        print("* The determination of the minimax critical path length "
+            "of the directed disjunctive graph has finished. *")
+
+    # Existance of ready() method signs the Class is not ABC
+    def ready(self) -> bool:
+        return True
+
 class CommonImitatedTask(MyTask):
     """
     This is a common test "imitated" task for tasks whose implementation has not yet been finished.
@@ -782,7 +815,6 @@ class CommonImitatedTask(MyTask):
     def ready(self) -> bool:
         return True
 
-
 # MyTask Factory
 class TaskFactory:
     """
@@ -805,7 +837,7 @@ class TaskFactory:
         REAL_USE global variable:
             False: the method serves a new imitator object definitely.
             True:  the method tries to serve a new real object,
-                     if its Class already is not ABC.
+                     if its Class already is not an ABC.
         """
         if REAL_USE and not inspect.isabstract(self.real_task_class):
             return self.real_task_class(
@@ -823,7 +855,7 @@ class TaskFactory:
         REAL_USE global variable:
             False: the method runs the imitator's object definitely.
             True:  the method tries to run the real class' object,
-                     if their Class already is not ABC.
+                     if their Class already is not an ABC.
         """
         loc_task: MyTask = self.get_task()
         loc_result: int = await loc_task.execute()
@@ -834,16 +866,7 @@ class TaskFactory:
         Deprecated: This method executes the functionality
         via a task object, and propagates the result
         vie the state_change_due_to_event() function of FSM.
-
-        REAL_USE global variable:
-            False: the method runs the imitator's object definitely.
-            True:  the method tries to run the real class' object,
-                     if their Class already is not ABC.
         """
-        loc_respond: str = await self.run_task()
-        print(self.task_name, ":", loc_respond)
-        loc_event: InfluEventSet = InfluEventSet(by_process= loc_respond)
-        state_change_due_to_event(influ_event= loc_event)
 
     async def run_and_post_result_event(self) -> None:
         """
@@ -854,7 +877,7 @@ class TaskFactory:
         REAL_USE global variable:
             False: the method runs the imitator's object definitely.
             True:  the method tries to run the real class' object,
-                     if their Class already is not ABC.
+                     if their Class already is not an ABC.
         """
         my_event_stack.set_busy_start()
         loc_respond: str = await self.run_task()
@@ -890,37 +913,37 @@ async def carry_out_process() -> None:
         loc_answers = (loc_answer1, loc_answer2)
     loc_factory: TaskFactory | None = None
     if   loc_rec_state == DgState.BUSY_RAND_GEN_INPUT:
-        loc_factory = TaskFactory(real_task_class=BusyRandGenInput, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusyRandGenInput, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_INP_TEXT_READ:
-        loc_factory = TaskFactory(real_task_class=BusyInpTextRead, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusyInpTextRead, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_TECHN_INP_PRESENT:
-        loc_factory = TaskFactory(real_task_class=BusyTechnInpPresent, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusyTechnInpPresent, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_FIRST_ORDER_CREATE:
-        loc_factory = TaskFactory(real_task_class=BusyFirstOrderCreate, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusyFirstOrderCreate, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_SEARCH_OPTIM_EXEC:
-        loc_factory = TaskFactory(real_task_class=BusySearchOptimExec, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusySearchOptimExec, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_RECENT_OPT_PRESENT:
-        loc_factory = TaskFactory(real_task_class=BusyRecentOptPresent, # t y pe: ignore
+        loc_factory = TaskFactory(real_task_class= BusyRecentOptPresent, # t y pe: ignore
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
     elif loc_rec_state == DgState.BUSY_RESULTS_PRESENT:
-        loc_factory = TaskFactory(real_task_class=CommonRealTask, # type: ignore
+        loc_factory = TaskFactory(real_task_class= BusyResultsPresent, # CommonRealTask
                                 imitated_class= CommonImitatedTask,
                                 answers= loc_answers,
                                 task_name= loc_rec_state.description)
@@ -930,50 +953,13 @@ async def carry_out_process() -> None:
     # await loc_factory.run_and_propagate_result()
     await loc_factory.run_and_post_result_event()
 
-# # # Just for test for here:
- # Real MyTask (potentially abstract if not fully implemented)
-class TestRealTask(MyTask):
-    """
-    This is a test "real" task. It is not ready yet.
-    """
-    async def execute(self) -> int:
-        # Implementation or pass if not ready
-        return 1
-
-# Imitated MyTask
-class ImitatedTask(MyTask):
-    """
-    This is a test "imitated" task.
-    """
-    def __init__(self,
-                 answers: tuple[str, ...],
-                 task_name: str) -> None:
-        super().__init__()
-        self.answers: tuple[str, ...] = answers
-        self.task_name: str = task_name
-    async def execute(self) -> int:
-        print(self.task_name, "> Executing as imitated task.")
-        loc_time_out = random.randint(2,5)
-        await asyncio.sleep(loc_time_out) # sleep(5)
-        print("Executing imitated task ended.")
-        if random.randint(0,99) > 85:
-            loc_ret_val = 0
-        else:
-            loc_ret_val = random.randint(1,len(self.answers)-1)
-        return loc_ret_val # 0
-    # Existance of ready() method signs the Class is not ABC
-    def ready(self) -> bool:
-        return True
-
+# # # # Just for test for here:
 async def async_main():
     """
     This function is for test only
     """
-    # global REAL_USE
-    # REAL_USE = False # for test mode, without linked with main functionality
-
-    loc_factory = TaskFactory(real_task_class=TestRealTask,
-                              imitated_class= ImitatedTask,
+    loc_factory = TaskFactory(real_task_class= MyTask, # TestRealTask,
+                              imitated_class= CommonImitatedTask, # ImitatedTask,
                               answers= ("Done","Failed","Success"),
                               task_name= "Test task")
     # Assuming RealTask class is not fully implemented and thus abstract,
@@ -995,8 +981,5 @@ async def async_main():
     state_change_due_to_event(influ_event= InfluEventSet(by_buttons=["","","Read"]))
     print(gui_control_dict["rec_state"])    # DgState.BUSY_INP_TEXT_READ
 
-    await carry_out_process()
-
-# # # Example usage:
 if __name__ == '__main__':
     asyncio.run(async_main())

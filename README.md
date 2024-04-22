@@ -100,6 +100,27 @@ I installed these packages manually in the virtual environment:
 Each linked folder contains its own ReadMe file.
 Below are only the major "milestones", listed in descending order of recency.
 
+### 2024-04-22 19:14:23 Important milestone achieved: Final core function integration
+
+Completed integration of the last core function; implemented in the class BusyResultsPresent
+in Task Manager. This function is now responsible for presenting optimal search results.  
+So, `we have achieved the minimum goal` of providing a `GUI` for the core functionality, mirroring
+the capabilities of the original DDG SIMULA'67 program.  
+
+For more details, see `src\gui\README.md`.
+
+Next steps:
+
+- Develop graphical presentations of result graphs.
+- Translate all originally Hungarian texts and messages into English.
+- Rewrite the SIMULA'67 program's Python mirror code in src\main folder into more elegant Python.
+(The code is already in Python, but it lacks elegance.)
+
+Immediate priority:
+
+- Perform a comprehensive revision to ensure the application is environment-independent
+and ready for download.
+
 ### 2024-04-19 09:31:49 Completed developer testing for the BusySearchOptimExec task
 
 This core function, implemented by the `BusySearchOptimExec` task, enables the search for the

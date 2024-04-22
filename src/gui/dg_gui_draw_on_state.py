@@ -228,7 +228,9 @@ def draw_button3(mw: MainWindow, lrs: DgState) -> None:
     loc_text = None
     if lrs.influ_events and lrs.influ_events.by_buttons[MyButton.ACTION.value]: # 1
         loc_text = lrs.influ_events.by_buttons[MyButton.ACTION.value] # 1
-    if loc_text is not None:
+    if loc_text == "PAUSE" and mw.buttons_frame.checkbox2.isChecked(): # already set 'step by step'
+        loc_text = "" # suppress the currently ineffective, unnecessary PAUSE function...
+    if loc_text is not None:                           # ... so that the button label does not flash
         loc_button.setDisabled(False)
         loc_button.setText(loc_text)
     else:
