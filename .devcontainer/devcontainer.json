@@ -1,0 +1,6 @@
+{
+  "name": "my-ddg-project-cloud-devcontainer",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.8",
+  "features": {
+  }
+}
