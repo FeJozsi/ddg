@@ -1,7 +1,7 @@
 {
   "name": "my-ddg-project-cloud-devcontainer",
   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.8",
-  "postCreateCommand": "pip install --upgrade pip && pip install typing_extensions && pip install PyQt6 && pip install qasync && sudo apt-get update && sudo apt-get install -y libgl1-mesa-glx libxkbcommon0",
+  "postCreateCommand": "pip install --upgrade pip && pip install typing_extensions && pip install PyQt6 && pip install qasync && sudo apt-get update && sudo apt-get install -y libgl1-mesa-glx libxkbcommon0 libegl1",
   "features": {
   }
 }
